@@ -2,7 +2,7 @@
 #include "ds/tree/dump/dump.h"
 
 int main(void) {
-  TreeNode* node = MUL_(SIN_(ADD_(NUM_(100), NUM_(420))), NUM_(5));
+  TreeNode* node = DIV_(COS_(MUL_(NUM_(123), NUM_(8))), NUM_(5));
   nodeFixParents(node);
   FILE* f = openHtmlLogFile(".log/");
   Context ctx = (Context){};
