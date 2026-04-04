@@ -1,5 +1,5 @@
 #include "lexer/lexer.h"
-#include "misc/utils.h"
+#include "utils/utils.h"
 #include <stdlib.h>
 
 #define RETURN_WITH_STATUS(value, returnValue) \

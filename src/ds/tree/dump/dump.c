@@ -6,7 +6,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
-#include "misc/utils.h"
+#include "utils/utils.h"
 #include "ds/queue/queue.h"
 
 //these aren't static consts but macros because of how C treats

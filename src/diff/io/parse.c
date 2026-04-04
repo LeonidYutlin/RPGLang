@@ -1,6 +1,6 @@
 //этот файл нуждается в полной переработке
 #include "diff/io/parse.h"
-#include "misc/utils.h"
+#include "utils/utils.h"
 #include <ctype.h>
 
 static TreeNode* getE(const char* buf, size_t* p, Variables* vars);

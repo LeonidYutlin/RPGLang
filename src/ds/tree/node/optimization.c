@@ -2,7 +2,7 @@
 #include "ds/tree/root.h"
 #include <assert.h>
 #include <math.h>
-#include "misc/utils.h"
+#include "utils/utils.h"
 
 static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status);
 static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);

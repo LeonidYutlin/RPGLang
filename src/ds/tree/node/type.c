@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "misc/utils.h"
+#include "utils/utils.h"
 
 static const NodeTypeInfo NODE_TYPES[] = {
   #define X(enm, s)       \
