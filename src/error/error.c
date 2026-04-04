@@ -1,5 +1,5 @@
 #include "error/error.h"
-#include "misc/util.h"
+#include "misc/utils.h"
 
 #undef prettyError
 
@@ -65,10 +65,10 @@ void prettyError(FILE* sink, Error error, const char* filename, int line) {
       !filename)
     return;
 
-  fprintf(sink, "%s:%d [ERROR]: ", filename, line);
   const ErrorInfo* err = parseError(error);
-  fprintf(sink, 
-          "%s (error code = %d): %s\n", 
+  fprintf(sink,
+          "%s:%d [ERROR]: %s (error code = %d): %s\n",
+          filename, line,
           err->str,
           error,
           err->desc);
@@ -78,7 +78,8 @@ Error dumpErrors(FILE* file) {
   if (!file)
     return InvalidParameters;
 
-  fprintf(file, 
+  fprintf(file,
+          "Centralized Error System Dump"
           "Total modules: %zu\n"
           "Total errors : %zu\n",
           ERROR_MODULES_SIZE,

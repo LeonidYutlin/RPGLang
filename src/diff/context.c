@@ -32,8 +32,8 @@ Error contextDestroy(Context* ctx) {
   
   if (ctx->vars)
     varsDestroy(ctx->vars);
-  if (ctx->sink)
-    closeTexFile(ctx);
+  //if (ctx->sink)
+    //closeTexFile(ctx);
   ctx->stepCount = 0;
   return OK;
 }

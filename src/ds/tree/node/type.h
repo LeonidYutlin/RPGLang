@@ -1,7 +1,7 @@
 #ifndef NODE_TYPE_H
 #define NODE_TYPE_H
 
-#include "misc/util.h"
+#include "misc/utils.h"
 #include <stddef.h>
 #include <sys/types.h>
 #include <math.h>

@@ -15,7 +15,8 @@ void nodeDump(FILE* html, Variables* vars, TreeNode* node,
 #define nodeDump(file, vars, node, commentary) \
         nodeDump(file, vars, node, commentary, __FILE__, __LINE__)
 
-FILE* openHtmlLogFile();
+/// if the directory in the dirPath doesn't exist, will return NULL
+FILE* openHtmlLogFile(const char* dirPath);
 void  closeHtmlLogFile(FILE* html);
 
 #endif

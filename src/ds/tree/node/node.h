@@ -4,9 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <math.h>
 #include <sys/types.h>
-#include "ds/tree/nodetype.h"
+#include "ds/tree/node/type.h"
 #include "error/error.h"
 
 typedef union NodeValue {
@@ -20,18 +19,26 @@ typedef struct NodeUnit {
   NodeValue value;
 } NodeUnit;
 
+#define TREE_NODE_FIELDS    \
+  NodeUnit  data;           \
+  struct TreeNode_* parent; \
+  struct TreeNode_* left;   \
+  struct TreeNode_* right
+
 typedef struct TreeNode_ {
-  NodeUnit  data;
-  struct TreeNode_* parent;
-  struct TreeNode_* left;
-  struct TreeNode_* right;
+  TREE_NODE_FIELDS;
 } TreeNode;
 
-Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent,
-               TreeNode* left, TreeNode* right);
-TreeNode* nodeAlloc(NodeUnit data, TreeNode* parent,
-                    TreeNode* left, TreeNode* right,
-                    Error* status);
+typedef struct NodeAllocOpt {
+  TREE_NODE_FIELDS;
+  Error* status;
+} NodeAllocOpt;
+
+#undef TREE_NODE_FIELDS
+
+TreeNode* nodeAlloc(NodeAllocOpt options);
+#define nodeAlloc(...) \
+  nodeAlloc((NodeAllocOpt){__VA_ARGS__})
 
 typedef Error (*callback_f)(TreeNode* node, void* data, uint level);
 
@@ -65,7 +72,11 @@ TreeNode*  nodeCopy(TreeNode* srcNode, TreeNode* newParent, Error* status);
 void nodeFixParents(TreeNode* node);
 Error nodeOptimize(TreeNode** node);
 
-Error  nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount);
-Error nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount);
+// nodeDeleteC - delete node (and its children), with counter 
+// being changed if it isn't NULL. Also removes the node from the children of its parents
+Error  nodeDeleteC(TreeNode* node, size_t* nodeCount);
+Error nodeDestroyC(TreeNode* node, size_t* nodeCount);
+#define nodeDelete(node) nodeDeleteC(node, NULL);
+#define nodeDestroy(node) nodeDestroyC(node, NULL);
 
 #endif

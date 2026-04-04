@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "ds/tree/node.h"
+#include "ds/tree/node/node.h"
 
 typedef struct TreeRoot {
   size_t nodeCount;
@@ -12,16 +12,8 @@ typedef struct TreeRoot {
 } TreeRoot;
 
 TreeRoot* attachRoot(TreeNode* node, Error* status);
+TreeRoot* attachRootC(TreeNode* node, size_t nodeCount, Error* status);
 TreeNode* detachRoot(TreeRoot* root, Error* status);
-Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
-                    TreeNode* left, TreeNode* right);
-TreeRoot* treeAlloc(NodeUnit data,
-                    TreeNode* left, TreeNode* right,
-                    Error* status);
-
-#define treeTraverse(root, ...) \
-  nodeTraverse((root)->rootNode, (NodeTraverseOpt){ __VA_ARGS__ })
-
-Error treeDestroy(TreeRoot* tree, bool isAlloced);
+Error rootDestroy(TreeRoot* tree);
 
 #endif

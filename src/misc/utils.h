@@ -1,9 +1,9 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef UTILS_H
+#define UTILS_H
 
-#include <sys/types.h>
+#include <stdbool.h>
 #include <stdio.h>
-#include <math.h>
+#include <sys/types.h>
 #include "error/error.h"
 
 #define sizer(a) (sizeof((a)) / sizeof((a)[0]))
@@ -19,6 +19,6 @@ bool doubleEqual(double a, double b);
 char* getTimestampedString(const char* prefix, const char* suffix, uint count);
 
 Error readBufferFromFile(FILE* file,
-                         char** bufferPtr, size_t* trueBufferSizePtr);
+                         char** buffer, size_t* bufferSize);
 
 #endif

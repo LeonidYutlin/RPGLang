@@ -18,55 +18,32 @@ TreeRoot* attachRoot(TreeNode* node, Error* status) {
   return root;
 }
 
+TreeRoot* attachRootC(TreeNode* node, size_t nodeCount, Error* status) {
+  TreeRoot* root = (TreeRoot*)calloc(1, sizeof(TreeRoot));
+  if (!root)
+    RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
+
+  root->rootNode = node;
+  root->nodeCount = nodeCount;
+  return root;
+}
+
 TreeNode* detachRoot(TreeRoot* root, Error* status) {
   if (!root)
     RETURN_WITH_STATUS(InvalidParameters, NULL);
 
   TreeNode* node = root->rootNode;
   root->rootNode = NULL;
-  treeDestroy(root, true);
+  free(root);
   return node;
 }
 
-Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
-                    TreeNode* left, TreeNode* right) {
-  if (!root || !node)
-    return InvalidParameters;
-  if (root->rootNode)
-    return AttemptedReinitialization;
-
-  Error status = nodeInit(node, data, NULL, left, right);
-  if (status)
-    return status;
-  root->rootNode = node;
-  root->nodeCount = 1;
-
-  return OK; //return treeVerify(root);
-}
-
-TreeRoot* treeAlloc(NodeUnit data,
-                    TreeNode* left, TreeNode* right,
-                    Error* status) {
-  Error returnedStatus = OK;
-  TreeNode* node = nodeAlloc(data, left, right, NULL, &returnedStatus);
-  if (returnedStatus)
-    RETURN_WITH_STATUS(returnedStatus, NULL);
-
-  TreeRoot* root = attachRoot(node, &returnedStatus);
-  if (returnedStatus)
-    RETURN_WITH_STATUS(returnedStatus, NULL);
-
-  return root;
-}
-
-Error treeDestroy(TreeRoot* root, bool isAlloced) {
+Error rootDestroy(TreeRoot* root) {
   if (!root)
     return InvalidParameters;
 
-  nodeDestroy(root->rootNode, isAlloced, NULL);
-
-  if (isAlloced)
-    free(root);
+  nodeDestroy(root->rootNode);
+  free(root);
 
   return OK;
 }

@@ -6,6 +6,7 @@ LIBS          := -lm -lc
 
 ARTIFACT_PATH := build
 BINARY_PATH   := bin
+LOG_PATH      := .log
 
 PROGRAM_NAME  := $(BINARY_PATH)/rpgc
 
@@ -60,13 +61,19 @@ $(foreach src,$(SOURCES),$(eval $(strip $(call declare_recipe,$(src)))))
 	@echo -e "•Compiling" $<
 	@$(COMPILER) -c $(DEFINE_FLAGS) $(INCLUDE_FLAGS) $(LIBS) $(C_FLAGS) $< -o $@
 
-.PHONY: ensure_directories_exist clean run build
+.PHONY: ensure_directories_exist clean run build clean_logs
 
 run: build
 	./$(PROGRAM_NAME)
 
 ensure_directories_exist:
-	mkdir -p $(BINARY_PATH) $(ARTIFACT_PATH)
+	mkdir -p $(BINARY_PATH) $(ARTIFACT_PATH) $(LOG_PATH)
 
 clean:
-	rm -f $(OBJECTS) $(PROGRAM_NAME)
+	rm -f $(PROGRAM_NAME)
+	rm -f -r $(ARTIFACT_PATH)
+	mkdir -p $(ARTIFACT_PATH)
+
+clean_logs:
+	rm -f -r $(LOG_PATH)
+	mkdir -p $(LOG_PATH)

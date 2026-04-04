@@ -7,8 +7,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
-#include "misc/quotes.h"
-#include "misc/util.h"
+#include "misc/utils.h"
 #include "ds/queue/queue.h"
 
 //these aren't static consts but macros because of how C treats
@@ -119,9 +118,9 @@ void nodeDump(FILE* f, Variables* vars, TreeNode* node,
   free(dotPath);
 }
 
-FILE* openHtmlLogFile() {
+FILE* openHtmlLogFile(const char* path) {
   time_t timeAbs = time(NULL);
-  char* name = getTimestampedString(".log/", ".html", 0);
+  char* name = getTimestampedString(path, ".html", 0);
   if (!name)
     return NULL;
   FILE* f = fopen(name, "w");
@@ -131,11 +130,8 @@ FILE* openHtmlLogFile() {
   }
   srand((uint)timeAbs);
   fprintf(f,
-          "<pre><h1>%s</h1>\n"
-          "<p><h3><i>[Q] %s\n</i></h3></p>",
-          name + strlen(".log/"),
-          QUOTES[(unsigned long)random()
-                      % (sizeof(QUOTES) / sizeof(char *))]);
+          "<pre><h1>%s</h1>\n",
+          name + sizeof(".log/") - 1);
   free(name);
   return f;
 }

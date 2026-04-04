@@ -1,8 +1,8 @@
-#include "ds/tree/nodetype.h"
+#include "ds/tree/node/type.h"
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "misc/util.h"
+#include "misc/utils.h"
 
 static const NodeTypeInfo NODE_TYPES[] = {
   #define X(enm, s)       \

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <sys/types.h>
+#include "ds/tree/node/node.h"
 
 //this isn't static const but a macro because of how C treats
 //constant-variable sized arrays (for some reason mistakes them for VLAs)
@@ -20,8 +21,6 @@ typedef struct Variables {
   size_t capacity;
   size_t count;
 } Variables;
-
-#include "ds/tree/node.h"
 
 Variables* varsAlloc(size_t initialCapacity, Error* status);
 Error varsDestroy(struct Variables* vars); 

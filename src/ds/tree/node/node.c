@@ -1,5 +1,5 @@
 #include "ds/tree/tree.h"
-#include "misc/util.h"
+#include "misc/utils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -15,41 +15,6 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
     *status = value;                           \
   return returnValue;                          \
   }
-
-Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent,
-                    TreeNode* left, TreeNode* right) {
-  if (!node)
-    return InvalidParameters;
-  if (node->left  ||
-      node->right ||
-      node->left)
-    return AttemptedReinitialization;
-
-  node->data   = data;
-  node->parent = parent;
-  node->left   = left;
-  node->right  = right;
-
-  return OK;
-}
-
-TreeNode*  nodeAlloc(NodeUnit data, TreeNode* parent,
-                           TreeNode* left, TreeNode* right,
-                           Error* status) {
-  TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
-  if (!node) {
-    free(node);
-    RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
-  }
-
-  Error returnedStatus = nodeInit(node, data, parent, left, right);
-  if (returnedStatus) {
-    free(node);
-    RETURN_WITH_STATUS(returnedStatus, NULL);
-  }
-
-  return node;
-}
 
 Error nodeTraverse(TreeNode* node, NodeTraverseOpt opt) {
 	if (!node)
@@ -71,7 +36,7 @@ TreeNode* nodeCopy(TreeNode* src, TreeNode* newParent, Error* status) {
   TreeNode* copy = nodeAlloc((NodeUnit){src->data.type, src->data.value}, newParent,
                                    NULL, NULL, &returnedStatus);
   if (returnedStatus) {
-    nodeDestroy(copy, true, NULL);
+    nodeDestroy(copy);
     RETURN_WITH_STATUS(returnedStatus, NULL);
   }
 
@@ -81,7 +46,7 @@ TreeNode* nodeCopy(TreeNode* src, TreeNode* newParent, Error* status) {
     copy->right = nodeCopy(src->right, copy, &returnedStatus);
 
   if (returnedStatus) {
-    nodeDestroy(copy, true, NULL);
+    nodeDestroy(copy);
     RETURN_WITH_STATUS(returnedStatus, NULL);
   }
 
@@ -108,13 +73,13 @@ Error nodeChangeChild(TreeNode* parent, TreeNode* child,
   if (!parent) {
     if (newChild)
       newChild->parent = parent;
-    nodeDestroy(child, true, nodeCount);
+    nodeDestroyC(child, nodeCount);
   } else if (*(childPath = &parent->left)  == child ||
              *(childPath = &parent->right) == child) {
     *childPath = newChild;
     if (newChild)
       newChild->parent = parent;
-    nodeDestroy(child, true, nodeCount);
+    nodeDestroyC(child, nodeCount);
   }
 
   return OK;
@@ -164,7 +129,7 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
           !node->left &&
           !isnan(rightVal)) {
         double result = applyOperation(opType, rightVal, NAN);
-        nodeDelete(node->right, true, nodeCount);
+        nodeDeleteC(node->right, nodeCount);
         node->data.type = NUM_TYPE;
         node->data.value.num = result;
         return result;
@@ -182,8 +147,8 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
           !isnan(leftVal) &&
           !isnan(rightVal)) {
         double result = applyOperation(opType, leftVal, rightVal);
-        nodeDelete(node->left,  true, nodeCount);
-        nodeDelete(node->right, true, nodeCount);
+        nodeDeleteC(node->left,  nodeCount);
+        nodeDeleteC(node->right, nodeCount);
         node->data.type = NUM_TYPE;
         node->data.value.num = result;
         return result;
@@ -208,8 +173,8 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
 
 #define REDUCE_TO_NUM(nodeValue)               \
   {                                            \
-  nodeDelete((*node)->left , true, nodeCount); \
-  nodeDelete((*node)->right, true, nodeCount); \
+  nodeDeleteC((*node)->left , nodeCount);      \
+  nodeDeleteC((*node)->right, nodeCount);      \
   (*node)->data.type      = NUM_TYPE;          \
   (*node)->data.value.num = nodeValue;         \
   }
@@ -278,7 +243,7 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
 #undef REPLACE_WITH
 #undef REDUCE_TO_NUM
 
-Error nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {
+Error nodeDeleteC(TreeNode* node, size_t* nodeCount) {
   if (!node)
     return InvalidParameters;
 
@@ -289,22 +254,21 @@ Error nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {
       node->parent->right = NULL;
   }
 
-  return nodeDestroy(node, isAlloced, nodeCount);
+  return nodeDestroyC(node, nodeCount);
 }
 
-Error nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
+Error nodeDestroyC(TreeNode* node, size_t* nodeCount) {
   if (!node)
     return InvalidParameters;
 
-  nodeDestroy(node->left, isAlloced, NULL);
-  nodeDestroy(node->right, isAlloced, NULL);
+  nodeDestroyC(node->left, nodeCount);
+  nodeDestroyC(node->right, nodeCount);
   node->left   = NULL;
   node->right  = NULL;
   node->parent = NULL;
   node->data   = (NodeUnit){};
 
-  if (isAlloced)
-    free(node);
+  free(node);
   if (nodeCount)
     (*nodeCount)--;
 
@@ -332,6 +296,20 @@ Error findVariableCallback(TreeNode* node, void* data,
       && node->data.value.var == *index)
     return 1;
   return OK;
+}
+
+#undef nodeAlloc
+
+TreeNode* nodeAlloc(NodeAllocOpt opt) {
+  TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
+  Error* status = opt.status;
+  if (!node) {
+    free(node);
+    RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
+  }
+  
+  //так как NodeAllocOpt повторяет те же поля что и TreeNode, можем сделать так
+  return memcpy(node, &opt, sizeof(TreeNode));
 }
 
 #undef RETURN_WITH_STATUS

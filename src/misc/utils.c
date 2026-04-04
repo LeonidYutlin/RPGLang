@@ -1,4 +1,6 @@
-#include "misc/util.h"
+#include "error/error.h"
+#include "misc/utils.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -13,35 +15,38 @@ bool doubleEqual(double a, double b) {
   return fabs(a - b) < DOUBLE_COMPARISON_PRECISION;
 }
 
-#define DEFER() { \
-  free(str);      \
-  return NULL;    \
-}
 #define REMAINING_LEN (TIMESTAMP_LEN - (size_t)(target - str))
 char* getTimestampedString(const char* prefix, const char* suffix, uint count) {
   time_t timeAbs = time(NULL);
-  struct tm* localTime  = localtime(&timeAbs);
+  struct tm* localTime = localtime(&timeAbs);
   char* str = (char*)calloc(TIMESTAMP_LEN, sizeof(char));
   if (!str)
-    DEFER();
+    goto defer;
 
   char* target = str;
+
   strncat(target, prefix, REMAINING_LEN - 1);
   target += strlen(prefix);
+
   size_t n = strftime(target, REMAINING_LEN, "%d-%m-%Y-%H:%M:%S", localTime);
   if (!n) 
-    DEFER();
+    goto defer;
   target += n;
+
   if (count) {
     if (snprintf(target, REMAINING_LEN, "-%u%s", count, suffix) <= 0)
-      DEFER();
+      goto defer;
   } else {
     if (snprintf(target, REMAINING_LEN, "%s", suffix) <= 0)
-      DEFER();
+      goto defer;
   }
+
   return str;
+
+  defer:
+    free(str);
+    return NULL;
 }
-#undef DEFER
 #undef REMAINING_LEN
 
 Error readBufferFromFile(FILE* file,
