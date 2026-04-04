@@ -17,6 +17,9 @@ bool doubleEqual(double a, double b) {
 
 #define REMAINING_LEN (TIMESTAMP_LEN - (size_t)(target - str))
 char* getTimestampedString(const char* prefix, const char* suffix, uint count) {
+  if (!prefix || !suffix)
+    return NULL; //InvalidParameters
+
   time_t timeAbs = time(NULL);
   struct tm* localTime = localtime(&timeAbs);
   char* str = (char*)calloc(TIMESTAMP_LEN, sizeof(char));
