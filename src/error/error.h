@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include "error/modules/da.h"
 #include "error/modules/generic.h"
 #include "error/modules/tree.h"
 #include "error/modules/variables.h"
@@ -12,14 +13,16 @@ typedef int Error;
 //TODO: new Error param for whether it is soft or not
 
 //INFO: Use this one when you want to iterate through every single one, since it keeps the same order
-#define UNITED_ERROR_LIST() \
-  GENERIC_ERROR_LIST()      \
-  TREE_ERROR_LIST()         \
+#define UNITED_ERROR_LIST()  \
+  GENERIC_ERROR_LIST()       \
+  TREE_ERROR_LIST()          \
+  DYNAMIC_ARRAY_ERROR_LIST() \
   VARIABLES_ERROR_LIST()
 
-#define ERROR_MODULE_LIST() \
-  GENERIC_ERROR_MODULE()    \
-  TREE_ERROR_MODULE()       \
+#define ERROR_MODULE_LIST()    \
+  GENERIC_ERROR_MODULE()       \
+  TREE_ERROR_MODULE()          \
+  DYNAMIC_ARRAY_ERROR_MODULE() \
   VARIABLES_ERROR_MODULE()
 
 typedef enum ErrorModule {
