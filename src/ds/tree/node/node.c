@@ -3,8 +3,6 @@
 #include <string.h>
 #include <assert.h>
 
-#undef nodeTraverse
-
 #define RETURN_WITH_STATUS(value, returnValue) \
   {                                            \
   if (status)                                  \
@@ -12,15 +10,27 @@
   return returnValue;                          \
   }
 
-Error nodeTraverse(TreeNode* node, NodeTraverseOpt opt) {
+TreeNode* nodeAlloc_(NodeAllocOpt opt) {
+  TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
+  Error* status = opt.status;
+  if (!node) {
+    free(node);
+    RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
+  }
+  
+  //так как NodeAllocOpt повторяет те же поля что и TreeNode, можем сделать так
+  return memcpy(node, &opt, sizeof(TreeNode));
+}
+
+Error nodeTraverse_(TreeNode* node, NodeTraverseOpt opt) {
 	if (!node)
     return OK;
 
   opt.level++;
   return (opt.prefix  && opt.prefix(node,  opt.prefixData, opt.level - 1)) ||
-         nodeTraverse(node->left,  opt) ||
+         nodeTraverse_(node->left,  opt) ||
          (opt.infix   && opt.infix(node,   opt.infixData, opt.level - 1)) ||
-         nodeTraverse(node->right, opt) ||
+         nodeTraverse_(node->right, opt) ||
          (opt.postfix && opt.postfix(node, opt.postfixData, opt.level - 1));
 }
 
@@ -111,20 +121,6 @@ Error nodeDestroyC(TreeNode* node, size_t* nodeCount) {
     (*nodeCount)--;
 
   return OK;
-}
-
-#undef nodeAlloc
-
-TreeNode* nodeAlloc(NodeAllocOpt opt) {
-  TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
-  Error* status = opt.status;
-  if (!node) {
-    free(node);
-    RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
-  }
-  
-  //так как NodeAllocOpt повторяет те же поля что и TreeNode, можем сделать так
-  return memcpy(node, &opt, sizeof(TreeNode));
 }
 
 #undef RETURN_WITH_STATUS

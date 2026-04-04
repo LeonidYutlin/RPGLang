@@ -36,10 +36,10 @@ typedef struct NodeAllocOpt {
 
 #undef TREE_NODE_FIELDS
 
-TreeNode* nodeAlloc(NodeAllocOpt options);
+TreeNode* nodeAlloc_(NodeAllocOpt options);
 //other fields will be 0-initialized which is what we want
 #define nodeAlloc(...) \
-  nodeAlloc((NodeAllocOpt){__VA_ARGS__})
+  nodeAlloc_((NodeAllocOpt){__VA_ARGS__})
 
 // nodeDeleteC - delete node (and its children), with counter 
 // being changed if it isn't NULL. Also removes the node from the children of its parents
@@ -61,11 +61,11 @@ typedef struct NodeTraverseOpt {
 } NodeTraverseOpt;
 
 /// Universal Traverse - stops if any callback_f return non-zero
-Error nodeTraverse(TreeNode* node, NodeTraverseOpt opt);
+Error nodeTraverse_(TreeNode* node, NodeTraverseOpt opt);
 
 //again, 0-initialized fields are helping us here
 #define nodeTraverse(node, ...) \
-  nodeTraverse(node, (NodeTraverseOpt){ __VA_ARGS__ })
+  nodeTraverse_(node, (NodeTraverseOpt){ __VA_ARGS__ })
 
 //Takes parent, seaches for child as its child, replaces that child with newChild and frees child
 //Note: if your newChild and child are in a relationship then you should make sure they aren't by
