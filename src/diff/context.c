@@ -1,3 +1,5 @@
+//этот файл нуждается в полной переработке
+
 #include <stdlib.h>
 #include <string.h>
 #include "diff/context.h"

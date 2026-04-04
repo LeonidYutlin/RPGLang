@@ -1,3 +1,5 @@
+
+//этот файл нуждается в полной переработке
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
