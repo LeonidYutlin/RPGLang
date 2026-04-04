@@ -1,0 +1,174 @@
+#include "ds/tree/node/optimization.h"
+#include "ds/tree/root.h"
+#include <assert.h>
+#include <math.h>
+#include "misc/utils.h"
+
+static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status);
+static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
+
+#define RETURN_WITH_STATUS(value, returnValue) \
+  {                                            \
+  if (status)                                  \
+    *status = value;                           \
+  return returnValue;                          \
+  }
+
+Error nodeOptimize(TreeNode** node) {
+  if (!node ||
+      !*node)
+    return InvalidParameters;
+
+  Error returnedStatus = OK;
+  TreeRoot* root = attachRoot(*node, &returnedStatus);
+  if (returnedStatus)
+    return returnedStatus;
+  size_t prevNodeCount = 0;
+  do {
+    prevNodeCount = root->nodeCount;
+    nodeOptimizeConstants(*node, &root->nodeCount, NULL);
+    nodeOptimizeNeutral(node, &root->nodeCount);
+    nodeFixParents(*node);
+  } while (prevNodeCount != root->nodeCount);
+
+  detachRoot(root, &returnedStatus);
+  if (returnedStatus)
+    return returnedStatus;
+  return OK;
+}
+
+static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status) {
+  if (!node)
+    RETURN_WITH_STATUS(InvalidParameters, NAN);
+  if (!IS_OP(node))
+    RETURN_WITH_STATUS(OK, NAN);
+  bool suppressOptimization = (OF_OP(node->parent, OP_POW) &&
+                               OF_OP(node, OP_DIV) &&
+                               OF_NUM(node->left, 1));
+
+  OpType opType = node->data.value.op;
+  const OpTypeInfo* i = parseOpType(opType);
+  assert(i);
+  switch (i->argCount) {
+    case 1: {
+      double rightVal = IS_NUM(node->right)
+                        ? node->right->data.value.num
+                        : nodeOptimizeConstants(node->right, nodeCount, status);
+      if (!suppressOptimization &&
+          !node->left &&
+          !isnan(rightVal)) {
+        double result = applyOperation(opType, rightVal, NAN);
+        nodeDeleteC(node->right, nodeCount);
+        node->data.type = NUM_TYPE;
+        node->data.value.num = result;
+        return result;
+      }
+      return NAN;
+    }
+    case 2: {
+      double leftVal =  IS_NUM(node->left)
+                        ? node->left->data.value.num
+                        : nodeOptimizeConstants(node->left, nodeCount, status);
+      double rightVal = IS_NUM(node->right)
+                        ? node->right->data.value.num
+                        : nodeOptimizeConstants(node->right, nodeCount, status);
+      if (!suppressOptimization &&
+          !isnan(leftVal) &&
+          !isnan(rightVal)) {
+        double result = applyOperation(opType, leftVal, rightVal);
+        nodeDeleteC(node->left,  nodeCount);
+        nodeDeleteC(node->right, nodeCount);
+        node->data.type = NUM_TYPE;
+        node->data.value.num = result;
+        return result;
+      }
+      return NAN;
+    }
+    default:
+      return NAN;
+  }
+
+  return NAN;
+}
+
+#define REPLACE_WITH(newNode)                          \
+  {                                                    \
+  TreeNode* newChild = newNode;                        \
+  newNode = NULL;                                      \
+  TreeNode* parent = (*node)->parent;                  \
+  nodeChangeChild(parent, *node, newChild, nodeCount); \
+  *node = newChild;                                    \
+  }                                                    \
+
+#define REDUCE_TO_NUM(nodeValue)               \
+  {                                            \
+  nodeDeleteC((*node)->left , nodeCount);      \
+  nodeDeleteC((*node)->right, nodeCount);      \
+  (*node)->data.type      = NUM_TYPE;          \
+  (*node)->data.value.num = nodeValue;         \
+  }
+
+static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
+  if (!node ||
+      !*node)
+    return InvalidParameters;
+  if (!IS_OP(*node))
+    return OK;
+
+  nodeOptimizeNeutral(&(*node)->left, nodeCount);
+  nodeOptimizeNeutral(&(*node)->right, nodeCount);
+
+  switch ((*node)->data.value.op) {
+    case OP_MUL: {
+      if (OF_NUM((*node)->left, 0) ||
+          OF_NUM((*node)->right, 0)) {
+        REDUCE_TO_NUM(0);
+      } else if (OF_NUM((*node)->left, 1)) {
+        REPLACE_WITH((*node)->right);
+      } else if (OF_NUM((*node)->right, 1)) {
+        REPLACE_WITH((*node)->left);
+      }
+      break;
+    }
+    case OP_DIV: {
+      if (OF_NUM((*node)->left, 0)) {
+        REDUCE_TO_NUM(0);
+      } else if (OF_NUM((*node)->right, 1)) {
+        REPLACE_WITH((*node)->left);
+      }
+      break;
+    }
+    case OP_ADD: {
+      if (OF_NUM((*node)->left, 0)) {
+        REPLACE_WITH((*node)->right);
+      } else if (OF_NUM((*node)->right, 0)) {
+        REPLACE_WITH((*node)->left);
+      }
+      break;
+    }
+    case OP_SUB: {
+      if (OF_NUM((*node)->right, 0))
+        REPLACE_WITH((*node)->left);
+      break;
+    }
+    case OP_POW: {
+      if (OF_NUM((*node)->right, 0) ||
+          OF_NUM((*node)->left, 1)) {
+        REDUCE_TO_NUM(1);
+      } else if (OF_NUM((*node)->left, 0)) {
+        REDUCE_TO_NUM(0);
+      } else if (OF_NUM((*node)->right, 1)) {
+        REPLACE_WITH((*node)->left);
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
+  return OK;
+}
+
+#undef REPLACE_WITH
+#undef REDUCE_TO_NUM
+#undef RETURN_WITH_STATUS

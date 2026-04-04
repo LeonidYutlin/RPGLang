@@ -2,16 +2,16 @@
 #define DUMP_H
 
 #include <stdio.h>
-#include "ds/tree/tree.h"
+#include "ds/tree/root.h"
 #include "diff/context.h"
 
-void treeDump(FILE* html, Variables* vars, TreeRoot* root,
+void rootDump(FILE* html, Variables* vars, TreeRoot* root,
               const char* commentary, const char* filename, int line);
 void nodeDump(FILE* html, Variables* vars, TreeNode* node, 
               const char* commentary, const char* filename, int line);
 
-#define treeDump(file, vars, root, commentary) \
-        treeDump(file, vars, root, commentary, __FILE__, __LINE__)
+#define rootDump(file, vars, root, commentary) \
+        rootDump(file, vars, root, commentary, __FILE__, __LINE__)
 #define nodeDump(file, vars, node, commentary) \
         nodeDump(file, vars, node, commentary, __FILE__, __LINE__)
 

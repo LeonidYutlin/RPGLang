@@ -1,4 +1,5 @@
-#include "ds/tree/tree.h"
+#include "ds/tree/root.h"
+#include "ds/tree/node/callback.h"
 #include <stdlib.h>
 
 #define RETURN_WITH_STATUS(value, returnValue) \

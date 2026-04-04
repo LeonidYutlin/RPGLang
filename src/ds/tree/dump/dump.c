@@ -1,6 +1,5 @@
 #include "ds/tree/dump/dump.h"
-#include "ds/tree/tree.h"
-#undef treeDump
+#undef rootDump
 #undef nodeDump
 
 #include <assert.h>
@@ -35,10 +34,10 @@ static const char* BAD_EDGE      = "#E02222";
 static const char* ROOT_OUTLINE  = "#666666";
 static const char* ROOT_FILL     = "#DDDDDD";
 
-static int treeTextDump(FILE* f, TreeRoot* root,
+static int rootTextDump(FILE* f, TreeRoot* root,
                         const char* commentary, const char* filename, int line,
                         uint callCount);
-static int treeGraphDump(FILE* f,  Variables* vars, TreeRoot* root, uint callCount);
+static int rootGraphDump(FILE* f,  Variables* vars, TreeRoot* root, uint callCount);
 static void populateDot(FILE* dot, Variables* vars, TreeNode* node);
 static void declareNode(FILE* dot, Variables* vars, TreeNode* node, bool bondFailed);
 static void declareRank(FILE* dot, TreeNode* node, Queue** queue);
@@ -46,7 +45,7 @@ static void executeDot(FILE* f, uint callCount, char* dotPath);
 
 #define WARNING_PREFIX(condition) (condition) ? "<b><body><font color=\"red\">[!]</font></body></b>" : ""
 
-void treeDump(FILE* f, Variables* vars, TreeRoot* root, 
+void rootDump(FILE* f, Variables* vars, TreeRoot* root, 
               const char* commentary, const char* filename, int line) {
   assert(f);
   assert(filename);
@@ -55,10 +54,10 @@ void treeDump(FILE* f, Variables* vars, TreeRoot* root,
   static uint callCount = 0;
   ++callCount;
 
-  if (treeTextDump(f, root, commentary, filename, line, callCount))
+  if (rootTextDump(f, root, commentary, filename, line, callCount))
     return;
 
-  treeGraphDump(f, vars, root, callCount);
+  rootGraphDump(f, vars, root, callCount);
 }
 
 #define DOT_HEADER_INIT(file)                                                               \
@@ -141,7 +140,7 @@ void closeHtmlLogFile(FILE* f) {
     fclose(f);
 } 
 
-static int treeTextDump(FILE* f, TreeRoot* root,
+static int rootTextDump(FILE* f, TreeRoot* root,
                         const char* commentary, const char* filename, int line,
                         uint callCount) {
   if (!root) {
@@ -152,7 +151,7 @@ static int treeTextDump(FILE* f, TreeRoot* root,
             "TreeRoot [NULL] {}\n",
             commentary,
             callCount, filename, line);
-    return -1;
+    return 1;
   }
 
   fprintf(f,
@@ -169,10 +168,10 @@ static int treeTextDump(FILE* f, TreeRoot* root,
           root->nodeCount,
           WARNING_PREFIX(!root->rootNode), root->rootNode);
 
-  return !root->rootNode ? -1 : 0;
+  return !root->rootNode ? 1 : 0;
 }
 
-static int treeGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCount) {
+static int rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCount) {
   assert(f);
   assert(!varsVerify(vars));
   assert(root);
@@ -180,14 +179,14 @@ static int treeGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCoun
   char* dotPath = getTimestampedString(".log/dot-", ".txt", callCount);
   if (!dotPath) {
     fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
-    return -1;
+    return 1;
   }
 
   FILE* dot = fopen(dotPath, "w");
   if (!dot) {
     fputs("<h1><b>Dot file open failed for this graph dump</h1><b>\n", f);
     free(dotPath);
-    return -1;
+    return 1;
   }
 
   DOT_HEADER_INIT(dot);

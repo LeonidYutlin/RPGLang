@@ -56,17 +56,18 @@ Error readBufferFromFile(FILE* file,
       !trueBufferSizePtr)
     return InvalidParameters;
 
-  struct stat fileStats = {0};
-  fstat(file->_fileno, &fileStats);
-  size_t bufferSize = (size_t) fileStats.st_size;
-  char* buffer = (char*) calloc(bufferSize + 1, sizeof(char)); // + 1 for NULL terminating character
+  struct stat fileStats = {};
+  fstat(fileno(file), &fileStats);
+  size_t bufferSize = (size_t)fileStats.st_size;
+  char* buffer = (char*)calloc(bufferSize + 1, sizeof(char)); // + 1 for '\0'
   if (!buffer)
     return FailMemoryAllocation;
 
   bufferSize = fread(buffer, sizeof(char), bufferSize, file);
+  if (ferror(file))
+    return FileError; 
 
   *trueBufferSizePtr = bufferSize;
-  *bufferPtr = buffer;
-
+  *bufferPtr         = buffer;
   return OK;
 }

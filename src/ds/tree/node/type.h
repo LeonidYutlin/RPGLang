@@ -1,10 +1,9 @@
 #ifndef NODE_TYPE_H
 #define NODE_TYPE_H
 
-#include "misc/utils.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
-#include <math.h>
 
 #define NODE_TYPE_LIST()          \
   X(UNKNOWN_TYPE, "UNKNOWN TYPE") \
@@ -79,20 +78,16 @@ double applyOperation(OpType type, double a, double b);
   (IS_NUM((node)) && doubleEqual((node)->data.value.num, (i)))
 //OF_VAR is in context.h because it's more finnicky
 
-//Quick node initializers (used in io and diff)
-
+//Quick node initializers
 #define OP_UNIT_(i)   (NodeUnit){.type = OP_TYPE,  .value = {.op = i}}
 #define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE, .value = {.num = i}}
 #define VAR_UNIT_(i)  (NodeUnit){.type = VAR_TYPE, .value = {.var = i}}
 
-#define nodeAllocOrphan(nodeUnit) \
-  nodeAlloc(nodeUnit, NULL, NULL, NULL, NULL)
-
-#define NUM_(i) nodeAllocOrphan(NUM_UNIT_(i))
-#define VAR_(i) nodeAllocOrphan(VAR_UNIT_(i))
+#define NUM_(i) nodeAlloc(NUM_UNIT_(i))
+#define VAR_(i) nodeAlloc(VAR_UNIT_(i))
 
 #define nodeAllocBinop(op, l, r) \
-  nodeAlloc(OP_UNIT_(op), NULL, l, r, NULL)
+  nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)
 #define nodeAllocUnop(op, r) \
   nodeAllocBinop(op, NULL, r)
 

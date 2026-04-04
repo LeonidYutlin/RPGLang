@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include "diff/context.h"
-#include "ds/tree/tree.h"
+#include "ds/tree/root.h"
 
 //not context because file isnt the tex output file but instead a "source" file
 TreeNode* nodeRead(FILE* file, Variables* vars, Error* status, size_t* nodeCount);

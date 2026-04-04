@@ -32,6 +32,11 @@
     GenericError,                                                                  \
     "Std func returned EOF",                                                       \
     "Std func returned EOF. See perror() for more info")                           \
+  X(FileError,                                                                     \
+    GenericError,                                                                  \
+    "Std func has set ferror flag on the stream",                                  \
+    "Std func has set ferror flag on the stream."                                  \
+    "See perror() for more info" )                                                 \
   X(NullPointerField,                                                              \
     GenericError,                                                                  \
     "There is a NULL field present in struct",                                     \

@@ -1,5 +1,5 @@
-#ifndef TREE_H
-#define TREE_H
+#ifndef ROOT_H
+#define ROOT_H
 
 #include <stddef.h>
 #include <stdbool.h>
