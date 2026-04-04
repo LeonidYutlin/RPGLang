@@ -1,0 +1,130 @@
+#ifndef NODE_TYPE_H
+#define NODE_TYPE_H
+
+#include "misc/util.h"
+#include <stddef.h>
+#include <sys/types.h>
+#include <math.h>
+
+#define NODE_TYPE_LIST()          \
+  X(UNKNOWN_TYPE, "UNKNOWN TYPE") \
+  X(OP_TYPE,      "OP")           \
+  X(NUM_TYPE,     "NUM")          \
+  X(VAR_TYPE,     "VAR")
+
+typedef enum NodeType {
+  #define X(enm, ...) enm,
+  NODE_TYPE_LIST()
+  #undef X
+} NodeType;
+
+typedef struct NodeTypeInfo {
+  NodeType type;
+  const char* str;
+} NodeTypeInfo;
+
+const NodeTypeInfo* parseNodeType(NodeType type);
+
+//NOTE:
+//X(enum, "str", "altstr", argc, prior, isSupp)
+#define OP_TYPE_LIST()                        \
+  X(OP_ADD,  "+",      NULL,     2, 1, false) \
+  X(OP_SUB,  "-",      NULL,     2, 1, false) \
+  X(OP_MUL,  "*",      NULL,     2, 2, false) \
+  X(OP_DIV,  "/",      NULL,     2, 2, false) \
+  X(OP_POW,  "^",      NULL,     2, 3, false) \
+  X(OP_SIN,  "sin",    NULL,     1, 3, true)  \
+  X(OP_COS,  "cos",    NULL,     1, 3, true)  \
+  X(OP_TAN,  "tan",    "tg",     1, 3, true)  \
+  X(OP_COT,  "cot",    "ctg",    1, 3, true)  \
+  X(OP_LOG,  "log",    NULL,     2, 3, true)  \
+  X(OP_LN,   "ln",     NULL,     1, 3, true)  \
+  X(OP_ASIN, "arcsin", NULL,     1, 3, true)  \
+  X(OP_ACOS, "arccos", NULL,     1, 3, true)  \
+  X(OP_ATAN, "arctan", "arctg",  1, 3, true)  \
+  X(OP_ACOT, "arccot", "arcctg", 1, 3, true)  \
+  X(OP_SINH, "sinh",   "sh",     1, 3, true)  \
+  X(OP_COSH, "cosh",   "ch",     1, 3, true)  \
+  X(OP_TANH, "tanh",   "th",     1, 3, true)  \
+  X(OP_COTH, "coth",   "cth",    1, 3, true)
+
+typedef enum OpType {
+  #define X(enm, ...) enm,
+  OP_TYPE_LIST()
+  #undef X
+} OpType;
+
+typedef struct OpTypeInfo {
+  OpType type;
+  const char* str;
+  const char* alt;
+  uint argCount;
+  uint priority;
+  bool isSupported;
+} OpTypeInfo;
+
+const OpTypeInfo* parseOpType(OpType type);
+int getOpType(const char* string);
+///Applies appropriate operation regarding a and b and returns the result.
+///If the operation doesn't require a second parameter (e.g. cos(x)) then leave b as NAN
+double applyOperation(OpType type, double a, double b);
+
+//Node utility macros
+#define IS_OP(node)  ((node) && (node)->data.type == OP_TYPE)
+#define IS_NUM(node) ((node) && (node)->data.type == NUM_TYPE)
+#define IS_VAR(node) ((node) && (node)->data.type == VAR_TYPE)
+#define OF_OP(node, opType) \
+  (IS_OP((node)) && (node)->data.value.op == (opType))
+#define OF_NUM(node, i) \
+  (IS_NUM((node)) && doubleEqual((node)->data.value.num, (i)))
+//OF_VAR is in context.h because it's more finnicky
+
+//Quick node initializers (used in io and diff)
+
+#define OP_UNIT_(i)   (NodeUnit){.type = OP_TYPE,  .value = {.op = i}}
+#define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE, .value = {.num = i}}
+#define VAR_UNIT_(i)  (NodeUnit){.type = VAR_TYPE, .value = {.var = i}}
+
+#define nodeAllocOrphan(nodeUnit) \
+  nodeAlloc(nodeUnit, NULL, NULL, NULL, NULL)
+
+#define NUM_(i) nodeAllocOrphan(NUM_UNIT_(i))
+#define VAR_(i) nodeAllocOrphan(VAR_UNIT_(i))
+
+#define nodeAllocBinop(op, l, r) \
+  nodeAlloc(OP_UNIT_(op), NULL, l, r, NULL)
+#define nodeAllocUnop(op, r) \
+  nodeAllocBinop(op, NULL, r)
+
+#define ADD_(l, r) \
+        nodeAllocBinop(OP_ADD, l, r)
+#define SUB_(l, r) \
+        nodeAllocBinop(OP_SUB, l, r)
+#define MUL_(l, r) \
+        nodeAllocBinop(OP_MUL, l, r)
+#define DIV_(l, r) \
+        nodeAllocBinop(OP_DIV, l, r)
+#define POW_(l, r) \
+        nodeAllocBinop(OP_POW, l, r)
+#define SQ_(l) \
+        POW_(l, NUM_(2))
+#define NEG_(r) \
+        nodeAllocBinop(OP_MUL, NUM_(-1), r)
+#define INV_(r) \
+        nodeAllocBinop(OP_DIV, NUM_(1), r)
+#define NEG_INV_(r) \
+        nodeAllocBinop(OP_DIV, NUM_(-1), r)
+#define SIN_(r) \
+        nodeAllocUnop(OP_SIN, r)
+#define COS_(r) \
+        nodeAllocUnop(OP_COS, r)
+#define LN_(r) \
+        nodeAllocUnop(OP_LN, r)
+#define SINH_(r) \
+        nodeAllocUnop(OP_SINH, r)
+#define COSH_(r) \
+        nodeAllocUnop(OP_COSH, r)
+#define SQRT_(l) \
+        nodeAllocBinop(OP_POW, l, INV_(NUM_(2)))
+
+#endif

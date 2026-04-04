@@ -1,0 +1,62 @@
+#ifndef ERROR_H
+#define ERROR_H
+
+#include <stddef.h>
+#include <stdio.h>
+#include "error/modules/generic.h"
+#include "error/modules/tree.h"
+#include "error/modules/variables.h"
+
+typedef int Error;
+
+//TODO: whether the error is saved in dt, whether verify passes with it (is it soft, fatal or ...)
+//INFO: Use this one when you want to iterate through every single one, since it keeps the same order
+#define UNITED_ERROR_LIST() \
+  GENERIC_ERROR_LIST()      \
+  TREE_ERROR_LIST()         \
+  VARIABLES_ERROR_LIST()
+
+#define ERROR_MODULE_LIST() \
+  GENERIC_ERROR_MODULE()    \
+  TREE_ERROR_MODULE()       \
+  VARIABLES_ERROR_MODULE()
+
+typedef enum ErrorModule {
+  #define X(enm, ...) enm,
+  ERROR_MODULE_LIST()
+  #undef X
+} ErrorModule;
+
+typedef enum ErrorEnum {
+  #define X(enm, ...) enm,
+  UNITED_ERROR_LIST()
+  #undef X
+} ErrorEnum;
+
+extern const size_t ERROR_MODULES_SIZE;
+extern const size_t ERRORS_SIZE;
+
+typedef struct ErrorInfo {
+  const char* str;
+  const char* shortDesc;
+  const char* desc;
+  Error error;
+  ErrorModule module;
+} ErrorInfo;
+
+typedef struct ErrorModuleInfo {
+  const char* str;
+  const char* shortDesc;
+  const char* desc;
+  int module;
+} ErrorModuleInfo;
+
+const ErrorInfo* parseError(Error error);
+const ErrorModuleInfo* parseErrorModule(ErrorModule module);
+
+void prettyError(FILE* sink, Error error, const char* filaname, int line);
+#define prettyError(sink, error) prettyError(sink, error, __FILE__, __LINE__)
+
+Error dumpErrors(FILE* file);
+
+#endif
