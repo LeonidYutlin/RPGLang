@@ -130,7 +130,7 @@ FILE* openHtmlLogFile(const char* path) {
   srand((uint)timeAbs);
   fprintf(f,
           "<pre><h1>%s</h1>\n",
-          name + sizeof(".log/") - 1);
+          name);
   free(name);
   return f;
 }
