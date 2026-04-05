@@ -50,6 +50,10 @@
     GenericError,                                                                  \
     "Unexpected enumeration item",                                                 \
     "An item with this enum value is wasn't expected. "                            \
-    "It is likely that it is some kind of default value in an established enum")
+    "It is likely that it is some kind of default value in an established enum")   \
+  X(LongFormat,                                                                    \
+    GenericError,                                                                  \
+    "Formatted string exceeds byte limit",                                         \
+    "Formatting the string requires more bytes than the limit provided")
 
 #endif

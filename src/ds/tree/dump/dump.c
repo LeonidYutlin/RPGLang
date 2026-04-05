@@ -11,8 +11,10 @@
 
 //these aren't static consts but macros because of how C treats
 //constant-variable sized arrays (for some reason mistakes them for VLAs)
-#define MAX_IMAGE_FILE_PATH_LENGTH 128
-#define MAX_DOT_COMMAND_LENGTH 512
+#define DOT_PATH_BUF_SZ  128
+#define HTML_PATH_BUF_SZ 128
+#define IMG_PATH_BUF_SZ  128
+#define DOT_CMD_BUF_SZ   512
 
 static const char* BG_COLOR      = "#FFFFFF";
 static const char* BAD_OUTLINE   = "#602222";
@@ -97,15 +99,15 @@ void nodeDump(FILE* f, Variables* vars, TreeNode* node,
           "TreeNode Dump #%u called from %s:%d\n",
           commentary,
           callCount++, filename, line);
-  char* dotPath = getTimestampedString(".log/dot-", ".txt", callCount);
-  if (!dotPath) {
+  char dotPath[DOT_PATH_BUF_SZ] = {};
+  if (snTimestamp(dotPath, DOT_PATH_BUF_SZ,
+                  ".log/dot-", ".txt", callCount)) {
     fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
     return;
   }
   FILE* dot = fopen(dotPath, "w");
   if (!dot) {
     fputs("<h1><b>Dot file open failed for this graph dump</h1><b>\n", f);
-    free(dotPath);
     return;
   }
   DOT_HEADER_INIT(dot);
@@ -114,24 +116,24 @@ void nodeDump(FILE* f, Variables* vars, TreeNode* node,
   fclose(dot);
   fputs("Graphical Dump:\n", f);
   executeDot(f, callCount, dotPath);
-  free(dotPath);
 }
 
 FILE* openHtmlLogFile(const char* path) {
-  time_t timeAbs = time(NULL);
-  char* name = getTimestampedString(path, ".html", 0);
-  if (!name)
+  if (!path)
     return NULL;
+
+  char name[HTML_PATH_BUF_SZ] = {}; 
+  if (snTimestamp(name, HTML_PATH_BUF_SZ,
+                  path, ".html", 0))
+    return NULL;
+
   FILE* f = fopen(name, "w");
-  if (!f) {
-    free(name);
+  if (!f)
     return NULL;
-  }
-  srand((uint)timeAbs);
+
   fprintf(f,
           "<pre><h1>%s</h1>\n",
           name);
-  free(name);
   return f;
 }
 
@@ -176,8 +178,9 @@ static int rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCoun
   assert(!varsVerify(vars));
   assert(root);
 
-  char* dotPath = getTimestampedString(".log/dot-", ".txt", callCount);
-  if (!dotPath) {
+  char dotPath[DOT_PATH_BUF_SZ] = {};
+  if (snTimestamp(dotPath, DOT_PATH_BUF_SZ,
+                  ".log/dot-", ".txt", callCount)) {
     fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
     return 1;
   }
@@ -185,7 +188,6 @@ static int rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCoun
   FILE* dot = fopen(dotPath, "w");
   if (!dot) {
     fputs("<h1><b>Dot file open failed for this graph dump</h1><b>\n", f);
-    free(dotPath);
     return 1;
   }
 
@@ -224,7 +226,6 @@ static int rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCoun
 
   fputs("Graphical Dump:\n", f);
   executeDot(f, callCount, dotPath);
-  free(dotPath);
 
   return 0;
 }
@@ -361,17 +362,18 @@ static void declareRank(FILE* dot, TreeNode* node, Queue** queue) {
 }
 
 static void executeDot(FILE* f, uint callCount, char* dotPath) {
-  char cmd[MAX_DOT_COMMAND_LENGTH] = {};
-  char* imgPath = getTimestampedString(".log/graph-", ".svg", callCount);
-  if (!imgPath) {
+  char cmd[DOT_CMD_BUF_SZ] = {};
+  char imgPath[IMG_PATH_BUF_SZ] = {};
+  if (snTimestamp(imgPath, IMG_PATH_BUF_SZ,
+                  ".log/graph-", 
+                  ".svg", callCount)) {
     fprintf(f, "<h1><b>Image file path composition failed for this graph dump!</h1><b>\n");
     return;
   }
-  snprintf(cmd, MAX_DOT_COMMAND_LENGTH, "dot -T svg \"%s\" -o \"%s\"", dotPath, imgPath);
+  snprintf(cmd, DOT_CMD_BUF_SZ, "dot -T svg \"%s\" -o \"%s\"", dotPath, imgPath);
   system(cmd);
 
   fprintf(f, "<img src=\"./%s\"></img>\n", imgPath + strlen(".log/"));
-  free(imgPath);
 }
 
 #undef WARNING_PREFIX

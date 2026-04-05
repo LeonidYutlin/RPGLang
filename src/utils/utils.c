@@ -8,52 +8,46 @@
 #include <sys/stat.h>
 #include <float.h>
 
-static const size_t TIMESTAMP_LEN = 128;
+#define TIMESTAMP_BUF_SZ 32
 static const double DOUBLE_COMPARISON_PRECISION = DBL_EPSILON;
 
 bool doubleEqual(double a, double b) {
   return fabs(a - b) < DOUBLE_COMPARISON_PRECISION;
 }
 
-#define REMAINING_LEN (TIMESTAMP_LEN - (size_t)(target - str))
-char* getTimestampedString(const char* prefix, const char* suffix, uint count) {
+Error snTimestamp(char* dest, size_t n, 
+                  const char* prefix, 
+                  const char* suffix, 
+                  uint count) {
   if (!prefix || !suffix)
-    return NULL; //InvalidParameters
+    return InvalidParameters;
 
+  char tsBuf[TIMESTAMP_BUF_SZ] = {};
   time_t timeAbs = time(NULL);
   struct tm* localTime = localtime(&timeAbs);
-  char* str = (char*)calloc(TIMESTAMP_LEN, sizeof(char));
-  if (!str)
-    goto defer;
-
-  char* target = str;
-
-  strncat(target, prefix, REMAINING_LEN - 1);
-  target += strlen(prefix);
-
-  size_t n = strftime(target, REMAINING_LEN, "%d-%m-%Y-%H:%M:%S", localTime);
-  if (!n) 
-    goto defer;
-  target += n;
+  if (!strftime(tsBuf, TIMESTAMP_BUF_SZ, 
+                "%d-%m-%Y-%H:%M:%S", localTime))
+    return LongFormat;
 
   if (count) {
-    if (snprintf(target, REMAINING_LEN, "-%u%s", count, suffix) <= 0)
-      goto defer;
+    if (snprintf(dest, n, 
+                 "%s%s-%u%s", 
+                 prefix, tsBuf, 
+                 count, suffix) <= 0)
+      return LongFormat;
   } else {
-    if (snprintf(target, REMAINING_LEN, "%s", suffix) <= 0)
-      goto defer;
+    if (snprintf(dest, n, 
+                 "%s%s%s", 
+                 prefix, tsBuf,
+                 suffix) <= 0)
+      return LongFormat;
   }
 
-  return str;
-
-  defer:
-    free(str);
-    return NULL;
+  return OK;
 }
-#undef REMAINING_LEN
 
-Error readBufferFromFile(FILE* file,
-                         char** bufferPtr, size_t* trueBufferSizePtr) {
+Error readBufferFromFile(FILE* file, char** bufferPtr, 
+                         size_t* trueBufferSizePtr) {
   if (!file ||
       !bufferPtr ||
       !trueBufferSizePtr)
