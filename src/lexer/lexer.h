@@ -19,18 +19,18 @@ typedef enum TokenType {
 typedef struct Token {
   TokenType type;
   size_t line;
-  size_t offset;
+  size_t lineStart;
   size_t pos;
 } Token;
 
 typedef DynamicArray Tokens;
 
 typedef struct Lexer {
-  Tokens* tokens;
+  Tokens tokens;
   char* buf;
   size_t bufSize;
   size_t line;
-  size_t offset;
+  size_t lineStart;
   size_t pos;
 } Lexer;
 

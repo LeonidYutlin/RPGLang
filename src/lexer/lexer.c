@@ -1,6 +1,10 @@
 #include "lexer/lexer.h"
 #include "utils/utils.h"
+#include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
+
+static void skipWhitespace(Lexer* lexer);
 
 #define RETURN_WITH_STATUS(value, returnValue) \
   {                                            \
@@ -19,39 +23,59 @@ Lexer* lexerAlloc(FILE* src, size_t initCap, Error* status) {
     RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
 
   Error err = OK;
-  Tokens* tokens = daAlloc(initCap, sizeof(Token), &err);
-  if (err) {
+  if ((err = daInit(&lexer->tokens, initCap, sizeof(Token)))) {
     free(lexer);
     RETURN_WITH_STATUS(err, NULL);
   }
 
-  char* buf = NULL;
-  size_t bufSize = 0;
-  if ((err = readBufferFromFile(src, &buf, &bufSize))) {
-    free(tokens);
+  if ((err = readBufferFromFile(src, &lexer->buf, &lexer->bufSize))) {
     free(lexer);
     RETURN_WITH_STATUS(err, NULL);
   }
 
-  lexer->pos     = 0;
-  lexer->line    = 1;
-  lexer->offset  = 1;
-  lexer->tokens  = tokens;
-  lexer->buf     = buf;
-  lexer->bufSize = bufSize;
+  lexer->pos        = 0;
+  lexer->line       = 1;
+  lexer->lineStart  = 1;
   return lexer;
 }
 
 #undef RETURN_WITH_STATUS
 
-//Error  lexerAnalyze(Lexer* lexer) {}
+Error lexerAnalyze(Lexer* lexer) {
+  Error err = OK;
+  if ((err = lexerVerify(lexer)))
+    return err;
+  
+  char* buf = lexer->buf;
+  size_t curPos = lexer->pos;
+  while (buf[curPos] != '\0') {
+    skipWhitespace(lexer);
+  }
+  lexer->pos = curPos;
+  return OK;
+}
 
-Error  lexerDestroy(Lexer* lexer) {
+static void skipWhitespace(Lexer* lexer) {
+  assert(lexer);
+
+  char* buf = lexer->buf;
+  size_t curPos = lexer->pos;
+  for (char c = buf[curPos]; isspace(c); curPos++) {
+    if (c == '\n') {
+      lexer->line++;
+      lexer->lineStart = curPos;
+    }
+  }
+  lexer->pos = curPos;
+
+  return;
+}
+
+Error lexerDestroy(Lexer* lexer) {
   if (!lexer)
     return InvalidParameters;
   
-  if (lexer->tokens)
-    daDestroy(lexer->tokens);
+  daDestroy(&lexer->tokens, false);
   if (lexer->buf)
     free(lexer->buf);
     
@@ -63,13 +87,12 @@ Error  lexerDestroy(Lexer* lexer) {
 Error lexerVerify(Lexer* lexer) {
   if (!lexer)
     return InvalidParameters;
-  if (!lexer->tokens ||
-      !lexer->buf)
+  if (!lexer->buf)
     return NullPointerField;
   if (!lexer->bufSize)
     return ZeroSize;
   Error err = OK;
-  if ((err = daVerify(lexer->tokens)))
+  if ((err = daVerify(&lexer->tokens)))
     return err;
   return OK;
 }

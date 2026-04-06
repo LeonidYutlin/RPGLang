@@ -2,6 +2,7 @@
 #define DYNAMIC_ARRAY_H
 
 #include "error/error.h"
+#include <stdbool.h>
 
 typedef void (*free_f)(void* ptr);
 
@@ -13,9 +14,12 @@ typedef struct DynamicArray {
   free_f freeFunc;
 } DynamicArray;
 
-DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, Error* status);
+Error daInit(DynamicArray* dynamicArray, 
+             size_t initialCapacity, size_t itemSize);
+DynamicArray* daAlloc(size_t initialCapacity,
+                      size_t itemSize, Error* status);
 Error daAppend(DynamicArray* dynamicArray, void* elem);
-Error daDestroy(DynamicArray* dynamicArray);
+Error daDestroy(DynamicArray* dynamicArray, bool isAlloced);
 Error daVerify(DynamicArray* dynamicArray);
 
 #endif

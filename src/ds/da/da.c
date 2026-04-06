@@ -17,23 +17,37 @@ DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, Error* status) {
   if (!da)
     RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
 
-  void* items = calloc(initialCapacity, itemSize);
-  if (!items) {
+  Error err = OK;
+  if ((err = daInit(da, initialCapacity, itemSize))) {
     free(da);
-    RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
+    RETURN_WITH_STATUS(err, NULL);
   }
-
-  da->items    = items;
-  da->itemSize = itemSize;
-  da->count    = 0;
-  da->capacity = initialCapacity;
 
   return da;
 }
 
 #undef RETURN_WITH_STATUS
 
-Error daDestroy(DynamicArray* da) {
+Error daInit(DynamicArray* da, 
+             size_t initialCapacity, size_t itemSize) {
+  if (!initialCapacity ||
+      !itemSize ||
+      !da)
+    return InvalidParameters;
+
+  void* items = calloc(initialCapacity, itemSize);
+  if (!items)
+    return FailMemoryAllocation;
+
+  da->items    = items;
+  da->itemSize = itemSize;
+  da->count    = 0;
+  da->capacity = initialCapacity;
+
+  return OK;
+}
+
+Error daDestroy(DynamicArray* da, bool isAlloced) {
   if (!da)
     return InvalidParameters;
 
@@ -45,7 +59,8 @@ Error daDestroy(DynamicArray* da) {
       freeFunc(i);
   }
   free(da->items);
-  free(da);
+  if (isAlloced)
+    free(da);
 
   return OK;
 }
