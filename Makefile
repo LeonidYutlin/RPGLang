@@ -35,7 +35,7 @@ C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
 				   -Wno-missing-field-initializers -Wno-narrowing                 \
 				   -Wno-varargs -Wstack-protector                                 \
 				   -fcheck-new -fstack-protector                                  \
-				   -fstrict-overflow -flto-odr-type-merging                       \
+				   -fstrict-overflow                        \
 				   -fno-omit-frame-pointer -Wlarger-than=64000                    \
 				   -Wstack-usage=8192 -pie -fPIE -Werror=vla                      \
 				   -fsanitize=address,alignment,bool,bounds,enum,$\
