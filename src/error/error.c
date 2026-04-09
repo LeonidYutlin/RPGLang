@@ -76,7 +76,7 @@ void prettyError(FILE* sink, Error error, const char* filename, int line) {
 
 Error dumpErrors(FILE* file) {
   if (!file)
-    return InvalidParameters;
+    return BadArgs;
 
   fprintf(file,
           "Centralized Error System Dump"

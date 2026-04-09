@@ -17,7 +17,7 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
 Error nodeOptimize(TreeNode** node) {
   if (!node ||
       !*node)
-    return InvalidParameters;
+    return BadArgs;
 
   Error returnedStatus = OK;
   TreeRoot* root = attachRoot(*node, &returnedStatus);
@@ -39,7 +39,7 @@ Error nodeOptimize(TreeNode** node) {
 
 static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status) {
   if (!node)
-    RETURN_WITH_STATUS(InvalidParameters, NAN);
+    RETURN_WITH_STATUS(BadArgs, NAN);
   if (!IS_OP(node))
     RETURN_WITH_STATUS(OK, NAN);
   bool suppressOptimization = (OF_OP(node->parent, OP_POW) &&
@@ -111,7 +111,7 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
 static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
   if (!node ||
       !*node)
-    return InvalidParameters;
+    return BadArgs;
   if (!IS_OP(*node))
     return OK;
 

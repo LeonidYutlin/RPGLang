@@ -36,7 +36,7 @@ Error nodeTraverse_(TreeNode* node, NodeTraverseOpt opt) {
 
 TreeNode* nodeCopy(TreeNode* src, TreeNode* newParent, Error* status) {
   if (!src)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
 
   Error returnedStatus = OK;
   TreeNode* copy = nodeAlloc((NodeUnit){src->data.type, src->data.value}, newParent,
@@ -93,7 +93,7 @@ Error nodeChangeChild(TreeNode* parent, TreeNode* child,
 
 Error nodeDeleteC(TreeNode* node, size_t* nodeCount) {
   if (!node)
-    return InvalidParameters;
+    return BadArgs;
 
   if (node->parent) {
     if (node->parent->left == node)
@@ -107,7 +107,7 @@ Error nodeDeleteC(TreeNode* node, size_t* nodeCount) {
 
 Error nodeDestroyC(TreeNode* node, size_t* nodeCount) {
   if (!node)
-    return InvalidParameters;
+    return BadArgs;
 
   nodeDestroyC(node->left, nodeCount);
   nodeDestroyC(node->right, nodeCount);

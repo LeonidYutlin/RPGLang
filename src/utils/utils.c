@@ -20,7 +20,7 @@ Error snTimestamp(char* dest, size_t n,
                   const char* suffix, 
                   uint count) {
   if (!prefix || !suffix)
-    return InvalidParameters;
+    return BadArgs;
 
   char tsBuf[TIMESTAMP_BUF_SZ] = {};
   time_t timeAbs = time(NULL);
@@ -51,7 +51,7 @@ Error readBufferFromFile(FILE* file, char** bufferPtr,
   if (!file ||
       !bufferPtr ||
       !trueBufferSizePtr)
-    return InvalidParameters;
+    return BadArgs;
 
   struct stat fileStats = {};
   fstat(fileno(file), &fileStats);

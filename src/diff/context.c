@@ -13,7 +13,7 @@ static ulong hash(const char* str);
 Error contextInit(Context* ctx, size_t initialCapacity) {
   if (!ctx ||
       initialCapacity == 0)
-    return InvalidParameters;
+    return BadArgs;
 
   Error err = OK;
   //if varsAlloc fails it already freed the memory
@@ -30,7 +30,7 @@ Error contextInit(Context* ctx, size_t initialCapacity) {
 
 Error contextDestroy(Context* ctx) {
   if (!ctx)
-    return InvalidParameters;
+    return BadArgs;
   
   if (ctx->vars)
     varsDestroy(ctx->vars);
@@ -42,7 +42,7 @@ Error contextDestroy(Context* ctx) {
 
 Error contextVerify(Context* ctx) {
   if (!ctx)
-    return InvalidParameters;
+    return BadArgs;
   if (!ctx->vars || !ctx->sink)
     return NullPointerField;
   return varsVerify(ctx->vars);
@@ -57,7 +57,7 @@ Error contextVerify(Context* ctx) {
 
 Variables* varsAlloc(size_t initialCapacity, Error* status) {
   if (!initialCapacity)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
 
   Variables* vars = (Variables*)calloc(1, sizeof(Variables));
   if (!vars)
@@ -78,7 +78,7 @@ Variables* varsAlloc(size_t initialCapacity, Error* status) {
 
 Error varsDestroy(Variables* vars) {
   if (!vars)
-    return InvalidParameters;
+    return BadArgs;
 
   if (vars->items) {
     for (size_t i = 0; i < vars->capacity; i++)
@@ -92,7 +92,7 @@ Error varsDestroy(Variables* vars) {
 
 size_t regVar(Variables* vars, const char* varStr, Error* status) {
   if (!vars || !varStr)
-    RETURN_WITH_STATUS(InvalidParameters, 0);
+    RETURN_WITH_STATUS(BadArgs, 0);
   Error err = varsVerify(vars);
   if (err)
     RETURN_WITH_STATUS(err, 0);
@@ -126,7 +126,7 @@ size_t regVar(Variables* vars, const char* varStr, Error* status) {
 
 Variable* getVar(Variables* vars, size_t index, Error* status) {
   if (!vars || index >= vars->capacity)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
   Error err = varsVerify(vars);
   if (err)
     RETURN_WITH_STATUS(err, NULL);
@@ -136,7 +136,7 @@ Variable* getVar(Variables* vars, size_t index, Error* status) {
 
 Error setVarValue(Variables* vars, const char* varStr, double value) {
   if (!vars || !varStr)
-    return InvalidParameters;
+    return BadArgs;
   Error err = varsVerify(vars);
   if (err)
     return err;
@@ -154,7 +154,7 @@ Error setVarValue(Variables* vars, const char* varStr, double value) {
 Variable* findVar(Variables* vars, const char* varStr, 
                   Error* status, size_t* indexPtr) {
   if (!vars || !varStr)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
   Error err = varsVerify(vars);
   if (err)
     RETURN_WITH_STATUS(err, NULL);
@@ -178,7 +178,7 @@ bool ofVar(Variables* vars, TreeNode* node, const char* varStr) {
 
 Error varsVerify(Variables* vars) {
   if (!vars)
-    return InvalidParameters;
+    return BadArgs;
   if (!vars->items)
     return NullPointerField;
   if (vars->count > vars->capacity)
@@ -189,7 +189,7 @@ Error varsVerify(Variables* vars) {
 static Variable* findVarHashed(Variables* vars, const char* varStr, 
                                ulong hash, Error* status, size_t* indexPtr) {
   if (!vars || !varStr)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
   Error err = varsVerify(vars);
   if (err)
     RETURN_WITH_STATUS(err, NULL);

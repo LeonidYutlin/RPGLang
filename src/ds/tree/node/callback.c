@@ -5,7 +5,7 @@ Error countNodesCallback(unused TreeNode* node,
                          void* data, 
                          unused uint level) {
   if (!data)
-    return InvalidParameters;
+    return BadArgs;
   size_t* nodeCount = (size_t*)data;
   (*nodeCount)++;
   return OK;

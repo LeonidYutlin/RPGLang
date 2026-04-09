@@ -11,7 +11,7 @@
     GenericError,                                                                  \
     "Success",                                                                     \
     "No errors occured")                                                           \
-  X(InvalidParameters,                                                             \
+  X(BadArgs,                                                                       \
     GenericError,                                                                  \
     "Invalid parameters",                                                          \
     "Invalid parameters were provided for a function call")                        \
@@ -28,29 +28,15 @@
     GenericError,                                                                  \
     "Failed to open file",                                                         \
     "Failed to open file. See perror() for more info")                             \
-  X(EndOfFile,                                                                     \
-    GenericError,                                                                  \
-    "Std func returned EOF",                                                       \
-    "Std func returned EOF. See perror() for more info")                           \
   X(FileError,                                                                     \
     GenericError,                                                                  \
     "Std func has set ferror flag on the stream",                                  \
     "Std func has set ferror flag on the stream."                                  \
-    "See perror() for more info" )                                                 \
+    "See perror() for more info")                                                  \
   X(NullPointerField,                                                              \
     GenericError,                                                                  \
     "There is a NULL field present in struct",                                     \
     "A crucial struct field is NULL, making the struct unusable in most cases")    \
-  X(UnknownEnumItem,                                                               \
-    GenericError,                                                                  \
-    "Unknown enumeration item",                                                    \
-    "An item with this enum value is not present in it's X'ed macro array. "       \
-    "Check integrity of the X macros, otherwise this is a corrupted value")        \
-  X(BadEnumItem,                                                                   \
-    GenericError,                                                                  \
-    "Unexpected enumeration item",                                                 \
-    "An item with this enum value is wasn't expected. "                            \
-    "It is likely that it is some kind of default value in an established enum")   \
   X(LongFormat,                                                                    \
     GenericError,                                                                  \
     "Formatted string exceeds byte limit",                                         \

@@ -28,7 +28,7 @@ static size_t NULL_STRING_REPRESENTATION_LENGTH = sizeof(NULL_STR_REP) - 1;
 TreeNode* nodeRead(FILE* f, Variables* vars, Error* status, size_t* nodeCount) {
   if (!f ||
       !vars)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
   Error err = OK;
   if ((err = varsVerify(vars)))
     RETURN_WITH_STATUS(err, NULL);
@@ -49,7 +49,7 @@ TreeNode* nodeRead(FILE* f, Variables* vars, Error* status, size_t* nodeCount) {
 TreeRoot* treeRead(FILE* f, Variables* vars, Error* status) {
   if (!f ||
       !vars)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
   Error err = OK;
   if ((err = varsVerify(vars)))
     RETURN_WITH_STATUS(err, NULL);
@@ -92,7 +92,7 @@ static TreeNode* nodeReadRecursion(Variables* vars,
   if (!buf || 
       *p >= bufSize || 
       !vars)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
   Error err = OK;
   if ((err = varsVerify(vars)))
     RETURN_WITH_STATUS(err, NULL);
@@ -218,20 +218,20 @@ Error nodePutcCallback(unused TreeNode* node,
                        void* data,
                        unused uint level) {
   if (!data)
-    return InvalidParameters;
+    return BadArgs;
 
   NodePutcCallbackData* d = (NodePutcCallbackData*)data;
   if (!d->sink)
-    return InvalidParameters;
+    return BadArgs;
   return (fputc(d->c, d->sink) == EOF)
-         ? EndOfFile
+         ? FileError
          : OK;
 }
 
 Error nodePrintCallback(TreeNode* node, void* data, 
                         unused uint level) {
   if (!data)
-    return InvalidParameters;
+    return BadArgs;
 
   NodePrintCallbackData* d = (NodePrintCallbackData*)data;
   return nodePrint(d->sink, d->vars, node);
@@ -247,7 +247,7 @@ Error nodePrint(FILE* f, Variables* vars, TreeNode* node) {
   if (!node ||
       !f ||
       !vars)
-    return InvalidParameters;
+    return BadArgs;
   Error err = OK;
   if ((err = varsVerify(vars)))
     return err;

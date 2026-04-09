@@ -13,7 +13,7 @@ Error enqueue(Queue** q, QueueUnit data) {
 
 Error dequeue(Queue** q, QueueUnit* data) {
 	if (!*q)
-		return InvalidParameters;
+		return BadArgs;
   
 	Queue* tail = (*q)->next;
 	*data = tail->data;

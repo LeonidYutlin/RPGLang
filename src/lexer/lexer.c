@@ -4,8 +4,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-static void skipWhitespace(Lexer* lexer);
-
 #define RETURN_WITH_STATUS(value, returnValue) \
   {                                            \
   if (status)                                  \
@@ -16,7 +14,7 @@ static void skipWhitespace(Lexer* lexer);
 Lexer* lexerAlloc(FILE* src, size_t initCap, Error* status) {
   if (!src || 
       !initCap)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
 
   Lexer* lexer = (Lexer*)calloc(1, sizeof(Lexer));
   if (!lexer)
@@ -47,33 +45,29 @@ Error lexerAnalyze(Lexer* lexer) {
     return err;
   
   char* buf = lexer->buf;
-  size_t curPos = lexer->pos;
-  while (buf[curPos] != '\0') {
-    skipWhitespace(lexer);
+  Tokens* tokens = &lexer->tokens;
+  Token newToken = {};
+  for (char c = buf[lexer->pos]; c != '\0';) {
+    //skip whitespace
+    if (isspace(c)) {
+      if (c == '\n') {
+        lexer->line++;
+        lexer->lineStart = lexer->pos;
+      }
+      lexer->pos++;
+      continue;
+    }
   }
-  lexer->pos = curPos;
+  //newToken = emitToken()
+  //daAppend(tokens, )
   return OK;
 }
 
-static void skipWhitespace(Lexer* lexer) {
-  assert(lexer);
-
-  char* buf = lexer->buf;
-  size_t curPos = lexer->pos;
-  for (char c = buf[curPos]; isspace(c); curPos++) {
-    if (c == '\n') {
-      lexer->line++;
-      lexer->lineStart = curPos;
-    }
-  }
-  lexer->pos = curPos;
-
-  return;
-}
+//static void emitToken(Token* token, );
 
 Error lexerDestroy(Lexer* lexer) {
   if (!lexer)
-    return InvalidParameters;
+    return BadArgs;
   
   daDestroy(&lexer->tokens, false);
   if (lexer->buf)
@@ -86,7 +80,7 @@ Error lexerDestroy(Lexer* lexer) {
 
 Error lexerVerify(Lexer* lexer) {
   if (!lexer)
-    return InvalidParameters;
+    return BadArgs;
   if (!lexer->buf)
     return NullPointerField;
   if (!lexer->bufSize)

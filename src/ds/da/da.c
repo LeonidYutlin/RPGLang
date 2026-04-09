@@ -11,7 +11,7 @@
 
 DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, Error* status) {
   if (!initialCapacity || !itemSize)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
 
   DynamicArray* da = (DynamicArray*)calloc(1, sizeof(DynamicArray));
   if (!da)
@@ -33,7 +33,7 @@ Error daInit(DynamicArray* da,
   if (!initialCapacity ||
       !itemSize ||
       !da)
-    return InvalidParameters;
+    return BadArgs;
 
   void* items = calloc(initialCapacity, itemSize);
   if (!items)
@@ -49,7 +49,7 @@ Error daInit(DynamicArray* da,
 
 Error daDestroy(DynamicArray* da, bool isAlloced) {
   if (!da)
-    return InvalidParameters;
+    return BadArgs;
 
   if (da->items) {
     char* endOfItems = (char*)da->items + da->capacity * da->itemSize;
@@ -67,7 +67,7 @@ Error daDestroy(DynamicArray* da, bool isAlloced) {
 
 Error daAppend(DynamicArray* da, void* elem) {
   if (!elem)
-    return InvalidParameters;
+    return BadArgs;
   Error err = daVerify(da);
   if (err)
     return err;
@@ -89,7 +89,7 @@ Error daAppend(DynamicArray* da, void* elem) {
 
 Error daVerify(DynamicArray* da) {
   if (!da)
-    return InvalidParameters;
+    return BadArgs;
   if (!da->items)
     return NullPointerField;
   if (da->count > da->capacity)

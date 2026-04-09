@@ -31,7 +31,7 @@ TreeRoot* attachRootC(TreeNode* node, size_t nodeCount, Error* status) {
 
 TreeNode* detachRoot(TreeRoot* root, Error* status) {
   if (!root)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
+    RETURN_WITH_STATUS(BadArgs, NULL);
 
   TreeNode* node = root->rootNode;
   root->rootNode = NULL;
@@ -41,7 +41,7 @@ TreeNode* detachRoot(TreeRoot* root, Error* status) {
 
 Error rootDestroy(TreeRoot* root) {
   if (!root)
-    return InvalidParameters;
+    return BadArgs;
 
   nodeDestroy(root->rootNode);
   free(root);
