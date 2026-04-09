@@ -36,10 +36,10 @@ static const char* BAD_EDGE      = "#E02222";
 static const char* ROOT_OUTLINE  = "#666666";
 static const char* ROOT_FILL     = "#DDDDDD";
 
-static int rootTextDump(FILE* f, TreeRoot* root,
-                        const char* commentary, const char* filename, int line,
-                        uint callCount);
-static int rootGraphDump(FILE* f,  Variables* vars, TreeRoot* root, uint callCount);
+static Error rootTextDump(FILE* f, TreeRoot* root,
+                          const char* commentary, const char* filename, int line,
+                          uint callCount);
+static Error rootGraphDump(FILE* f,  Variables* vars, TreeRoot* root, uint callCount);
 static void populateDot(FILE* dot, Variables* vars, TreeNode* node);
 static void declareNode(FILE* dot, Variables* vars, TreeNode* node, bool bondFailed);
 static void declareRank(FILE* dot, TreeNode* node, Queue** queue);
@@ -142,9 +142,9 @@ void closeHtmlLogFile(FILE* f) {
     fclose(f);
 } 
 
-static int rootTextDump(FILE* f, TreeRoot* root,
-                        const char* commentary, const char* filename, int line,
-                        uint callCount) {
+static Error rootTextDump(FILE* f, TreeRoot* root,
+                          const char* commentary, const char* filename, int line,
+                          uint callCount) {
   if (!root) {
     fprintf(f,
             "%s\n"
@@ -153,7 +153,7 @@ static int rootTextDump(FILE* f, TreeRoot* root,
             "TreeRoot [NULL] {}\n",
             commentary,
             callCount, filename, line);
-    return 1;
+    return Fail;
   }
 
   fprintf(f,
@@ -170,10 +170,10 @@ static int rootTextDump(FILE* f, TreeRoot* root,
           root->nodeCount,
           WARNING_PREFIX(!root->rootNode), root->rootNode);
 
-  return !root->rootNode ? 1 : 0;
+  return !root->rootNode ? Fail : OK;
 }
 
-static int rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCount) {
+static Error rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCount) {
   assert(f);
   assert(!varsVerify(vars));
   assert(root);
@@ -182,13 +182,13 @@ static int rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCoun
   if (snTimestamp(dotPath, DOT_PATH_BUF_SZ,
                   ".log/dot-", ".txt", callCount)) {
     fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
-    return 1;
+    return Fail;
   }
 
   FILE* dot = fopen(dotPath, "w");
   if (!dot) {
     fputs("<h1><b>Dot file open failed for this graph dump</h1><b>\n", f);
-    return 1;
+    return Fail;
   }
 
   DOT_HEADER_INIT(dot);
@@ -227,7 +227,7 @@ static int rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCoun
   fputs("Graphical Dump:\n", f);
   executeDot(f, callCount, dotPath);
 
-  return 0;
+  return OK;
 }
 
 #undef DOT_HEADER_INIT

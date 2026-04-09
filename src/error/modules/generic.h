@@ -10,7 +10,12 @@
   X(OK,                                                                            \
     GenericError,                                                                  \
     "Success",                                                                     \
-    "No errors occured")                                                           \
+    "No errors occured. This always has the error code of 0")                      \
+  X(Fail,                                                                          \
+    GenericError,                                                                  \
+    "Fail",                                                                        \
+    "A function failed and it didn't specify why. "                                \
+    "This always has the error code of 1")                                         \
   X(BadArgs,                                                                       \
     GenericError,                                                                  \
     "Invalid parameters",                                                          \

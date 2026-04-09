@@ -37,6 +37,9 @@ typedef enum ErrorEnum {
   #undef X
 } ErrorEnum;
 
+_Static_assert(OK == 0,   "OK must be 0 to pass in if (cond)");
+_Static_assert(Fail == 1, "Fail must be 1 to fail in if (cond)");
+
 extern const size_t ERROR_MODULES_SIZE;
 extern const size_t ERRORS_SIZE;
 
