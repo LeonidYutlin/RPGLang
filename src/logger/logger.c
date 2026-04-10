@@ -61,7 +61,7 @@ Error logln_(LogLevel level, const char* fmt, ...) {
     if ((err = snTimestamp(tsBuf, TIMESTAMP_BUF_SZ)))
       return err;
 
-    fprintf(LOGGER.sink, "[%s][%s]: ", tsBuf, LOG_LEVELS[level]);
+    fprintf(LOGGER.sink, "[%s][%s]", tsBuf, LOG_LEVELS[level]);
     va_list args = {};
     va_start(args, fmt);
     vfprintf(LOGGER.sink, fmt, args);

@@ -36,9 +36,9 @@ Error lexerAnalyze(Lexer* lexer) {
     return err;
   
   char* buf = lexer->buf;
-  Tokens* tokens = &lexer->tokens;
-  Token newToken = {};
-  for (char c = buf[lexer->pos]; c != '\0';) {
+  //Tokens* tokens = &lexer->tokens;
+  //Token newToken = {};
+  for (char c = buf[lexer->pos]; c != '\0'; c = buf[lexer->pos]) {
     //skip whitespace
     if (isspace(c)) {
       if (c == '\n') {

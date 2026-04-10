@@ -29,11 +29,18 @@ typedef struct Logger {
 Error loggerInit(const char* filename, LogLevel level);
 void  loggerCloseFile();
 
+#define loglnTraced(level, fmt, ...)             \
+  logln_(level, "[%s:%d in %s]: " fmt "\n",       \
+         __FILE__, __LINE__, __PRETTY_FUNCTION__ \
+         __VA_OPT__(,) __VA_ARGS__)
+
+#ifndef LOG_FORCE_TRACE
 #define logln(level, fmt, ...) \
-  logln_(level, fmt "\n" __VA_OPT__(,) __VA_ARGS__)
-#define loglnTraced(level, fmt, ...) \
-  logln(level, "[%s:%d in %s] " fmt, \
-        __FILE__, __LINE__, __PRETTY_FUNCTION__ __VA_OPT__(,) __VA_ARGS__)
+  logln_(level, ": " fmt "\n" __VA_OPT__(,) __VA_ARGS__)
+#else
+#define logln(level, fmt, ...) \
+  loglnTraced(level, fmt, __VA_ARGS__)
+#endif
 
 Error logln_(LogLevel level, const char* fmt, ...);
 

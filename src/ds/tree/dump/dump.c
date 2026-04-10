@@ -1,9 +1,9 @@
 #include "ds/tree/dump/dump.h"
+#include "logger/logger.h"
 #undef rootDump
 #undef nodeDump
 
 #include <assert.h>
-#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include "utils/utils.h"
@@ -55,11 +55,13 @@ void rootDump(FILE* f, Variables* vars, TreeRoot* root,
 
   static uint callCount = 0;
   ++callCount;
+  logln(INFO, "rootDump #%u started", callCount);
 
   if (rootTextDump(f, root, commentary, filename, line, callCount))
     return;
 
   rootGraphDump(f, vars, root, callCount);
+  logln(INFO, "rootDump #%u ended", callCount);
 }
 
 #define DOT_HEADER_INIT(file)                                                               \
@@ -84,6 +86,8 @@ void nodeDump(FILE* f, Variables* vars, TreeNode* node,
   static uint callCount = 0;
   ++callCount;
 
+  logln(INFO, "nodeDump #%u started", callCount);
+
   if (!node) {
     fprintf(f,
             "%s\n"
@@ -91,23 +95,23 @@ void nodeDump(FILE* f, Variables* vars, TreeNode* node,
             "TreeNode Dump #%u called from %s:%d\n"
             "TreeNode [NULL] {}\n",
             commentary,
-            ++callCount, filename, line);
+            callCount, filename, line);
     return;
   }
   fprintf(f,
           "%s\n"
           "TreeNode Dump #%u called from %s:%d\n",
           commentary,
-          callCount++, filename, line);
+          callCount, filename, line);
   char dotPath[DOT_PATH_BUF_SZ] = {};
   if (snTimestampedFilename(dotPath, DOT_PATH_BUF_SZ,
                   ".log/dot-", ".txt", callCount)) {
-    fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
+    loglnTraced(ERROR, "Dot file name composition failed for graph dump");
     return;
   }
   FILE* dot = fopen(dotPath, "w");
   if (!dot) {
-    fputs("<h1><b>Dot file open failed for this graph dump</h1><b>\n", f);
+    loglnTraced(ERROR, "Dot file open failed for this graph dump");
     return;
   }
   DOT_HEADER_INIT(dot);
@@ -116,6 +120,8 @@ void nodeDump(FILE* f, Variables* vars, TreeNode* node,
   fclose(dot);
   fputs("Graphical Dump:\n", f);
   executeDot(f, callCount, dotPath);
+
+  logln(INFO, "nodeDump #%u ended", callCount);
 }
 
 FILE* openHtmlLogFile(const char* path) {
@@ -181,13 +187,13 @@ static Error rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCo
   char dotPath[DOT_PATH_BUF_SZ] = {};
   if (snTimestampedFilename(dotPath, DOT_PATH_BUF_SZ,
                   ".log/dot-", ".txt", callCount)) {
-    fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
+    loglnTraced(ERROR, "Dot file name composition failed for graph dump");
     return Fail;
   }
 
   FILE* dot = fopen(dotPath, "w");
   if (!dot) {
-    fputs("<h1><b>Dot file open failed for this graph dump</h1><b>\n", f);
+    loglnTraced(ERROR, "Dot file open failed for graph dump");
     return Fail;
   }
 
@@ -367,7 +373,7 @@ static void executeDot(FILE* f, uint callCount, char* dotPath) {
   if (snTimestampedFilename(imgPath, IMG_PATH_BUF_SZ,
                   ".log/graph-", 
                   ".svg", callCount)) {
-    fprintf(f, "<h1><b>Image file path composition failed for this graph dump!</h1><b>\n");
+    loglnTraced(ERROR, "Image file path composition failed for graph dump!");
     return;
   }
   snprintf(cmd, DOT_CMD_BUF_SZ, "dot -T svg \"%s\" -o \"%s\"", dotPath, imgPath);
