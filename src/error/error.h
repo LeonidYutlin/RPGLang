@@ -31,6 +31,9 @@ typedef enum ErrorModule {
   #undef X
 } ErrorModule;
 
+_Static_assert(GenericError == 0, 
+               "GenericError must be 0 to be OK's and Fail's module");
+
 typedef enum ErrorEnum {
   #define X(enm, ...) enm,
   UNITED_ERROR_LIST()

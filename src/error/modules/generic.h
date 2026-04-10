@@ -42,6 +42,11 @@
     GenericError,                                                                  \
     "There is a NULL field present in struct",                                     \
     "A crucial struct field is NULL, making the struct unusable in most cases")    \
+  X(DenyReinit,                                                                    \
+    GenericError,                                                                  \
+    "An initialized struct was attempted to be reinitialized",                     \
+    "An initialized struct was attempted to be reinitialized."                     \
+    "If you really want to reinitialize it, destroy/deinitialize it first")        \
   X(LongFormat,                                                                    \
     GenericError,                                                                  \
     "Formatted string exceeds byte limit",                                         \

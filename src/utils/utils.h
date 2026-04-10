@@ -16,15 +16,21 @@
 
 bool doubleEqual(double a, double b);
 
+#define TIMESTAMP_BUF_SZ 32
+
 /// prints up to n chars to dest, in a form of 
 /// <prefix><timestamp><?-count><suffix>
 ///  | <?-count> - if count != 0, then "-%d"
 ///    else the count is not printed
-///  | <timestamp> - "%day-%month-%Year-%Hour:%Minute:%Second"
-Error snTimestamp(char* dest, size_t n, 
-                  const char* prefix, 
-                  const char* suffix, 
-                  uint count);
+///  | <timestamp> - see snTimestamp(...)
+Error snTimestampedFilename(char* dest, size_t n, 
+                            const char* prefix, 
+                            const char* suffix, 
+                            uint count);
+
+/// prints up to n chars to dest, in a form of 
+/// "%day-%month-%Year-%Hour:%Minute:%Second"
+Error snTimestamp(char* dest, size_t n);
 
 Error readBufferFromFile(FILE* file,
                          char** buffer, size_t* bufferSize);

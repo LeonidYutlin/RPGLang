@@ -100,7 +100,7 @@ void nodeDump(FILE* f, Variables* vars, TreeNode* node,
           commentary,
           callCount++, filename, line);
   char dotPath[DOT_PATH_BUF_SZ] = {};
-  if (snTimestamp(dotPath, DOT_PATH_BUF_SZ,
+  if (snTimestampedFilename(dotPath, DOT_PATH_BUF_SZ,
                   ".log/dot-", ".txt", callCount)) {
     fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
     return;
@@ -123,7 +123,7 @@ FILE* openHtmlLogFile(const char* path) {
     return NULL;
 
   char name[HTML_PATH_BUF_SZ] = {}; 
-  if (snTimestamp(name, HTML_PATH_BUF_SZ,
+  if (snTimestampedFilename(name, HTML_PATH_BUF_SZ,
                   path, ".html", 0))
     return NULL;
 
@@ -179,7 +179,7 @@ static Error rootGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCo
   assert(root);
 
   char dotPath[DOT_PATH_BUF_SZ] = {};
-  if (snTimestamp(dotPath, DOT_PATH_BUF_SZ,
+  if (snTimestampedFilename(dotPath, DOT_PATH_BUF_SZ,
                   ".log/dot-", ".txt", callCount)) {
     fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
     return Fail;
@@ -364,7 +364,7 @@ static void declareRank(FILE* dot, TreeNode* node, Queue** queue) {
 static void executeDot(FILE* f, uint callCount, char* dotPath) {
   char cmd[DOT_CMD_BUF_SZ] = {};
   char imgPath[IMG_PATH_BUF_SZ] = {};
-  if (snTimestamp(imgPath, IMG_PATH_BUF_SZ,
+  if (snTimestampedFilename(imgPath, IMG_PATH_BUF_SZ,
                   ".log/graph-", 
                   ".svg", callCount)) {
     fprintf(f, "<h1><b>Image file path composition failed for this graph dump!</h1><b>\n");
@@ -377,4 +377,3 @@ static void executeDot(FILE* f, uint callCount, char* dotPath) {
 }
 
 #undef WARNING_PREFIX
-
