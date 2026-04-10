@@ -69,4 +69,25 @@ void prettyError(FILE* sink, Error error, const char* filename, int line);
 
 Error dumpErrors(FILE* file);
 
+#ifndef LOG_STATUSES
+#define RETURN_WITH_STATUS(value, returnValue) \
+  {                                            \
+  if (status)                                  \
+    *status = value;                           \
+  return returnValue;                          \
+  }
+#else
+
+#include "logger/logger.h"
+
+#define RETURN_WITH_STATUS(value, returnValue) \
+  {                                            \
+  if (status)                                  \
+    *status = value;                           \
+  loglnTraced(WARN, "Returned with status %s", \
+              parseError(value)->str);         \
+  return returnValue;                          \
+  }
+#endif
+
 #endif

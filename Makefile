@@ -1,7 +1,7 @@
 COMPILER := gcc
 
 INCLUDE_FLAGS := -I src/
-DEFINE_FLAGS  := -D _DEBUG
+DEFINE_FLAGS  := -D _DEBUG -D LOG_STATUSES
 LIBS          := -lm -lc
 
 ARTIFACT_PATH := build

@@ -4,6 +4,8 @@
 
 int main(void) {
   loggerInit(".log/!latest.txt", DEBUG);
+
+
   logln(INFO, "Hello from main!");
   loglnTraced(WARN, "Hello from main, traced!");
   TreeNode* node = DIV_(COS_(MUL_(NUM_(123), NUM_(8))), NUM_(5));
@@ -15,6 +17,7 @@ int main(void) {
   closeHtmlLogFile(f);
   nodeDestroy(node);
   contextDestroy(&ctx);
+
   loggerCloseFile();
   return 0;
 }

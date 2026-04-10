@@ -18,13 +18,6 @@ static const char* NULL_STRING_REPRESENTATION   = NULL_STR_REP;
 static size_t NULL_STRING_REPRESENTATION_LENGTH = sizeof(NULL_STR_REP) - 1;
 #undef  NULL_STR_REP
 
-#define RETURN_WITH_STATUS(value, returnValue) \
-  {                                            \
-  if (status)                                  \
-    *status = value;                           \
-  return returnValue;                          \
-  }
-
 TreeNode* nodeRead(FILE* f, Variables* vars, Error* status, size_t* nodeCount) {
   if (!f ||
       !vars)
@@ -212,7 +205,6 @@ static TreeNode* nodeReadRecursion(Variables* vars,
 
 #undef DUMP_ERROR_RETURN
 #undef SKIP_WHITESPACE
-#undef RETURN_WITH_STATUS
 
 Error nodePutcCallback(unused TreeNode* node, 
                        void* data,

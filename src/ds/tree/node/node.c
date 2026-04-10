@@ -3,13 +3,6 @@
 #include <string.h>
 #include <assert.h>
 
-#define RETURN_WITH_STATUS(value, returnValue) \
-  {                                            \
-  if (status)                                  \
-    *status = value;                           \
-  return returnValue;                          \
-  }
-
 TreeNode* nodeAlloc_(NodeAllocOpt opt) {
   TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
   Error* status = opt.status;
@@ -122,5 +115,3 @@ Error nodeDestroyC(TreeNode* node, size_t* nodeCount) {
 
   return OK;
 }
-
-#undef RETURN_WITH_STATUS

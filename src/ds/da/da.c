@@ -2,13 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RETURN_WITH_STATUS(value, returnValue) \
-  {                                            \
-  if (status)                                  \
-      *status = value;                         \
-  return returnValue;                          \
-  }
-
 DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, Error* status) {
   if (!initialCapacity || !itemSize)
     RETURN_WITH_STATUS(BadArgs, NULL);
@@ -25,8 +18,6 @@ DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, Error* status) {
 
   return da;
 }
-
-#undef RETURN_WITH_STATUS
 
 Error daInit(DynamicArray* da, 
              size_t initialCapacity, size_t itemSize) {

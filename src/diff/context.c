@@ -48,13 +48,6 @@ Error contextVerify(Context* ctx) {
   return varsVerify(ctx->vars);
 }
 
-#define RETURN_WITH_STATUS(value, returnValue) \
-  {                                            \
-  if (status)                                  \
-      *status = value;                         \
-  return returnValue;                          \
-  }
-
 Variables* varsAlloc(size_t initialCapacity, Error* status) {
   if (!initialCapacity)
     RETURN_WITH_STATUS(BadArgs, NULL);
@@ -220,5 +213,3 @@ static ulong hash(const char* str) {
   // fprintf(stderr, "%s is %lu\n", strSaved, hash);
   return hash;
 }
-
-#undef RETURN_WITH_STATUS

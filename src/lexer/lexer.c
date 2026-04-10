@@ -4,13 +4,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#define RETURN_WITH_STATUS(value, returnValue) \
-  {                                            \
-  if (status)                                  \
-      *status = value;                         \
-  return returnValue;                          \
-  }
-
 Lexer* lexerAlloc(FILE* src, size_t initCap, Error* status) {
   if (!src || 
       !initCap)
@@ -36,8 +29,6 @@ Lexer* lexerAlloc(FILE* src, size_t initCap, Error* status) {
   lexer->lineStart  = 1;
   return lexer;
 }
-
-#undef RETURN_WITH_STATUS
 
 Error lexerAnalyze(Lexer* lexer) {
   Error err = OK;

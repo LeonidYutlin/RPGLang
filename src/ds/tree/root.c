@@ -2,13 +2,6 @@
 #include "ds/tree/node/callback.h"
 #include <stdlib.h>
 
-#define RETURN_WITH_STATUS(value, returnValue) \
-  {                                            \
-  if (status)                                  \
-      *status = value;                         \
-  return returnValue;                          \
-  }
-
 TreeRoot* attachRoot(TreeNode* node, Error* status) {
   TreeRoot* root = (TreeRoot*)calloc(1, sizeof(TreeRoot));
   if (!root)
@@ -48,5 +41,3 @@ Error rootDestroy(TreeRoot* root) {
 
   return OK;
 }
-
-#undef RETURN_WITH_STATUS

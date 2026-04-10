@@ -7,13 +7,6 @@
 static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status);
 static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
 
-#define RETURN_WITH_STATUS(value, returnValue) \
-  {                                            \
-  if (status)                                  \
-    *status = value;                           \
-  return returnValue;                          \
-  }
-
 Error nodeOptimize(TreeNode** node) {
   if (!node ||
       !*node)
@@ -171,4 +164,3 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
 
 #undef REPLACE_WITH
 #undef REDUCE_TO_NUM
-#undef RETURN_WITH_STATUS
