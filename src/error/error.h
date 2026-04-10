@@ -70,12 +70,14 @@ void prettyError(FILE* sink, Error error, const char* filename, int line);
 Error dumpErrors(FILE* file);
 
 #ifndef LOG_STATUSES
+
 #define RETURN_WITH_STATUS(value, returnValue) \
   {                                            \
   if (status)                                  \
     *status = value;                           \
   return returnValue;                          \
   }
+
 #else
 
 #include "logger/logger.h"
@@ -88,6 +90,7 @@ Error dumpErrors(FILE* file);
               parseError(value)->str);         \
   return returnValue;                          \
   }
-#endif
 
-#endif
+#endif //LOG_STATUSES
+
+#endif //ERROR_H
