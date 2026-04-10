@@ -26,6 +26,9 @@ Error loggerInit(const char* filename, LogLevel level) {
     sink = fopen(filename, "a");
     if (!sink)
       return FailFileOpen;
+
+    if (setvbuf(sink, NULL, _IONBF, 0))
+      return FileError;
   }
 
   LOGGER.sink  = sink;
