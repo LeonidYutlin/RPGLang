@@ -32,7 +32,12 @@ Error snTimestampedFilename(char* dest, size_t n,
 /// "%day-%month-%Year-%Hour:%Minute:%Second"
 Error snTimestamp(char* dest, size_t n);
 
-Error readBufferFromFile(FILE* file,
-                         char** buffer, size_t* bufferSize);
+typedef struct MappedFile {
+  char* data;
+  size_t size;
+} MappedFile; 
+
+Error mappedFileInit(int fileDescriptor, MappedFile* mappedFile); 
+Error mappedFileDestroy(MappedFile* mappedFile); 
 
 #endif

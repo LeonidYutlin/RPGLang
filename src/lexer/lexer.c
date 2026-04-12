@@ -4,8 +4,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-Lexer* lexerAlloc(FILE* src, size_t initCap, Error* status) {
-  if (!src || 
+Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
+  if (fd < 0 || 
       !initCap)
     RETURN_WITH_STATUS(BadArgs, NULL);
 
@@ -19,7 +19,7 @@ Lexer* lexerAlloc(FILE* src, size_t initCap, Error* status) {
     RETURN_WITH_STATUS(err, NULL);
   }
 
-  if ((err = readBufferFromFile(src, &lexer->buf, &lexer->bufSize))) {
+  if ((err = mappedFileInit(fd, &lexer->mf))) {
     free(lexer);
     RETURN_WITH_STATUS(err, NULL);
   }
@@ -35,7 +35,7 @@ Error lexerAnalyze(Lexer* lexer) {
   if ((err = lexerVerify(lexer)))
     return err;
   
-  char* buf = lexer->buf;
+  const char* buf = lexer->mf.data;
   //Tokens* tokens = &lexer->tokens;
   //Token newToken = {};
   for (char c = buf[lexer->pos]; c != '\0'; c = buf[lexer->pos]) {
@@ -61,8 +61,8 @@ Error lexerDestroy(Lexer* lexer) {
     return BadArgs;
   
   daDestroy(&lexer->tokens, false);
-  if (lexer->buf)
-    free(lexer->buf);
+  if (lexer->mf.data)
+    mappedFileDestroy(&lexer->mf);
     
   free(lexer);
 
@@ -72,9 +72,9 @@ Error lexerDestroy(Lexer* lexer) {
 Error lexerVerify(Lexer* lexer) {
   if (!lexer)
     return BadArgs;
-  if (!lexer->buf)
+  if (!lexer->mf.data)
     return NullPointerField;
-  if (!lexer->bufSize)
+  if (!lexer->mf.size)
     return ZeroSize;
   Error err = OK;
   if ((err = daVerify(&lexer->tokens)))

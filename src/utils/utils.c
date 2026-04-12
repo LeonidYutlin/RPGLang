@@ -6,6 +6,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #include <float.h>
 
 static const double DOUBLE_COMPARISON_PRECISION = DBL_EPSILON;
@@ -51,25 +53,37 @@ Error snTimestamp(char* dest, size_t n) {
          : LongFormat;
 }
 
-Error readBufferFromFile(FILE* file, char** bufferPtr, 
-                         size_t* trueBufferSizePtr) {
-  if (!file ||
-      !bufferPtr ||
-      !trueBufferSizePtr)
+Error mappedFileInit(int fd, MappedFile* mappedFile) {
+  if (fd < 0 ||
+      !mappedFile)
     return BadArgs;
+  if (mappedFile->data)
+    return DenyReinit;
 
   struct stat fileStats = {};
-  fstat(fileno(file), &fileStats);
-  size_t bufferSize = (size_t)fileStats.st_size;
-  char* buffer = (char*)calloc(bufferSize + 1, sizeof(char)); // + 1 for '\0'
-  if (!buffer)
-    return FailMemoryAllocation;
+  fstat(fd, &fileStats);
+  size_t fileSize = (size_t)fileStats.st_size;
+  char *buffer = mmap(NULL, fileSize,
+                      PROT_READ, MAP_PRIVATE,
+                      fd, 0);
+  if (buffer == MAP_FAILED)
+    return FailMemoryMapping;
 
-  bufferSize = fread(buffer, sizeof(char), bufferSize, file);
-  if (ferror(file))
-    return FileError; 
+  mappedFile->size = fileSize;
+  mappedFile->data = buffer;
+  return OK;
+}
 
-  *trueBufferSizePtr = bufferSize;
-  *bufferPtr         = buffer;
+Error mappedFileDestroy(MappedFile* mappedFile) {
+  if (!mappedFile)
+    return BadArgs;
+  if (!mappedFile->data)
+    return NullPointerField;
+
+  if (munmap(mappedFile->data, mappedFile->size) < 0)
+    return FailMemoryUnmapping;
+
+  mappedFile->data = NULL;
+  mappedFile->size = 0;
   return OK;
 }

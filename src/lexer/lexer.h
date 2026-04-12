@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include "ds/da/da.h"
+#include "utils/utils.h"
 
 #define TOKEN_TYPE_LIST() \
   X(TOK_EOF,        "EOF") \
@@ -27,14 +28,14 @@ typedef DynamicArray Tokens;
 
 typedef struct Lexer {
   Tokens tokens;
-  char* buf;
-  size_t bufSize;
+  MappedFile mf;
   size_t line;
   size_t lineStart;
   size_t pos;
 } Lexer;
 
-Lexer* lexerAlloc(FILE* sourceFile, size_t initialCapacity, Error* status);
+
+Lexer* lexerAlloc(int fd, size_t initCap, Error* status);
 Error  lexerAnalyze(Lexer* lexer);
 Error  lexerDestroy(Lexer* lexer);
 Error  lexerVerify(Lexer* lexer);

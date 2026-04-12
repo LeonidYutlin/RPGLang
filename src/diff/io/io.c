@@ -26,14 +26,13 @@ TreeNode* nodeRead(FILE* f, Variables* vars, Error* status, size_t* nodeCount) {
   if ((err = varsVerify(vars)))
     RETURN_WITH_STATUS(err, NULL);
 
-  char* buffer = NULL;
-  size_t bufferSize = 0;
-  if ((err = readBufferFromFile(f, &buffer, &bufferSize)))
+  MappedFile mf = {};
+  if ((err = mappedFileInit(fileno(f), &mf)))
     RETURN_WITH_STATUS(err, NULL);
 
   size_t p = 0;
-  TreeNode* node = nodeReadRecursion(vars, buffer, bufferSize, &p, &err, nodeCount);
-  free(buffer);
+  TreeNode* node = nodeReadRecursion(vars, mf.data, mf.size, &p, &err, nodeCount);
+  mappedFileDestroy(&mf);
   if (err)
     RETURN_WITH_STATUS(err, NULL);
   return node;

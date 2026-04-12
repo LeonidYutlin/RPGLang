@@ -29,6 +29,14 @@
     "Failed memory reallocation",                                                  \
     "Failed to reallocate memory (realloc()). "                                    \
     "Allocated memory is still stored where it was before attempted reallocation") \
+  X(FailMemoryMapping,                                                             \
+    GenericError,                                                                  \
+    "Failed memory mapping",                                                       \
+    "Failed to map memory (using mmap()). See errno() for more info")              \
+  X(FailMemoryUnmapping,                                                           \
+    GenericError,                                                                  \
+    "Failed memory unmapping",                                                     \
+    "Failed to unmap memory (using munmap()). See errno() for more info")          \
   X(FailFileOpen,                                                                  \
     GenericError,                                                                  \
     "Failed to open file",                                                         \
