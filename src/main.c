@@ -20,7 +20,7 @@ int main(void) {
     return 1;
   }
 
-  logln(INFO, "Read file successfully!\n%s", mf.data);
+  logln(INFO, "Read file successfully!\n%*s", mf.size, mf.data);
 
   if (mappedFileDestroy(&mf)) {
     logln(FATAL, "Failed to mappedFileDestroy");
