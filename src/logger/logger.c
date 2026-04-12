@@ -61,11 +61,20 @@ Error logln_(LogLevel level, const char* fmt, ...) {
     if ((err = snTimestamp(tsBuf, TIMESTAMP_BUF_SZ)))
       return err;
 
-    fprintf(LOGGER.sink, "[%s][%s]", tsBuf, LOG_LEVELS[level]);
+    fprintf(LOGGER.sink, "[%s][%s]", tsBuf, getLogLevelStr(level));
     va_list args = {};
     va_start(args, fmt);
     vfprintf(LOGGER.sink, fmt, args);
     va_end(args);
 
     return OK;
+}
+
+static const char* UNKNOWN_LOG_LEVEL_STR = "unknown";
+
+const char* getLogLevelStr(LogLevel level) {
+  if (level < 0 || level >= LOG_LEVELS_SIZE)
+    return UNKNOWN_LOG_LEVEL_STR;
+
+  return LOG_LEVELS[level];
 }

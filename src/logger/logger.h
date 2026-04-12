@@ -25,6 +25,8 @@ typedef struct Logger {
   LogLevel level;
 } Logger;
 
+const char* getLogLevelStr(LogLevel level);
+
 /// filename can be NULL, this way logger sets the output to stderr
 Error loggerInit(const char* filename, LogLevel level);
 void  loggerCloseFile();
