@@ -17,8 +17,13 @@ typedef enum TokenType {
   #undef X
 } TokenType;
 
+extern const size_t TOKEN_TYPES_SIZE; 
+
+const char* getTokenTypeStr(TokenType type);
+
 typedef struct Token {
   TokenType type;
+  int64_t value;
   size_t line;
   size_t lineStart;
   size_t pos;

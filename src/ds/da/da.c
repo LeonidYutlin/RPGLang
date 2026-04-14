@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, Error* status) {
+DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, 
+                      free_f freeFunc, Error* status) {
   if (!initialCapacity || !itemSize)
     RETURN_WITH_STATUS(BadArgs, NULL);
 
@@ -11,7 +12,7 @@ DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, Error* status) {
     RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
 
   Error err = OK;
-  if ((err = daInit(da, initialCapacity, itemSize))) {
+  if ((err = daInit(da, initialCapacity, itemSize, freeFunc))) {
     free(da);
     RETURN_WITH_STATUS(err, NULL);
   }
@@ -19,8 +20,8 @@ DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, Error* status) {
   return da;
 }
 
-Error daInit(DynamicArray* da, 
-             size_t initialCapacity, size_t itemSize) {
+Error daInit(DynamicArray* da, size_t initialCapacity, 
+             size_t itemSize, free_f freeFunc) {
   if (!initialCapacity ||
       !itemSize ||
       !da)
@@ -34,6 +35,7 @@ Error daInit(DynamicArray* da,
   da->itemSize = itemSize;
   da->count    = 0;
   da->capacity = initialCapacity;
+  da->freeFunc = freeFunc;
 
   return OK;
 }
@@ -42,7 +44,7 @@ Error daDestroy(DynamicArray* da, bool isAlloced) {
   if (!da)
     return BadArgs;
 
-  if (da->items) {
+  if (da->items && da->freeFunc) {
     char* endOfItems = (char*)da->items + da->capacity * da->itemSize;
     size_t itemSize = da->itemSize;
     free_f freeFunc = da->freeFunc;
