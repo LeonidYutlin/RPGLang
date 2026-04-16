@@ -8,10 +8,11 @@
 #define TOKEN_TYPE_LIST()         \
   X(TOK_EOF,        "EOF")        \
   X(TOK_IDENTIFIER, "IDENTIFIER") \
+  X(TOK_SEMIC,      "';'")        \
   X(TOK_LPAR,       "'('")        \
   X(TOK_RPAR,       "')'")        \
-  X(TOK_LBRACE,       "'{'")      \
-  X(TOK_RBRACE,       "'}'")      \
+  X(TOK_LBRACE,     "'{'")        \
+  X(TOK_RBRACE,     "'}'")        \
   X(TOK_NUM_LIT,    "NUM_LITERAL")
 
 typedef enum TokenType {

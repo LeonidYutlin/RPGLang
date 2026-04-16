@@ -32,11 +32,19 @@ int main(int argc, char* argv[]) {
 
   for (size_t i = 0; i < lexer->tokens.count; i++) {
     Token* t = (Token*)daGet(&lexer->tokens, i);
-    if (t->type == TOK_NUM_LIT) {
-      printf("%s(%lu)(%.*s)\n", 
-             getTokenTypeStr(t->type), t->value, (int)t->len, lexer->mf.data + t->pos);
-    } else {
-      printf("%s\n", getTokenTypeStr(t->type));
+    switch (t->type) {
+      case TOK_NUM_LIT:
+        printf("%s(%lu)(%.*s)\n", 
+               getTokenTypeStr(t->type), t->value, 
+               (int)t->len, lexer->mf.data + t->pos);
+        break;
+      case TOK_IDENTIFIER:
+        printf("%s(%.*s)\n", 
+               getTokenTypeStr(t->type), 
+               (int)t->len, lexer->mf.data + t->pos);
+        break;
+      default:
+        printf("%s\n", getTokenTypeStr(t->type));
     }
   }
 

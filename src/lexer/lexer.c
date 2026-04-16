@@ -16,6 +16,8 @@ static const char* const TOKEN_TYPES[] = {
 
 const size_t TOKEN_TYPES_SIZE = sizer(TOKEN_TYPES);
 
+static bool isIn(char c, const char* str);
+
 Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
   if (fd < 0 || 
       !initCap)
@@ -62,6 +64,9 @@ Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
     lexer->pos++;                   \
  }
 
+static const char* const RESERVED_SPECIAL_CHARACTERS = ";(){}";
+static const char* const ROMAN_NUMERALS = "IVXLC";
+
 Error lexerAnalyze(Lexer* lexer) {
   Error err = OK;
   if ((err = lexerVerify(lexer)))
@@ -84,8 +89,9 @@ Error lexerAnalyze(Lexer* lexer) {
     
     // one-character long tokens
     switch (c) {
-      case '(': CONSUME_CHAR(TOK_LPAR); continue;
-      case ')': CONSUME_CHAR(TOK_RPAR); continue;
+      case ';': CONSUME_CHAR(TOK_SEMIC);  continue;
+      case '(': CONSUME_CHAR(TOK_LPAR);   continue;
+      case ')': CONSUME_CHAR(TOK_RPAR);   continue;
       case '{': CONSUME_CHAR(TOK_LBRACE); continue;
       case '}': CONSUME_CHAR(TOK_RBRACE); continue;
       default: break;
@@ -97,7 +103,7 @@ Error lexerAnalyze(Lexer* lexer) {
       size_t oldPos = lexer->pos;
       lexer->pos++;
       if (lexer->pos < bufSize &&
-          strchr("IVXLC", c = buf[lexer->pos]) != NULL) {
+          isIn(c = buf[lexer->pos], ROMAN_NUMERALS)) {
         uint64_t degree = 0;
         uint64_t newDegree = 0;
         uint64_t numBuf = 0;
@@ -137,6 +143,21 @@ Error lexerAnalyze(Lexer* lexer) {
       continue;
     }
 
+    // identifiers
+    size_t oldPos = lexer->pos;
+    lexer->pos++;
+    while (lexer->pos < bufSize &&
+           !isspace(c = buf[lexer->pos]) &&
+           !isIn(c, RESERVED_SPECIAL_CHARACTERS)) {
+      lexer->pos++;
+    }
+
+    EMIT(TOK_IDENTIFIER, 
+         oldPos,
+         lexer->pos - oldPos);
+    continue;
+
+    // should be unreachable
     logln(ERROR, "Unknown character '%c'. Skipping...", c);
     lexer->pos++;
   }
@@ -180,4 +201,8 @@ const char* getTokenTypeStr(TokenType type) {
     return UNKNOWN_TOKEN_TYPE_STR;
 
   return TOKEN_TYPES[type];
+}
+
+static bool isIn(char c, const char* str) {
+  return strchr(str, c) != NULL;
 }
