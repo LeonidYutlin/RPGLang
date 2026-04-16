@@ -181,6 +181,35 @@ Error lexerDestroy(Lexer* lexer) {
   return OK;
 }
 
+Error lexerPrintTokens(FILE* sink, Lexer* lexer) {
+  if (!sink)
+    return BadArgs;
+  Error err = OK;
+  if ((err = lexerVerify(lexer)))
+    return err;
+
+  for (size_t i = 0; i < lexer->tokens.count; i++) {
+    Token* t = (Token*)daGet(&lexer->tokens, i);
+    const char* tStr = getTokenTypeStr(t->type);
+    switch (t->type) {
+      case TOK_NUM_LIT:
+        fprintf(sink, 
+                "%s(%lu)(%.*s)\n", 
+                tStr, t->value, 
+                (int)t->len, lexer->mf.data + t->pos);
+        break;
+      case TOK_IDENTIFIER:
+        fprintf(sink, 
+                "%s(%.*s)\n", 
+                tStr, (int)t->len, lexer->mf.data + t->pos);
+        break;
+      default:
+        fprintf(sink, "%s\n", tStr);
+    }
+  }
+  return OK;
+}
+
 Error lexerVerify(Lexer* lexer) {
   if (!lexer)
     return BadArgs;

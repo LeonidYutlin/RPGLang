@@ -44,10 +44,10 @@ typedef struct Lexer {
   size_t pos;
 } Lexer;
 
-
 Lexer* lexerAlloc(int fd, size_t initCap, Error* status);
 Error  lexerAnalyze(Lexer* lexer);
 Error  lexerDestroy(Lexer* lexer);
+Error  lexerPrintTokens(FILE* sink, Lexer* lexer);
 Error  lexerVerify(Lexer* lexer);
 
 #endif
