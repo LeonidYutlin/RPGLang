@@ -1,4 +1,5 @@
 #include "lexer/lexer.h"
+#include "logger/logger.h"
 #include "utils/utils.h"
 #include <assert.h>
 #include <ctype.h>
@@ -41,17 +42,25 @@ Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
   return lexer;
 }
 
-#define EMIT(T, ...)                 \
-  {                                  \
-    newToken = (Token){              \
-      __VA_ARGS__ __VA_OPT__(,)      \
-      .type = T,                     \
-      .line = lexer->line,           \
-      .lineStart = lexer->lineStart, \
-      .pos = lexer->pos,             \
-    };                               \
-    daAppend(tokens, &newToken);     \
+#define EMIT(T, position, length, ...) \
+  {                                    \
+    newToken = (Token){                \
+      __VA_ARGS__ __VA_OPT__(,)        \
+      .type = T,                       \
+      .pos = position,                 \
+      .len = length,                   \
+      .line = lexer->line,             \
+      .lineStart = lexer->lineStart,   \
+    };                                 \
+    daAppend(tokens, &newToken);       \
   }
+
+#define CONSUME_CHAR(T, ...)        \
+ {                                  \
+    EMIT(T, lexer->pos, 1           \
+        __VA_OPT__(,) __VA_ARGS__); \
+    lexer->pos++;                   \
+ }
 
 Error lexerAnalyze(Lexer* lexer) {
   Error err = OK;
@@ -72,48 +81,71 @@ Error lexerAnalyze(Lexer* lexer) {
       lexer->pos++;
       continue;
     }
+    
+    // one-character long tokens
     switch (c) {
-      case '(': EMIT(TOK_LPAR); lexer->pos++; continue;
-      case ')': EMIT(TOK_RPAR); lexer->pos++; continue;
+      case '(': CONSUME_CHAR(TOK_LPAR); continue;
+      case ')': CONSUME_CHAR(TOK_RPAR); continue;
+      case '{': CONSUME_CHAR(TOK_LBRACE); continue;
+      case '}': CONSUME_CHAR(TOK_RBRACE); continue;
       default: break;
     }
 
-    if (strchr("IVX", c) != NULL) {
-      int num = 0;
-      bool cont = true;
-      int degree = 0;
-      int newDegree = 0;
-      int numBuf = 0;
-      while (cont) {
-        switch (c) {
-          case 'I': newDegree = 1;  break;
-          case 'V': newDegree = 5;  break;
-          case 'X': newDegree = 10; break;
-          default:  cont = false; num += numBuf; continue;
-        }
-        if (degree && 
-            degree != newDegree) {
-          if (degree < newDegree) {
-            numBuf *= -1;
-          }
-          num += numBuf;
-          numBuf = 0;
-        }
-        numBuf += newDegree;
-        degree = newDegree;
+    // numeric literals
+    if (c == '0') {
+      uint64_t num = 0;
+      size_t oldPos = lexer->pos;
+      lexer->pos++;
+      if (lexer->pos < bufSize &&
+          strchr("IVXLC", c = buf[lexer->pos]) != NULL) {
+        uint64_t degree = 0;
+        uint64_t newDegree = 0;
+        uint64_t numBuf = 0;
+        bool cont = true;
+        while (cont && lexer->pos < bufSize) {
 
-        lexer->pos++;
-        c = buf[lexer->pos];
+          c = buf[lexer->pos];
+          switch (c) {
+            case 'I': newDegree = 1;  break;
+            case 'V': newDegree = 5;  break;
+            case 'X': newDegree = 10; break;
+            case 'L': newDegree = 50; break;
+            case 'C': newDegree = 100; break;
+            default:  cont = false; num += numBuf; continue;
+          }
+
+          if (degree && 
+              degree != newDegree) {
+            if (degree < newDegree) {
+              num -= numBuf;
+            } else {
+              num += numBuf;
+            }
+            numBuf = 0;
+          }
+
+          degree = newDegree;
+          numBuf += degree;
+
+          lexer->pos++;
+        }
       }
-      EMIT(TOK_NUM_LIT, .value = num);
+      EMIT(TOK_NUM_LIT, 
+           oldPos,
+           lexer->pos - oldPos,
+           .value = num);
       continue;
     }
+
+    logln(ERROR, "Unknown character '%c'. Skipping...", c);
+    lexer->pos++;
   }
-  EMIT(TOK_EOF);
+  EMIT(TOK_EOF, lexer->pos, 0);
   return OK;
 }
 
 #undef EMIT
+#undef CONSUME_CHAR
 
 Error lexerDestroy(Lexer* lexer) {
   if (!lexer)

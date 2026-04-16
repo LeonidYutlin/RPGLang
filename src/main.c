@@ -24,6 +24,7 @@ int main(int argc, char* argv[]) {
     logln(FATAL, "lexerAlloc returned %s", parseError(err)->str);
     return 1;
   }
+
   if ((err = lexerAnalyze(lexer))) {
     logln(FATAL, "lexerAnalyze returned %s", parseError(err)->str);
     return 1;
@@ -32,14 +33,14 @@ int main(int argc, char* argv[]) {
   for (size_t i = 0; i < lexer->tokens.count; i++) {
     Token* t = (Token*)daGet(&lexer->tokens, i);
     if (t->type == TOK_NUM_LIT) {
-      printf("%s(%ld)\n", getTokenTypeStr(t->type), t->value);
+      printf("%s(%lu)(%.*s)\n", 
+             getTokenTypeStr(t->type), t->value, (int)t->len, lexer->mf.data + t->pos);
     } else {
       printf("%s\n", getTokenTypeStr(t->type));
     }
   }
 
   lexerDestroy(lexer);
-
   close(fd);
 
   loggerCloseFile();
