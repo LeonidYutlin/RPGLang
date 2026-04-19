@@ -161,14 +161,17 @@ static ListIndex listFindByKey(List* lst, StringView key) {
   for (ListIndex cur = lst->next[0];
        lst->next[cur] < lst->capacity;
        cur = lst->next[cur]) {
-    ListUnit* unit = lst->data + cur;
-    if (unit->key.size == key.size &&
-        strncmp(unit->key.data, key.data, key.size) == 0)
-      return cur;
-
-    if (!lst->next[cur])
+    if (!cur)
       break;
+    ListUnit* unit = lst->data + cur;
+    //logln(INFO, "Comparing %.*s and %.*s", key.size, key.data, unit->key.size, unit->key.data);
+    if (unit->key.size == key.size &&
+        strncmp(unit->key.data, key.data, key.size) == 0) {
+      //logln(INFO, "Success");
+      return cur;
+    }
   }
 
+  //logln(INFO, "Not Found");
   return 0;
 }

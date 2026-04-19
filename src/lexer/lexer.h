@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include "ds/da/da.h"
+#include "ds/hashtable/hashtable.h"
 #include "utils/utils.h"
 #include <stdint.h>
 
@@ -63,6 +64,8 @@ typedef enum TokenType {
   TOKEN_TYPE_LIST()
   #undef X
 } TokenType;
+
+extern HashTable KEYWORD_HT;
 
 extern const size_t TOKEN_TYPES_SIZE; 
 

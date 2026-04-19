@@ -1,10 +1,15 @@
 #include "lexer/lexer.h"
+#include "ds/hashtable/hashtable.h"
 #include "logger/logger.h"
 #include "utils/utils.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+
+static void keywordInit();
+
+HashTable KEYWORD_HT = (HashTable){};
 
 static bool isIn(char c, const char* str);
 
@@ -40,6 +45,9 @@ Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
   lexer->pos        = 0;
   lexer->line       = 1;
   lexer->lineStart  = 1;
+
+  if (!KEYWORD_HT.initialized)
+    keywordInit();
   return lexer;
 }
 
@@ -151,11 +159,11 @@ Error lexerAnalyze(Lexer* lexer) {
       lexer->pos++;
     }
 
-    // TODO: check for keywords
+    err = OK;
     size_t len = lexer->pos - oldPos;
-    // ....
-
-    EMIT(TOK_IDENTIFIER, 
+    TokenType kwType = (TokenType)hashTableGet(&KEYWORD_HT, 
+                   (StringView){ .data = lexer->mf.data + oldPos, .size = len }, &err);
+    EMIT(err == NotFound ? TOK_IDENTIFIER : kwType, 
          oldPos, len);
     continue;
 
@@ -236,4 +244,15 @@ const char* getTokenTypeStr(TokenType type) {
 
 static bool isIn(char c, const char* str) {
   return strchr(str, c) != NULL;
+}
+
+#define SV(str) (StringView){ .data = str, .size = sizeof(str) - 1 }
+
+static void keywordInit() {
+  //ignoring the errors?
+  hashTableInit(&KEYWORD_HT, 17, 8, hash);
+#define X(tok, str) hashTablePut(&KEYWORD_HT, SV(str), tok);
+  KEYWORD_LIST()
+#undef X
+  return;
 }
