@@ -14,10 +14,6 @@
     "count > capacity",                                                       \
     "The count field in DynamicArray"                                         \
     "is greater than the capacity field. "                                    \
-    "Potentially the count field has been corrupted or accidentally changed") \
-  X(ZeroSize,                                                                 \
-    DynamicArrayError,                                                        \
-    "capacity == 0 || elemSize == 0",                                         \
-    "A size_t field is zero, even though it shouldn't be")
+    "Potentially the count field has been corrupted or accidentally changed")
 
 #endif

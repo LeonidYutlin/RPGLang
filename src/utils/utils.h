@@ -2,8 +2,10 @@
 #define UTILS_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include "ds/hashtable/entry.h"
 #include "error/error.h"
 
 #define sizer(a) (sizeof((a)) / sizeof((a)[0]))
@@ -39,5 +41,7 @@ typedef struct MappedFile {
 
 Error mappedFileInit(int fileDescriptor, MappedFile* mappedFile); 
 Error mappedFileDestroy(MappedFile* mappedFile); 
+
+uint64_t hash(StringView strView);
 
 #endif

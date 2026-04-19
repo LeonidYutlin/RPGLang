@@ -1,10 +1,55 @@
+#include "ds/dump.h"
+#include "ds/hashtable/entry.h"
+#include "ds/hashtable/hashtable.h"
 #include "lexer/lexer.h"
 #include "logger/logger.h"
 #include "error/error.h"
 #include <fcntl.h>
 #include <unistd.h>
 
+#define SV(str) (StringView){ .data = str, .size = sizeof(str) - 1 }
+
+int main() {
+  loggerInit(".log/!latest.txt", DEBUG);
+  FILE* logFile = openHtmlLogFile("./.log/");
+  if (!logFile)
+    return 80;
+  Error err = OK;
+  HashTable* t = hashTableAlloc(17, 8, hash, &err);
+  if (err)
+    return err;
+  
+  hashTableDump(logFile, t, "<h2>alloced</h2>");
+
+#define X(tok, str) hashTablePut(t, SV(str), tok);
+  KEYWORD_LIST()
+#undef X
+
+  hashTableDump(logFile, t, "<h2>Added elements</h2>");
+
+  char buf[] = "Cat";
+
+  uint64_t v = hashTableGet(t, SV("#warlock"), &err);
+  if (err != OK &&
+      err != NotFound)
+    return err;
+  printf("#warlock is %lu\n", v);
+
+  v = hashTableGet(t, (StringView){.data = buf, .size = 3}, &err);
+  if (err != OK &&
+      err != NotFound)
+    return err;
+  printf("Cat is %lu\n", v);
+
+  hashTableDestroy(t, true);
+  fclose(logFile);
+  loggerCloseFile();
+  return 0;
+}
+/*
 int main(int argc, char* argv[]) {
+  
+
   if (argc < 2) {
     fprintf(stderr, "Usage: %s <filepath>\n", argv[0]);
     return 1;
@@ -34,7 +79,7 @@ int main(int argc, char* argv[]) {
 
   lexerDestroy(lexer);
   close(fd);
-
   loggerCloseFile();
   return 0;
 }
+*/

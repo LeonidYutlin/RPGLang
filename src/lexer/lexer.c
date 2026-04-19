@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static bool isIn(char c, const char* str);
+
 static const char* const TOKEN_TYPES[] = {
   #define X(enm, str) \
     [enm] = str,
@@ -13,10 +15,7 @@ static const char* const TOKEN_TYPES[] = {
   TOKEN_TYPE_LIST()
   #undef X
 };
-
 const size_t TOKEN_TYPES_SIZE = sizer(TOKEN_TYPES);
-
-static bool isIn(char c, const char* str);
 
 Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
   if (fd < 0 || 
@@ -65,7 +64,8 @@ Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
  }
 
 static const char* const RESERVED_SPECIAL_CHARACTERS = ";(){}";
-static const char* const ROMAN_NUMERALS = "IVXLC";
+static const char* const ROMAN_NUMERAL_CHARS = "IVXLC";
+static const char ROMAN_NUMERAL_PREFIX = '0';
 
 Error lexerAnalyze(Lexer* lexer) {
   Error err = OK;
@@ -98,18 +98,17 @@ Error lexerAnalyze(Lexer* lexer) {
     }
 
     // numeric literals
-    if (c == '0') {
+    if (c == ROMAN_NUMERAL_PREFIX) {
       uint64_t num = 0;
       size_t oldPos = lexer->pos;
       lexer->pos++;
       if (lexer->pos < bufSize &&
-          isIn(c = buf[lexer->pos], ROMAN_NUMERALS)) {
+          isIn(c = buf[lexer->pos], ROMAN_NUMERAL_CHARS)) {
         uint64_t degree = 0;
         uint64_t newDegree = 0;
         uint64_t numBuf = 0;
         bool cont = true;
         while (cont && lexer->pos < bufSize) {
-
           c = buf[lexer->pos];
           switch (c) {
             case 'I': newDegree = 1;  break;
@@ -152,9 +151,12 @@ Error lexerAnalyze(Lexer* lexer) {
       lexer->pos++;
     }
 
+    // TODO: check for keywords
+    size_t len = lexer->pos - oldPos;
+    // ....
+
     EMIT(TOK_IDENTIFIER, 
-         oldPos,
-         lexer->pos - oldPos);
+         oldPos, len);
     continue;
 
     // should be unreachable

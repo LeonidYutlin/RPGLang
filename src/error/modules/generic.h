@@ -55,6 +55,14 @@
     "An initialized struct was attempted to be reinitialized",                     \
     "An initialized struct was attempted to be reinitialized."                     \
     "If you really want to reinitialize it, destroy/deinitialize it first")        \
+  X(ZeroSize,                                                                      \
+    GenericError,                                                                  \
+    "Expected non-zero size_t field",                                              \
+    "A size_t field is zero, even though it shouldn't be")                         \
+  X(Uninitialized,                                                                 \
+    GenericError,                                                                  \
+    "A struct is uninitialized",                                                   \
+    "A struct is unititialized. To use it you must init it first")                 \
   X(LongFormat,                                                                    \
     GenericError,                                                                  \
     "Formatted string exceeds byte limit",                                         \
