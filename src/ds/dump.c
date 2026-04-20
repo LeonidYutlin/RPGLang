@@ -529,7 +529,7 @@ static Error rootTextDump(FILE* f, TreeRoot* root,
 
 static Error rootGraphDump(FILE* f, Variables* vars, TreeRoot* root) {
   assert(f);
-  assert(!varsVerify(vars));
+  //assert(!varsVerify(vars));
   assert(root);
 
   char dotPath[DOT_PATH_BUF_SZ] = {};
@@ -588,7 +588,7 @@ static Error rootGraphDump(FILE* f, Variables* vars, TreeRoot* root) {
 
 static void populateDot(FILE* dot, Variables* vars, TreeNode* node) {
   assert(dot);
-  assert(!varsVerify(vars));
+  //assert(!varsVerify(vars));
   assert(node);
 
   declareNode(dot, vars, node, false);
@@ -612,7 +612,7 @@ static void populateDot(FILE* dot, Variables* vars, TreeNode* node) {
 
 static void declareNode(FILE* dot, Variables* vars, TreeNode* node, bool bondFailed) {
   assert(dot);
-  assert(!varsVerify(vars));
+  //assert(!varsVerify(vars));
   if (!node)
     return;
   

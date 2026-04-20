@@ -48,14 +48,14 @@
   X(TOK_SYMBIOSIS, "symbiosis")
 
 
-#define TOKEN_TYPE_LIST()         \
-  X(TOK_EOF,        "EOF")        \
-  X(TOK_IDENTIFIER, "IDENTIFIER") \
-  X(TOK_SEMIC,      "';'")        \
-  X(TOK_LPAR,       "'('")        \
-  X(TOK_RPAR,       "')'")        \
-  X(TOK_LBRACE,     "'{'")        \
-  X(TOK_RBRACE,     "'}'")        \
+#define TOKEN_TYPE_LIST()          \
+  X(TOK_EOF,        "EOF")         \
+  X(TOK_IDENTIFIER, "IDENTIFIER")  \
+  X(TOK_SEMIC,      "';'")         \
+  X(TOK_LPAREN,       "'('")       \
+  X(TOK_RPAREN,       "')'")       \
+  X(TOK_LBRACE,     "'{'")         \
+  X(TOK_RBRACE,     "'}'")         \
   X(TOK_NUM_LIT,    "NUM_LITERAL") \
   KEYWORD_LIST()
 
