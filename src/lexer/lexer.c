@@ -22,6 +22,27 @@ static const char* const TOKEN_TYPES[] = {
 };
 const size_t TOKEN_TYPES_SIZE = sizer(TOKEN_TYPES);
 
+Error lexerInit(Lexer* lexer, int fd, size_t initCap) {
+  if (fd < 0 || 
+      !initCap)
+    return BadArgs;
+
+  Error err = OK;
+  if ((err = daInit(&lexer->tokens, initCap, sizeof(Token), NULL)))
+    return err;
+
+  if ((err = mappedFileInit(fd, &lexer->mf)))
+    return err;
+
+  lexer->pos        = 0;
+  lexer->line       = 1;
+  lexer->lineStart  = 1;
+
+  if (!KEYWORD_HT.initialized)
+    keywordInit();
+  return OK;
+}
+
 Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
   if (fd < 0 || 
       !initCap)
@@ -32,22 +53,11 @@ Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
     RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
 
   Error err = OK;
-  if ((err = daInit(&lexer->tokens, initCap, sizeof(Token), NULL))) {
+  if ((err = lexerInit(lexer, fd, initCap))) {
     free(lexer);
     RETURN_WITH_STATUS(err, NULL);
   }
 
-  if ((err = mappedFileInit(fd, &lexer->mf))) {
-    free(lexer);
-    RETURN_WITH_STATUS(err, NULL);
-  }
-
-  lexer->pos        = 0;
-  lexer->line       = 1;
-  lexer->lineStart  = 1;
-
-  if (!KEYWORD_HT.initialized)
-    keywordInit();
   return lexer;
 }
 
@@ -98,8 +108,8 @@ Error lexerAnalyze(Lexer* lexer) {
     // one-character long tokens
     switch (c) {
       case ';': CONSUME_CHAR(TOK_SEMIC);  continue;
-      case '(': CONSUME_CHAR(TOK_LPAR);   continue;
-      case ')': CONSUME_CHAR(TOK_RPAR);   continue;
+      case '(': CONSUME_CHAR(TOK_LPAREN);   continue;
+      case ')': CONSUME_CHAR(TOK_RPAREN);   continue;
       case '{': CONSUME_CHAR(TOK_LBRACE); continue;
       case '}': CONSUME_CHAR(TOK_RBRACE); continue;
       default: break;
@@ -178,7 +188,7 @@ Error lexerAnalyze(Lexer* lexer) {
 #undef EMIT
 #undef CONSUME_CHAR
 
-Error lexerDestroy(Lexer* lexer) {
+Error lexerDestroy(Lexer* lexer, bool isAlloced) {
   if (!lexer)
     return BadArgs;
   
@@ -186,7 +196,8 @@ Error lexerDestroy(Lexer* lexer) {
   if (lexer->mf.data)
     mappedFileDestroy(&lexer->mf);
     
-  free(lexer);
+  if (isAlloced)
+    free(lexer);
 
   return OK;
 }

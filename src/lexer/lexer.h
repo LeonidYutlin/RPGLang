@@ -90,9 +90,10 @@ typedef struct Lexer {
   size_t pos;
 } Lexer;
 
+Error  lexerInit(Lexer* lexer, int fd, size_t initCap);
 Lexer* lexerAlloc(int fd, size_t initCap, Error* status);
 Error  lexerAnalyze(Lexer* lexer);
-Error  lexerDestroy(Lexer* lexer);
+Error  lexerDestroy(Lexer* lexer, bool isAlloced);
 Error  lexerPrintTokens(FILE* sink, Lexer* lexer);
 Error  lexerVerify(Lexer* lexer);
 

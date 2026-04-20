@@ -22,38 +22,38 @@ int main(int argc, char* argv[]) {
   }
 
   Error err = OK;
-  Lexer* lexer = lexerAlloc(fd, 16, &err);
-  if (err) {
-    logln(FATAL, "lexerAlloc returned %s", parseError(err)->str);
+  Lexer lexer = (Lexer){};
+  if ((err = lexerInit(&lexer, fd, 16))) {
+    logln(FATAL, "lexerInit returned %s", parseError(err)->str);
     close(fd);
-    loggerCloseFile(); 
+    loggerCloseFile();
     return 1;
   }
 
   FILE* logFile = openHtmlLogFile("./.log/");
   if (!logFile) {
-    lexerDestroy(lexer);
+    lexerDestroy(&lexer, false);
     close(fd);
     loggerCloseFile(); 
     return 1;
   }
   //hashTableDump(logFile, &KEYWORD_HT, "test");
 
-  if ((err = lexerAnalyze(lexer))) {
+  if ((err = lexerAnalyze(&lexer))) {
     logln(FATAL, "lexerAnalyze returned %s", parseError(err)->str);
     closeHtmlLogFile(logFile);
-    lexerDestroy(lexer);
+    lexerDestroy(&lexer, false);
     close(fd);
     loggerCloseFile(); 
     return 1;
   }
 
   //lexerPrintTokens(stdout, lexer);
-  TreeNode* ast = parse(&lexer->tokens);
+  TreeNode* ast = parse(&lexer.tokens);
   if (!ast) {
     fprintf(stderr, "Failed to parse\n");
     closeHtmlLogFile(logFile);
-    lexerDestroy(lexer);
+    lexerDestroy(&lexer, false);
     close(fd);
     loggerCloseFile(); 
     return 1;
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
 
   nodeDestroy(ast);
   closeHtmlLogFile(logFile);
-  lexerDestroy(lexer);
+  lexerDestroy(&lexer, false);
   close(fd);
   loggerCloseFile();
   return 0;
