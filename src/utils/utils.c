@@ -87,13 +87,3 @@ Error mappedFileDestroy(MappedFile* mappedFile) {
   mappedFile->size = 0;
   return OK;
 }
-
-uint64_t hash(StringView strView) {
-  uint64_t hash = 5381;
-
-  for (size_t i = 0; i < strView.size; i++)
-    hash = ((hash << 5) + hash) + (uint64_t)strView.data[i]; /* hash * 33 + c */
-
-  //logln(INFO, "%.*s is %lu", strView.size, strView.data, hash);
-  return hash;
-}

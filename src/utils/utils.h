@@ -5,15 +5,14 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include "ds/hashtable/entry.h"
 #include "error/error.h"
 
 #define sizer(a) (sizeof((a)) / sizeof((a)[0]))
 
 #if defined(__GNUC__) || defined(__clang__)
-#define unused __attribute__ ((unused))
+#define _unused __attribute__ ((unused))
 #else 
-#define unused 
+#define _unused 
 #endif
 
 bool doubleEqual(double a, double b);
@@ -41,7 +40,5 @@ typedef struct MappedFile {
 
 Error mappedFileInit(int fileDescriptor, MappedFile* mappedFile); 
 Error mappedFileDestroy(MappedFile* mappedFile); 
-
-uint64_t hash(StringView strView);
 
 #endif

@@ -65,8 +65,6 @@ typedef enum TokenType {
   #undef X
 } TokenType;
 
-extern HashTable KEYWORD_HT;
-
 extern const size_t TOKEN_TYPES_SIZE; 
 
 const char* getTokenTypeStr(TokenType type);

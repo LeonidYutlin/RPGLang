@@ -7,10 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void keywordInit();
+static HashTable KEYWORD_HT = (HashTable){};
+static size_t KEYWORD_HT_REFCOUNT = 0;
 
-HashTable KEYWORD_HT = (HashTable){};
-
+static Error keywordInit();
 static bool isIn(char c, const char* str);
 
 static const char* const TOKEN_TYPES[] = {
@@ -38,8 +38,11 @@ Error lexerInit(Lexer* lexer, int fd, size_t initCap) {
   lexer->line       = 1;
   lexer->lineStart  = 1;
 
-  if (!KEYWORD_HT.initialized)
-    keywordInit();
+  if (!KEYWORD_HT_REFCOUNT &&
+      (err = keywordInit())) {
+    return err;
+  }
+  KEYWORD_HT_REFCOUNT++;
   return OK;
 }
 
@@ -171,8 +174,11 @@ Error lexerAnalyze(Lexer* lexer) {
 
     err = OK;
     size_t len = lexer->pos - oldPos;
-    TokenType kwType = (TokenType)hashTableGet(&KEYWORD_HT, 
-                   (StringView){ .data = lexer->mf.data + oldPos, .size = len }, &err);
+    StringView strView = (StringView){ 
+      .data = lexer->mf.data + oldPos, 
+      .size = len 
+    };
+    TokenType kwType = (TokenType)hashTableGet(&KEYWORD_HT, strView, &err);
     EMIT(err == NotFound ? TOK_IDENTIFIER : kwType, 
          oldPos, len);
     continue;
@@ -199,6 +205,9 @@ Error lexerDestroy(Lexer* lexer, bool isAlloced) {
   if (isAlloced)
     free(lexer);
 
+  KEYWORD_HT_REFCOUNT--;
+  if (!KEYWORD_HT_REFCOUNT)
+    hashTableDestroy(&KEYWORD_HT, false);
   return OK;
 }
 
@@ -257,13 +266,48 @@ static bool isIn(char c, const char* str) {
   return strchr(str, c) != NULL;
 }
 
-#define SV(str) (StringView){ .data = str, .size = sizeof(str) - 1 }
+static uint64_t hashdjb2(StringView strView);
+static uint64_t hashRotate(StringView strView);
 
-static void keywordInit() {
-  //ignoring the errors?
-  hashTableInit(&KEYWORD_HT, 17, 8, hash);
-#define X(tok, str) hashTablePut(&KEYWORD_HT, SV(str), tok);
+static const size_t KEYWORD_HT_BUCKET_SIZE = 101;
+static const size_t KEYWORD_HT_LIST_CAPACITY = 4;
+static const hash_f KEYWORD_HT_HASH_FUNC = hashRotate;
+
+static Error keywordInit() {
+  Error err = OK;
+  if ((err = hashTableInit(&KEYWORD_HT, 
+                           KEYWORD_HT_BUCKET_SIZE, 
+                           KEYWORD_HT_LIST_CAPACITY, 
+                           KEYWORD_HT_HASH_FUNC)))
+    return err;
+
+#define SV(str) (StringView){ .data = str, .size = sizeof(str) - 1 }
+#define X(tok, str) if ((err = hashTablePut(&KEYWORD_HT, SV(str), tok))) return err;
   KEYWORD_LIST()
 #undef X
-  return;
+#undef SV
+
+  return OK;
+}
+
+//NOTE: Mainly taken from: http://www.cse.yorku.ca/~oz/hash.html
+static _unused uint64_t hashdjb2(StringView strView) {
+  uint64_t hash = 5381;
+
+  for (size_t i = 0; i < strView.size; i++)
+    hash = ((hash << 5) + hash) + (uint64_t)strView.data[i]; /* hash * 33 + c */
+
+  return hash;
+}
+
+static _unused uint64_t hashRotate(StringView strView) {
+  uint64_t hash = 0;
+ 
+  //NOTE: Source for left rotation: https://stackoverflow.com/a/13289498
+  for (size_t i = 0; i < strView.size; i++) {
+    hash = (hash << 1) | (hash >> ((sizeof(hash) - 1) % sizeof(hash)));
+    hash ^= (uint64_t)strView.data[i];
+  }
+
+  return hash;
 }

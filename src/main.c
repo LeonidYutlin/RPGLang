@@ -44,7 +44,6 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
   htmlLogInited = true;
-  //hashTableDump(logFile, &KEYWORD_HT, "test");
 
   if ((err = lexerAnalyze(&lexer))) {
     logln(FATAL, "lexerAnalyze returned %s", parseError(err)->str);
