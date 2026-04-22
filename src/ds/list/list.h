@@ -11,7 +11,7 @@
 typedef uint64_t ListIndex;
 #define LIST_INDEX_FMT "%lu"
 
-/// everything needed to change the type that List stores
+// everything needed to change the type that List stores
 typedef Entry ListUnit;
 extern const ListUnit LIST_UNIT_CANARY;
 extern const ListUnit LIST_UNIT_ZERO;
@@ -20,12 +20,13 @@ extern const ListUnit LIST_UNIT_ZERO;
   "data = %.*s "  \
   "size = %zu "       \
   "hash = %lu "       \
-  "value = %lu"
+  "value = %u"
 #define LIST_UNIT_FMT_ARGS(a)        \
   (int)(a)->key.size, (a)->key.data, \
   (a)->key.size,                     \
-  (a)->hash, (a)->value
-///
+  (a)->hash,                         \
+  (a)->value
+//
 
 typedef struct {
   ListIndex capacity;

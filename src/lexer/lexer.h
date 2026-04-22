@@ -2,7 +2,6 @@
 #define LEXER_H
 
 #include "ds/da/da.h"
-#include "ds/hashtable/hashtable.h"
 #include "utils/utils.h"
 #include <stdint.h>
 

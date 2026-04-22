@@ -1,9 +1,9 @@
 #include "ds/tree/node/callback.h"
 #include "utils/utils.h"
 
-Error countNodesCallback(unused TreeNode* node, 
+Error countNodesCallback(_unused TreeNode* node, 
                          void* data, 
-                         unused uint level) {
+                         _unused uint level) {
   if (!data)
     return BadArgs;
   size_t* nodeCount = (size_t*)data;
@@ -13,7 +13,7 @@ Error countNodesCallback(unused TreeNode* node,
 
 // here non-zero return is treated as found variable
 Error findVariableCallback(TreeNode* node, void* data, 
-                           unused uint level) {
+                           _unused uint level) {
   if (data)
     return OK; //nothing to find
 

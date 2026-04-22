@@ -1,6 +1,7 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
+#include "lexer/lexer.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -12,7 +13,7 @@ typedef struct {
 typedef struct {
   StringView key;
   uint64_t   hash;
-  uint64_t   value; //TODO: change to tok type
+  TokenType  value;
 } Entry;
 
 #endif

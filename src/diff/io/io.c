@@ -205,9 +205,9 @@ static TreeNode* nodeReadRecursion(Variables* vars,
 #undef DUMP_ERROR_RETURN
 #undef SKIP_WHITESPACE
 
-Error nodePutcCallback(unused TreeNode* node, 
+Error nodePutcCallback(_unused TreeNode* node, 
                        void* data,
-                       unused uint level) {
+                       _unused uint level) {
   if (!data)
     return BadArgs;
 
@@ -220,7 +220,7 @@ Error nodePutcCallback(unused TreeNode* node,
 }
 
 Error nodePrintCallback(TreeNode* node, void* data, 
-                        unused uint level) {
+                        _unused uint level) {
   if (!data)
     return BadArgs;
 
@@ -229,7 +229,7 @@ Error nodePrintCallback(TreeNode* node, void* data,
 }
 
 Error nodePutcAndPrintCallback(TreeNode* node, void* data, 
-                              unused uint level) {
+                               _unused uint level) {
   return nodePutcCallback(node, data, level) ||
          nodePrintCallback(node, data, level);
 }

@@ -60,7 +60,7 @@ HashTable* hashTableAlloc(size_t bucketCount, size_t initialListCapacity,
   return table;
 }
 
-Error hashTablePut(HashTable* table, StringView key, uint64_t value) {
+Error hashTablePut(HashTable* table, StringView key, TokenType value) {
   Error err = OK;
   if ((err = hashTableVerify(table)))
     return err;
@@ -86,7 +86,7 @@ Error hashTablePut(HashTable* table, StringView key, uint64_t value) {
   return OK;
 }
 
-uint64_t hashTableGet(HashTable* table, StringView key, Error* status) {
+TokenType hashTableGet(HashTable* table, StringView key, Error* status) {
   Error err = OK;
   if ((err = hashTableVerify(table)))
     RETURN_WITH_STATUS(err, 0);

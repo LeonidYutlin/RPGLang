@@ -19,8 +19,8 @@ Error hashTableInit(HashTable* table, size_t bucketCount,
                     size_t initialListCapacity, hash_f hashFunc);
 HashTable* hashTableAlloc(size_t bucketCount, size_t initialListCapacity, 
                           hash_f hashFunc, Error* status);
-Error hashTablePut(HashTable* table, StringView key, uint64_t value);
-uint64_t hashTableGet(HashTable* table, StringView key, Error* status);
+Error hashTablePut(HashTable* table, StringView key, TokenType value);
+TokenType hashTableGet(HashTable* table, StringView key, Error* status);
 Error hashTableDelete(HashTable* table, StringView key);
 Error hashTableVerify(HashTable* table);
 Error hashTableDestroy(HashTable* table, bool isAlloced);
