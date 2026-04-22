@@ -88,7 +88,6 @@ Error listDump_(FILE* f, List* lst, const char* commentary,
   ++CALL_COUNT;
 
   listVerify(lst);
-  listLoopCheck(lst);
 
   if (listTextDump(f, lst, commentary, 
                    filename, line))
