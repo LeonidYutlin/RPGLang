@@ -17,12 +17,12 @@ int main(int argc, char* argv[]) {
   bool lexerInited   = false;
   bool htmlLogInited = false;
   bool astInited     = false;
-  loggerInit(".log/!latest.txt", DEBUG);
+  loggerInit(NULL, ERROR);
   loggerInited = true;
 
   int fd = open(argv[1], O_RDONLY);
   if (fd < 0) {
-    logln(FATAL, "Failed to open");
+    logln(FATAL, "Failed to open \"%s\"", argv[1]);
     exitValue = FailFileOpen;
     goto exit;
   }
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
   //lexerPrintTokens(stdout, lexer);
   TreeNode* ast = parse(&lexer.tokens);
   if (!ast) {
-    fprintf(stderr, "Failed to parse\n");
+    fprintf(stderr, "Failed to parse token stream\n");
     exitValue = Fail;
     goto exit;
   }

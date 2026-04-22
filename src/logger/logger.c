@@ -38,7 +38,6 @@ Error loggerInit(const char* filename, LogLevel level) {
 }
 
 void loggerCloseFile() {
-  // можно еще проверить stdout но инит не позволяет такой случай, поэтому не проверяем
   if (LOGGER.sink &&
       LOGGER.sink != stderr) {
     logln(INFO, "Logger waves goodbye\n"
