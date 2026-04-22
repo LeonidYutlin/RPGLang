@@ -12,13 +12,19 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  //loggerInit(".log/!latest.txt", DEBUG);
-  loggerInit(NULL, DEBUG);
+  int  exitValue = 0;
+  bool loggerInited  = false;
+  bool lexerInited   = false;
+  bool htmlLogInited = false;
+  bool astInited     = false;
+  loggerInit(".log/!latest.txt", DEBUG);
+  loggerInited = true;
 
   int fd = open(argv[1], O_RDONLY);
   if (fd < 0) {
     logln(FATAL, "Failed to open");
-    return 1;
+    exitValue = FailFileOpen;
+    goto exit;
   }
 
   Error err = OK;
@@ -26,44 +32,44 @@ int main(int argc, char* argv[]) {
   if ((err = lexerInit(&lexer, fd, 16))) {
     logln(FATAL, "lexerInit returned %s", parseError(err)->str);
     close(fd);
-    loggerCloseFile();
-    return 1;
+    exitValue = err;
+    goto exit;
   }
+  lexerInited = true;
+  close(fd);
 
   FILE* logFile = openHtmlLogFile("./.log/");
   if (!logFile) {
-    lexerDestroy(&lexer, false);
-    close(fd);
-    loggerCloseFile(); 
-    return 1;
+    exitValue = FailFileOpen; 
+    goto exit;
   }
+  htmlLogInited = true;
   //hashTableDump(logFile, &KEYWORD_HT, "test");
 
   if ((err = lexerAnalyze(&lexer))) {
     logln(FATAL, "lexerAnalyze returned %s", parseError(err)->str);
-    closeHtmlLogFile(logFile);
-    lexerDestroy(&lexer, false);
-    close(fd);
-    loggerCloseFile(); 
-    return 1;
+    exitValue = err;
+    goto exit;
   }
 
   //lexerPrintTokens(stdout, lexer);
   TreeNode* ast = parse(&lexer.tokens);
   if (!ast) {
     fprintf(stderr, "Failed to parse\n");
-    closeHtmlLogFile(logFile);
-    lexerDestroy(&lexer, false);
-    close(fd);
-    loggerCloseFile(); 
-    return 1;
+    exitValue = Fail;
+    goto exit;
   }
+  astInited = true;
   nodeDump(logFile, NULL, ast, "Parsed Tree");
 
-  nodeDestroy(ast);
-  closeHtmlLogFile(logFile);
-  lexerDestroy(&lexer, false);
-  close(fd);
-  loggerCloseFile();
-  return 0;
+exit:
+  if (loggerInited)
+    loggerCloseFile();
+  if (lexerInited)
+    lexerDestroy(&lexer, false);
+  if (htmlLogInited)
+    closeHtmlLogFile(logFile);
+  if (astInited)
+    nodeDestroy(ast);
+  return exitValue;
 }
