@@ -1,0 +1,6 @@
+General ::= Expression EOF
+Expression ::= Term (("unite" | "hit") Term)*
+Term ::= Primary (("empower" | "shatter") Primary)*
+Primary ::= Number
+          | "(" Expression ")"
+Number ::= "0" ("I" | "V" | "X" | "L" | "C")+
