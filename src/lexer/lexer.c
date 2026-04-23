@@ -180,7 +180,7 @@ Error lexerAnalyze(Lexer* lexer) {
     };
     TokenType kwType = hashTableGet(&KEYWORD_HT, strView, &err);
     if (err == NotFound) {
-      EMIT(TOK_IDENTIFIER, oldPos, len, .value = buf[oldPos]);
+      EMIT(TOK_IDENTIFIER, oldPos, len);
     } else {
       EMIT(kwType, oldPos, len);
     }

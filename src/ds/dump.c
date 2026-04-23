@@ -59,9 +59,9 @@ static Error hashTableTextDump(FILE* f, HashTable* table,
 static Error hashTableGraphDump(FILE* f, HashTable* table);
 static Error rootTextDump(FILE* f, TreeRoot* root,
                           const char* commentary, const char* filename, int line);
-static Error rootGraphDump(FILE* f,  Variables* vars, TreeRoot* root);
-static void populateDot(FILE* dot, Variables* vars, TreeNode* node);
-static void declareNode(FILE* dot, Variables* vars, TreeNode* node, bool bondFailed);
+static Error rootGraphDump(FILE* f, TreeRoot* root);
+static void populateDot(FILE* dot, TreeNode* node);
+static void declareNode(FILE* dot, TreeNode* node, bool bondFailed);
 static void declareRank(FILE* dot, TreeNode* node, Queue** queue);
 static void executeDot(FILE* f, char* dotPath);
 
@@ -409,7 +409,7 @@ static Error listGraphDump(FILE* f, List* lst) {
     return OK;
 }
 
-void rootDump(FILE* f, Variables* vars, TreeRoot* root, 
+void rootDump(FILE* f, TreeRoot* root, 
               const char* commentary, const char* filename, int line) {
   assert(f);
   assert(filename);
@@ -421,11 +421,11 @@ void rootDump(FILE* f, Variables* vars, TreeRoot* root,
   if (rootTextDump(f, root, commentary, filename, line))
     return;
 
-  rootGraphDump(f, vars, root);
+  rootGraphDump(f, root);
   logln(INFO, "rootDump (overall dump #%u) ended", CALL_COUNT);
 }
 
-void nodeDump(FILE* f, Variables* vars, TreeNode* node, 
+void nodeDump(FILE* f, TreeNode* node, 
               const char* commentary, const char* filename, int line) {
   assert(f);
   assert(filename);
@@ -462,7 +462,7 @@ void nodeDump(FILE* f, Variables* vars, TreeNode* node,
     return;
   }
   DOT_HEADER_INIT(dot);
-  populateDot(dot, vars, node);
+  populateDot(dot, node);
   fputs("}\n", dot);
   fclose(dot);
   fputs("Graphical Dump:\n", f);
@@ -526,9 +526,8 @@ static Error rootTextDump(FILE* f, TreeRoot* root,
   return !root->rootNode ? Fail : OK;
 }
 
-static Error rootGraphDump(FILE* f, Variables* vars, TreeRoot* root) {
+static Error rootGraphDump(FILE* f, TreeRoot* root) {
   assert(f);
-  //assert(!varsVerify(vars));
   assert(root);
 
   char dotPath[DOT_PATH_BUF_SZ] = {};
@@ -571,7 +570,7 @@ static Error rootGraphDump(FILE* f, Variables* vars, TreeRoot* root) {
           TABLE_FILL, root,
           TABLE_FILL, root->rootNode);
 
-  populateDot(dot, vars, root->rootNode);
+  populateDot(dot, root->rootNode);
 
   fprintf(dot, "root -> node%p [color=\"%s\"]\n", root->rootNode, OK_EDGE);
   fputs("}\n", dot);
@@ -585,12 +584,11 @@ static Error rootGraphDump(FILE* f, Variables* vars, TreeRoot* root) {
 
 #undef DOT_HEADER_INIT
 
-static void populateDot(FILE* dot, Variables* vars, TreeNode* node) {
+static void populateDot(FILE* dot, TreeNode* node) {
   assert(dot);
-  //assert(!varsVerify(vars));
   assert(node);
 
-  declareNode(dot, vars, node, false);
+  declareNode(dot, node, false);
   Queue* queue = NULL;
   declareRank(dot, node, &queue);
 }
@@ -601,17 +599,16 @@ static void populateDot(FILE* dot, Variables* vars, TreeNode* node) {
      if (child->parent == node) {                                                 \
        fprintf(dot, "node%p -> node%p [color=\"%s\", arrowtail=vee, dir=both]\n", \
                node, child, OK_EDGE);                                             \
-       declareNode(dot, vars, child, false);                                      \
+       declareNode(dot, child, false);                                            \
      } else {                                                                     \
        fprintf(dot, "node%p -> node%p [color=\"%s\"]\n", node, child, BAD_EDGE);  \
-       declareNode(dot, vars, child, true);                                       \
+       declareNode(dot, child, true);                                             \
      }                                                                            \
    }                                                                              \
    }
 
-static void declareNode(FILE* dot, Variables* vars, TreeNode* node, bool bondFailed) {
+static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
   assert(dot);
-  //assert(!varsVerify(vars));
   if (!node)
     return;
   
@@ -650,13 +647,21 @@ static void declareNode(FILE* dot, Variables* vars, TreeNode* node, bool bondFai
       break;
     case VAR_TYPE:
       {
-        Variable* v = getVar(vars, node->data.value.var, NULL);
-        fprintf(dot,
-                "<tr>"
-                  "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %s</td>"
-                "</tr>",
-                v ? VALUE_FILL : BAD_FILL, 
-                v ? v->str     : "ERROR: no var with such index");
+        StringView var = node->data.value.var;
+        if (var.data) 
+          fprintf(dot,
+                  "<tr>"
+                    "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %.*s</td>"
+                  "</tr>",
+                  VALUE_FILL,
+                  (int)var.size, var.data);
+        else
+          fprintf(dot,
+                  "<tr>"
+                    "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %s</td>"
+                  "</tr>",
+                  BAD_FILL,
+                  "NULL");
       }
       break;
     case NUM_TYPE:

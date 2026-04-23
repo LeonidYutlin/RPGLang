@@ -82,10 +82,10 @@ double applyOperation(OpType type, double a, double b);
 //Quick node initializers
 #define OP_UNIT_(i)   (NodeUnit){.type = OP_TYPE,  .value = {.op = i}}
 #define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE, .value = {.num = i}}
-#define VAR_UNIT_(i)  (NodeUnit){.type = VAR_TYPE, .value = {.var = i}}
+#define VAR_UNIT_(name, len)  (NodeUnit){.type = VAR_TYPE, .value = {.var = (StringView){name, len}}}
 
 #define NUM_(i) nodeAlloc(NUM_UNIT_(i))
-#define VAR_(i) nodeAlloc(VAR_UNIT_(i))
+#define VAR_(name, len) nodeAlloc(VAR_UNIT_(name, len))
 
 #define nodeAllocBinop(op, l, r) \
   nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)

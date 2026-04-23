@@ -5,6 +5,5 @@
 #include "error/error.h"
 
 Error countNodesCallback(TreeNode* node, void* data, uint level);
-Error findVariableCallback(TreeNode* node, void* data, uint level);
 
 #endif

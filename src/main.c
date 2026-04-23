@@ -52,14 +52,14 @@ int main(int argc, char* argv[]) {
   }
 
   lexerPrintTokens(stdout, &lexer);
-  TreeNode* ast = parse(&lexer.tokens);
+  TreeNode* ast = parse(&lexer.tokens, lexer.mf.data);
   if (!ast) {
     fprintf(stderr, "Failed to parse token stream\n");
     exitValue = Fail;
     goto exit;
   }
   astInited = true;
-  nodeDump(logFile, NULL, ast, "Parsed Tree");
+  nodeDump(logFile, ast, "Parsed Tree");
 
 exit:
   if (loggerInited)

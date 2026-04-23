@@ -8,7 +8,6 @@
 #include "error/modules/hashtable.h"
 #include "error/modules/list.h"
 #include "error/modules/tree.h"
-#include "error/modules/variables.h"
 
 typedef int Error;
 
@@ -20,16 +19,14 @@ typedef int Error;
   TREE_ERROR_LIST()          \
   DYNAMIC_ARRAY_ERROR_LIST() \
   LINKED_LIST_ERROR_LIST()   \
-  HASH_TABLE_ERROR_LIST()    \
-  VARIABLES_ERROR_LIST()
+  HASH_TABLE_ERROR_LIST()
 
 #define ERROR_MODULE_LIST()    \
   GENERIC_ERROR_MODULE()       \
   TREE_ERROR_MODULE()          \
   DYNAMIC_ARRAY_ERROR_MODULE() \
   LINKED_LIST_ERROR_MODULE()   \
-  HASH_TABLE_ERROR_MODULE()    \
-  VARIABLES_ERROR_MODULE()
+  HASH_TABLE_ERROR_MODULE()
 
 typedef enum ErrorModule {
   #define X(enm, ...) enm,

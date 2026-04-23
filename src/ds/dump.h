@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include "ds/tree/root.h"
-#include "diff/context.h"
 #include "ds/hashtable/hashtable.h"
 
 /*
@@ -28,15 +27,15 @@ Error hashTableDump_(FILE* f, HashTable* table, const char* commentary,
 #define hashTableDump(f, table, commentary) \
         hashTableDump_(f, table, commentary, __FILE__, __LINE__)
 
-void rootDump(FILE* html, Variables* vars, TreeRoot* root,
+void rootDump(FILE* html, TreeRoot* root,
               const char* commentary, const char* filename, int line);
-void nodeDump(FILE* html, Variables* vars, TreeNode* node, 
+void nodeDump(FILE* html, TreeNode* node, 
               const char* commentary, const char* filename, int line);
 
-#define rootDump(file, vars, root, commentary) \
-        rootDump(file, vars, root, commentary, __FILE__, __LINE__)
-#define nodeDump(file, vars, node, commentary) \
-        nodeDump(file, vars, node, commentary, __FILE__, __LINE__)
+#define rootDump(file, root, commentary) \
+        rootDump(file, root, commentary, __FILE__, __LINE__)
+#define nodeDump(file, node, commentary) \
+        nodeDump(file, node, commentary, __FILE__, __LINE__)
 
 /// if the directory in the dirPath doesn't exist, will return NULL
 FILE* openHtmlLogFile(const char* dirPath);

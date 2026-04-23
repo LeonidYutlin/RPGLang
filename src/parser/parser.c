@@ -1,17 +1,17 @@
 #include "parser/parser.h"
 
-static TreeNode* getStatement(Tokens* t, size_t* i);
-static TreeNode* getAssignment(Tokens* t, size_t* i);
+static TreeNode* getStatement(Tokens* t, size_t* i, char* buf);
+static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf);
 static TreeNode* getExpression(Tokens* t, size_t* i);
 static TreeNode* getTerm(Tokens* t, size_t* i);
 static TreeNode* getPrimary(Tokens* t, size_t* i);
 
-TreeNode* parse(Tokens* t) {
-  if (daVerify(t))
+TreeNode* parse(Tokens* t, char* buf) {
+  if (daVerify(t) || !buf)
     return NULL;
- 
+
   size_t i = 0;
-  TreeNode* val = getStatement(t, &i);
+  TreeNode* val = getStatement(t, &i, buf);
   if (!val) {
     logln(ERROR, "Invalid Statement");
     return NULL;
@@ -30,13 +30,13 @@ TreeNode* parse(Tokens* t) {
 #define PEEK() ((Token*)daGet(t, (*i)))
 #define CHECK(T) (PEEK()->type == T)
 
-static TreeNode* getStatement(Tokens* t, size_t* i) {
+static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
   TreeNode* stmt = NULL;
   if ((stmt = getExpression(t, i))) {
     return stmt;
   }
 
-  stmt = getAssignment(t, i);
+  stmt = getAssignment(t, i, buf);
   if (!stmt)
     return NULL;
 
@@ -49,11 +49,11 @@ static TreeNode* getStatement(Tokens* t, size_t* i) {
   return stmt;
 }
 
-static TreeNode* getAssignment(Tokens* t, size_t* i) {
+static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf) {
   logln(INFO, "Assignment parsing!");
   TreeNode* lhs = NULL;
   if (CHECK(TOK_IDENTIFIER)) {
-    lhs = NUM_(PEEK()->value);
+    lhs = VAR_(buf + PEEK()->pos, PEEK()->len);
     (*i)++;
   } else
     return NULL;

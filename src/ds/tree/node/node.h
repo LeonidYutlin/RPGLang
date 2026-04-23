@@ -7,11 +7,12 @@
 #include <sys/types.h>
 #include "ds/tree/node/type.h"
 #include "error/error.h"
+#include "utils/utils.h"
 
 typedef union NodeValue {
   OpType op;
-  size_t var; //var_id actually
-  double num;
+  StringView var;
+  double num; //TODO: change this to uint64_t and add a new union field for float-point nums
 } NodeValue;
 
 typedef struct NodeUnit {

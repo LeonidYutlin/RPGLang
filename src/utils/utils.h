@@ -15,6 +15,11 @@
 #define _unused 
 #endif
 
+typedef struct {
+  char* data;
+  size_t size;
+} StringView;
+
 bool doubleEqual(double a, double b);
 
 #define TIMESTAMP_BUF_SZ 32
