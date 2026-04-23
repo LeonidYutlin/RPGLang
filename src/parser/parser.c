@@ -17,6 +17,14 @@ TreeNode* parse(Tokens* t, char* buf) {
     return NULL;
   }
 
+  TreeNode* nextStmt = getStatement(t, &i, buf);
+  for (TreeNode* curStmt = val; 
+       nextStmt; 
+       nextStmt = getStatement(t, &i, buf)) {
+    curStmt->right = nextStmt;
+    curStmt = nextStmt;
+  }
+
   TokenType nextType = ((Token*)daGet(t, i++))->type; 
   if (nextType != TOK_EOF) {
     logln(ERROR, "Expected EOF, got %s", getTokenTypeStr(nextType));
@@ -31,12 +39,10 @@ TreeNode* parse(Tokens* t, char* buf) {
 #define CHECK(T) (PEEK()->type == T)
 
 static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
-  TreeNode* stmt = NULL;
-  if ((stmt = getExpression(t, i))) {
-    return stmt;
-  }
+  TreeNode* stmt = getExpression(t, i);
+  if (!stmt)
+    stmt = getAssignment(t, i, buf);
 
-  stmt = getAssignment(t, i, buf);
   if (!stmt)
     return NULL;
 
@@ -46,11 +52,11 @@ static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
   }
   (*i)++;
 
-  return stmt;
+  return SEMIC_(stmt);
 }
 
 static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf) {
-  logln(INFO, "Assignment parsing!");
+  logln(DEBUG, "Assignment parsing!");
   TreeNode* lhs = NULL;
   if (CHECK(TOK_IDENTIFIER)) {
     lhs = VAR_(buf + PEEK()->pos, PEEK()->len);
@@ -73,15 +79,15 @@ static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf) {
 }
 
 static TreeNode* getExpression(Tokens* t, size_t* i) {
-  logln(INFO, "Expression parsing!");
+  logln(DEBUG, "Expression parsing!");
   TreeNode* val = getTerm(t, i);
   for (Token* next = PEEK(); 
        next->type == TOK_UNITE ||
        next->type == TOK_HIT;
        next = PEEK()) {
-    logln(INFO, "Next is %s", getTokenTypeStr(next->type));
+    logln(DEBUG, "Next is %s", getTokenTypeStr(next->type));
     (*i)++;
-    logln(INFO, "we are on the %zu elem out of %zu elems", *i, t->count);
+    logln(DEBUG, "we are on the %zu elem out of %zu elems", *i, t->count);
     TreeNode* val2 = getTerm(t, i);
     if (next->type == TOK_UNITE)
       val = ADD_(val, val2);
@@ -92,15 +98,15 @@ static TreeNode* getExpression(Tokens* t, size_t* i) {
 }
 
 static TreeNode* getTerm(Tokens* t, size_t* i) {
-  logln(INFO, "Term parsing!");
+  logln(DEBUG, "Term parsing!");
   TreeNode* val = getPrimary(t, i);
   for (Token* next = PEEK(); 
        next->type == TOK_EMPOWER ||
        next->type == TOK_SHATTER;
        next = PEEK()) {
-    logln(INFO, "Next is %s", getTokenTypeStr(next->type));
+    logln(DEBUG, "Next is %s", getTokenTypeStr(next->type));
     (*i)++;
-    logln(INFO, "we are on the %zu elem out of %zu elems", *i, t->count);
+    logln(DEBUG, "we are on the %zu elem out of %zu elems", *i, t->count);
     TreeNode* val2 = getPrimary(t, i);
     if (next->type == TOK_EMPOWER)
       val = MUL_(val, val2);

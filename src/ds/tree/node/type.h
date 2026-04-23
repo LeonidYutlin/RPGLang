@@ -27,6 +27,7 @@ const NodeTypeInfo* parseNodeType(NodeType type);
 //NOTE:
 //X(enum, "str", "altstr", argc, prior, isSupp)
 #define OP_TYPE_LIST()                        \
+  X(OP_SEMIC,  ";",      NULL,     2, 1, false) \
   X(OP_ASG,  "=",      NULL,     2, 1, false) \
   X(OP_ADD,  "+",      NULL,     2, 1, false) \
   X(OP_SUB,  "-",      NULL,     2, 1, false) \
@@ -92,6 +93,8 @@ double applyOperation(OpType type, double a, double b);
 #define nodeAllocUnop(op, r) \
   nodeAllocBinop(op, NULL, r)
 
+#define SEMIC_(l) \
+        nodeAllocBinop(OP_SEMIC, l, NULL)
 #define ASG_(l, r) \
         nodeAllocBinop(OP_ASG, l, r)
 #define ADD_(l, r) \

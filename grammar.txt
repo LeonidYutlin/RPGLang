@@ -1,7 +1,7 @@
 (* RPGLang's Expanded Backus-Naur Form *)
 
-Grammar ::= Statement, EOF
-Statement ::= Expression
+Grammar ::= Statement+, EOF
+Statement ::= Expression, ";"
             | Assignment, ";"
 
 Expression ::= Term, (("unite" | "hit"), Term)*          (* "+" | "-" *)
