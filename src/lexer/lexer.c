@@ -178,9 +178,12 @@ Error lexerAnalyze(Lexer* lexer) {
       .data = lexer->mf.data + oldPos, 
       .size = len 
     };
-    TokenType kwType = (TokenType)hashTableGet(&KEYWORD_HT, strView, &err);
-    EMIT(err == NotFound ? TOK_IDENTIFIER : kwType, 
-         oldPos, len);
+    TokenType kwType = hashTableGet(&KEYWORD_HT, strView, &err);
+    if (err == NotFound) {
+      EMIT(TOK_IDENTIFIER, oldPos, len, .value = buf[oldPos]);
+    } else {
+      EMIT(kwType, oldPos, len);
+    }
     continue;
 
     // should be unreachable

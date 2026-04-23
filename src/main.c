@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
   bool lexerInited   = false;
   bool htmlLogInited = false;
   bool astInited     = false;
-  loggerInit(NULL, ERROR);
+  loggerInit(NULL, DEBUG);
   loggerInited = true;
 
   int fd = open(argv[1], O_RDONLY);
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
-  //lexerPrintTokens(stdout, lexer);
+  lexerPrintTokens(stdout, &lexer);
   TreeNode* ast = parse(&lexer.tokens);
   if (!ast) {
     fprintf(stderr, "Failed to parse token stream\n");

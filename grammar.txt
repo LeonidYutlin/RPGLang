@@ -1,6 +1,25 @@
-General ::= Expression EOF
-Expression ::= Term (("unite" | "hit") Term)*
-Term ::= Primary (("empower" | "shatter") Primary)*
+(* RPGLang's Expanded Backus-Naur Form *)
+
+Grammar ::= Statement, EOF
+Statement ::= Expression
+            | Assignment, ";"
+
+Expression ::= Term, (("unite" | "hit"), Term)*          (* "+" | "-" *)
+Term ::= Primary, (("empower" | "shatter"), Primary)*    (* "*" | "/" *)
 Primary ::= Number
-          | "(" Expression ")"
-Number ::= "0" ("I" | "V" | "X" | "L" | "C")+
+          | "(", Expression, ")"
+Number ::= "0", (RomanDigit)+
+
+Assignment ::= Identifier, "mirror", Expression
+Identifier ::= Character, (Character | "0")*
+
+Character ::= Letter
+            | NonZeroDecimalDigit
+            | SpecialCharacter
+Letter ::= LowercaseLetter
+         | UppercaseLetter
+LowercaseLetter ::= [a-z]
+UppercaseLetter ::= [A-Z]
+NonZeroDecimalDigit ::= [1-9]
+SpecialCharacter ::= "+" | "-" | "*" | "/" | "_" | "." (* TODO: finish this list, it isn't exhaustive *)
+RomanDigit ::= "I" | "V" | "X" | "L" | "C"
