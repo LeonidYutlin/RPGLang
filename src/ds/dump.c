@@ -22,9 +22,10 @@ static const char* BG_COLOR      = "#FFFFFF";
 static const char* BAD_OUTLINE   = "#602222";
 static const char* BAD_FILL      = "#F02222";
 static const char* DEFAULT_CELL  = "#F02222";
-static const char* OP_CELL       = "#98D26B";
-static const char* NUM_CELL      = "#7CA0CE";
-static const char* VAR_CELL      = "#8673BA";
+static const char* OP_CELL       = "#A6E3A1";
+static const char* NUM_CELL      = "#6CA1F9";
+static const char* VAR_CELL      = "#B581F4";
+static const char* CTRL_CELL     = "#F9E2AF";
 static const char* TABLE_OUTLINE = "#101510";
 static const char* TABLE_FILL    = "#10151034";
 static const char* ADDRESS_FILL  = "#10151034";
@@ -613,6 +614,14 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
     return;
   
   const NodeTypeInfo* nodeInfo = parseNodeType(node->data.type);
+  const char* nodeColor = DEFAULT_CELL;
+  switch (node->data.type) {
+    case NUM_TYPE:  nodeColor = NUM_CELL;  break;
+    case OP_TYPE:   nodeColor = OP_CELL;   break;
+    case VAR_TYPE:  nodeColor = VAR_CELL;  break;
+    case CTRL_TYPE: nodeColor = CTRL_CELL; break;
+    default: break;
+  }
   fprintf(dot,
           "node%p"
           "[shape=box, style=\"rounded, filled\", color=\"%s\", fillcolor=\"%s\", penwidth=2.1, fontsize=14, label="
@@ -625,15 +634,12 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           "</tr>",
           node,
           TABLE_OUTLINE,
-          IS_OP(node)  ? OP_CELL  :
-          IS_NUM(node) ? NUM_CELL :
-          IS_VAR(node) ? VAR_CELL :
-          DEFAULT_CELL,
+          nodeColor,
           TABLE_OUTLINE,
           PARENT_FILL,  node->parent,
           nodeInfo ? TYPE_FILL     : BAD_FILL,  
           nodeInfo ? nodeInfo->str : "ERROR: no info for such NodeType");
-  switch(node->data.type) {
+  switch (node->data.type) {
     case OP_TYPE:
       {
         const OpTypeInfo* opInfo = parseOpType(node->data.value.op);
@@ -671,6 +677,17 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
               "</tr>",
               VALUE_FILL, node->data.value.num);
       break;
+    case CTRL_TYPE:
+      {
+        const char* str = getCtrlTypeStr(node->data.value.ctrl);
+        fprintf(dot,
+                "<tr>"
+                  "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %s</td>"
+                "</tr>",
+                str ? VALUE_FILL : BAD_FILL, 
+                str ? str : "ERROR: no info for such CtrlType");
+      }
+      break;
     default:
       break;
   }
@@ -685,10 +702,10 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           "</table>"
           ">];\n",
           ADDRESS_FILL, node,
-          node->data.type != OP_TYPE && node->left
+          !IS_OP(node) && !IS_CTRL(node) && node->left
           ? DEFAULT_CELL
           : LEFT_FILL, node->left,
-          node->data.type != OP_TYPE && node->right
+          !IS_OP(node) && !IS_CTRL(node) && node->right
           ? DEFAULT_CELL
           : RIGHT_FILL, node->right);
   if (node->parent && bondFailed)

@@ -5,10 +5,10 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-//TODO: add a new node type for different control flow nodes
 #define NODE_TYPE_LIST()          \
   X(UNKNOWN_TYPE, "UNKNOWN TYPE") \
   X(OP_TYPE,      "OP")           \
+  X(CTRL_TYPE,    "CTRL")         \
   X(NUM_TYPE,     "NUM")          \
   X(VAR_TYPE,     "VAR")
 
@@ -26,11 +26,14 @@ typedef struct NodeTypeInfo {
 const NodeTypeInfo* parseNodeType(NodeType type);
 
 //NOTE:
+//X(enum, "str")
+#define CTRL_TYPE_LIST() \
+  X(CTRL_SEMIC, ";")     \
+  X(CTRL_ASG,   "=")
+
+//NOTE:
 //X(enum, "str", argc, prior)
 #define OP_TYPE_LIST()       \
-  X(OP_IF,     "if",   2, 1) \
-  X(OP_SEMIC, ";",     2, 1) \
-  X(OP_ASG,  "=",      2, 1) \
   X(OP_ADD,  "+",      2, 1) \
   X(OP_SUB,  "-",      2, 1) \
   X(OP_MUL,  "*",      2, 2) \
@@ -70,33 +73,48 @@ int getOpType(const char* string);
 ///If the operation doesn't require a second parameter (e.g. cos(x)) then leave b as NAN
 double applyOperation(OpType type, double a, double b);
 
+typedef enum CtrlType {
+  #define X(enm, ...) enm,
+  CTRL_TYPE_LIST()
+  #undef X
+} CtrlType;
+
+const char* getCtrlTypeStr(CtrlType type);
+
 //Node utility macros
-#define IS_OP(node)  ((node) && (node)->data.type == OP_TYPE)
-#define IS_NUM(node) ((node) && (node)->data.type == NUM_TYPE)
-#define IS_VAR(node) ((node) && (node)->data.type == VAR_TYPE)
+#define IS_OP(node)   ((node) && (node)->data.type == OP_TYPE)
+#define IS_NUM(node)  ((node) && (node)->data.type == NUM_TYPE)
+#define IS_VAR(node)  ((node) && (node)->data.type == VAR_TYPE)
+#define IS_CTRL(node) ((node) && (node)->data.type == CTRL_TYPE)
+#define OF_CTRL(node, ctrlType) \
+  (IS_CTRL((node)) && (node)->data.value.ctrl == (ctrlType))
 #define OF_OP(node, opType) \
   (IS_OP((node)) && (node)->data.value.op == (opType))
 #define OF_NUM(node, i) \
   (IS_NUM((node)) && doubleEqual((node)->data.value.num, (i)))
-//OF_VAR is in context.h because it's more finnicky
 
-//Quick node initializers
-#define OP_UNIT_(i)   (NodeUnit){.type = OP_TYPE,  .value = {.op = i}}
-#define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE, .value = {.num = i}}
+//Quick TreeNode and NodeUnit initializers
+#define OP_UNIT_(i)   (NodeUnit){.type = OP_TYPE,   .value = {.op = i}}
+#define CTRL_UNIT_(i) (NodeUnit){.type = CTRL_TYPE, .value = {.ctrl = i}}
+#define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE,  .value = {.num = i}}
 #define VAR_UNIT_(name, len)  (NodeUnit){.type = VAR_TYPE, .value = {.var = (StringView){name, len}}}
 
 #define NUM_(i) nodeAlloc(NUM_UNIT_(i))
 #define VAR_(name, len) nodeAlloc(VAR_UNIT_(name, len))
+
+#define nodeAllocCtrl(ctrl, l, r) \
+  nodeAlloc(.data = CTRL_UNIT_(ctrl), .left = l, .right = r)
+
+#define SEMIC_(l) \
+        nodeAllocCtrl(CTRL_SEMIC, l, NULL)
+#define ASG_(l, r) \
+        nodeAllocCtrl(CTRL_ASG, l, r)
 
 #define nodeAllocBinop(op, l, r) \
   nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)
 #define nodeAllocUnop(op, r) \
   nodeAllocBinop(op, NULL, r)
 
-#define SEMIC_(l) \
-        nodeAllocBinop(OP_SEMIC, l, NULL)
-#define ASG_(l, r) \
-        nodeAllocBinop(OP_ASG, l, r)
 #define ADD_(l, r) \
         nodeAllocBinop(OP_ADD, l, r)
 #define SUB_(l, r) \

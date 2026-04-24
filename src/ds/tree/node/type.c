@@ -34,7 +34,7 @@ static const OpTypeInfo OP_TYPES[] = {
   #undef X
 };
 
-const size_t OP_TYPES_SIZE = sizer(OP_TYPES);
+static const size_t OP_TYPES_SIZE = sizer(OP_TYPES);
 
 const OpTypeInfo* parseOpType(OpType t) {
   return (t < 0 || (size_t)t >= OP_TYPES_SIZE)
@@ -77,4 +77,18 @@ double applyOperation(OpType type, double a, double b) {
     case OP_LN :  return log(a);
     default:      return NAN;
   }
+}
+
+static const char* CTRL_TYPES[] = {
+  #define X(enm, str) [enm] = str,
+  CTRL_TYPE_LIST()
+  #undef X
+};
+
+static const size_t CTRL_TYPES_SIZE = sizer(CTRL_TYPES);
+
+const char* getCtrlTypeStr(CtrlType t) {
+  return (t < 0 || (size_t)t >= CTRL_TYPES_SIZE)
+         ? NULL
+         : CTRL_TYPES[t];
 }
