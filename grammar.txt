@@ -1,9 +1,13 @@
 (* RPGLang's Expanded Backus-Naur Form *)
 
 Grammar ::= Statement+, EOF
-Statement ::= If
+Statement ::= StatementBlock
+            | If
             | Expression, ";"
             | Assignment, ";"
+            | ";"
+
+StatementBlock ::= "{", Statement*, "}" 
 
 If ::= "if", "(", Expression, ")", Statement
 

@@ -1,6 +1,8 @@
-grammar.txt:28:(* TODO: finish this list, it isn't exhaustive *)
+grammar.txt:32:(* TODO: finish this list, it isn't exhaustive *)
 
 src/ds/tree/node/node.h:17:  // TODO: change this to uint64_t and add a new union field for float-point nums
+
+src/parser/parser.c:3://TODO: add asserts in every static function
 
 src/parser/parser.h:8:// TODO: new struct Parser that gets needed fields from lexer
 

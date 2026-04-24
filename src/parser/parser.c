@@ -1,5 +1,6 @@
 #include "parser/parser.h"
 
+//TODO: add asserts in every static function
 static TreeNode* getStatement(Tokens* t, size_t* i, char* buf);
 static TreeNode* getIf(Tokens* t, size_t* i, char* buf);
 static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf);
@@ -22,7 +23,11 @@ TreeNode* parse(Tokens* t, char* buf) {
   for (TreeNode* curStmt = val; 
        nextStmt; 
        nextStmt = getStatement(t, &i, buf)) {
-    curStmt->right = nextStmt;
+    TreeNode* lastStmt = curStmt;
+    while (OF_CTRL(lastStmt, CTRL_IF)) {
+      lastStmt = lastStmt->right;
+    }
+    lastStmt->right = nextStmt;
     curStmt = nextStmt;
   }
 
@@ -38,6 +43,36 @@ TreeNode* parse(Tokens* t, char* buf) {
 
 #define PEEK() ((Token*)daGet(t, (*i)))
 #define CHECK(T) (PEEK()->type == T)
+
+static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
+  if (CHECK(TOK_SEMIC)) {
+    (*i)++;
+    return SEMIC_(NULL);
+  }
+
+  bool requiresSemicolon = false;
+  TreeNode* stmt = getIf(t, i, buf);
+  if (!stmt) {
+    requiresSemicolon = true;
+    stmt = getExpression(t, i);
+  }
+  if (!stmt)
+    stmt = getAssignment(t, i, buf);
+
+  if (!stmt)
+    return NULL;
+
+  if (!requiresSemicolon)
+    return stmt;
+
+  if (!CHECK(TOK_SEMIC)) {
+    nodeDestroy(stmt);
+    return NULL;
+  }
+  (*i)++;
+
+  return SEMIC_(stmt);
+}
 
 static TreeNode* getIf(Tokens* t, size_t* i, char* buf) {
   logln(DEBUG, "Assignment parsing!");
@@ -63,31 +98,6 @@ static TreeNode* getIf(Tokens* t, size_t* i, char* buf) {
     return NULL;
   }
   return IF_(lhs, rhs);
-}
-
-static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
-  bool requiresSemicolon = false;
-  TreeNode* stmt = getIf(t, i, buf);
-  if (!stmt) {
-    requiresSemicolon = true;
-    stmt = getExpression(t, i);
-  }
-  if (!stmt)
-    stmt = getAssignment(t, i, buf);
-
-  if (!stmt)
-    return NULL;
-
-  if (!requiresSemicolon)
-    return stmt;
-
-  if (!CHECK(TOK_SEMIC)) {
-    nodeDestroy(stmt);
-    return NULL;
-  }
-  (*i)++;
-
-  return SEMIC_(stmt);
 }
 
 static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf) {

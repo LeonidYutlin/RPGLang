@@ -1,0 +1,4 @@
+cat mirror 0V;
+if (0) apple mirror 0I; 
+banana mirror 0;
+if (0I);;0V;
