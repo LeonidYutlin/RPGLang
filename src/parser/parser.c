@@ -2,6 +2,7 @@
 
 //TODO: add asserts in every static function
 static TreeNode* getStatement(Tokens* t, size_t* i, char* buf);
+static TreeNode* getStatementBlock(Tokens* t, size_t* i, char* buf);
 static TreeNode* getIf(Tokens* t, size_t* i, char* buf);
 static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf);
 static TreeNode* getExpression(Tokens* t, size_t* i);
@@ -51,7 +52,9 @@ static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
   }
 
   bool requiresSemicolon = false;
-  TreeNode* stmt = getIf(t, i, buf);
+  TreeNode* stmt = getStatementBlock(t, i, buf);
+  if (!stmt)
+    stmt = getIf(t, i, buf);
   if (!stmt) {
     requiresSemicolon = true;
     stmt = getExpression(t, i);
@@ -74,8 +77,44 @@ static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
   return SEMIC_(stmt);
 }
 
+static TreeNode* getStatementBlock(Tokens* t, size_t* i, char* buf) {
+  logln(DEBUG, "Stmt block parsing!");
+  if (!CHECK(TOK_LBRACE))
+    return NULL;
+  (*i)++;
+  if (CHECK(TOK_RBRACE)) {
+    (*i)++;
+    return SEMIC_(NULL);
+  }
+
+  TreeNode* firstStmt = getStatement(t, i, buf);
+  if (!firstStmt) {
+    return NULL;
+  }
+
+  TreeNode* nextStmt = getStatement(t, i, buf);
+  for (TreeNode* curStmt = firstStmt; 
+       nextStmt;
+       nextStmt = getStatement(t, i, buf)) {
+    TreeNode* lastStmt = curStmt;
+    while (OF_CTRL(lastStmt, CTRL_IF)) {
+      lastStmt = lastStmt->right;
+    }
+    lastStmt->right = nextStmt;
+    curStmt = nextStmt;
+  }
+
+  if (!CHECK(TOK_RBRACE)) {
+    nodeDestroy(firstStmt);
+    return NULL;
+  }
+  (*i)++;
+
+  return SEMIC_(firstStmt);
+}
+
 static TreeNode* getIf(Tokens* t, size_t* i, char* buf) {
-  logln(DEBUG, "Assignment parsing!");
+  logln(DEBUG, "If parsing!");
   if (!CHECK(TOK_IF))
     return NULL;
   (*i)++;
