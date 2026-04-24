@@ -25,32 +25,31 @@ typedef struct NodeTypeInfo {
 
 const NodeTypeInfo* parseNodeType(NodeType type);
 
-//TODO: remove unneccesary fields
 //NOTE:
-//X(enum, "str", "altstr", argc, prior, isSupp)
-#define OP_TYPE_LIST()                        \
-  X(OP_IF,     "if",   NULL,     2, 1, false) \
-  X(OP_SEMIC, ";",     NULL,     2, 1, false) \
-  X(OP_ASG,  "=",      NULL,     2, 1, false) \
-  X(OP_ADD,  "+",      NULL,     2, 1, false) \
-  X(OP_SUB,  "-",      NULL,     2, 1, false) \
-  X(OP_MUL,  "*",      NULL,     2, 2, false) \
-  X(OP_DIV,  "/",      NULL,     2, 2, false) \
-  X(OP_POW,  "^",      NULL,     2, 3, false) \
-  X(OP_SIN,  "sin",    NULL,     1, 3, true)  \
-  X(OP_COS,  "cos",    NULL,     1, 3, true)  \
-  X(OP_TAN,  "tan",    "tg",     1, 3, true)  \
-  X(OP_COT,  "cot",    "ctg",    1, 3, true)  \
-  X(OP_LOG,  "log",    NULL,     2, 3, true)  \
-  X(OP_LN,   "ln",     NULL,     1, 3, true)  \
-  X(OP_ASIN, "arcsin", NULL,     1, 3, true)  \
-  X(OP_ACOS, "arccos", NULL,     1, 3, true)  \
-  X(OP_ATAN, "arctan", "arctg",  1, 3, true)  \
-  X(OP_ACOT, "arccot", "arcctg", 1, 3, true)  \
-  X(OP_SINH, "sinh",   "sh",     1, 3, true)  \
-  X(OP_COSH, "cosh",   "ch",     1, 3, true)  \
-  X(OP_TANH, "tanh",   "th",     1, 3, true)  \
-  X(OP_COTH, "coth",   "cth",    1, 3, true)
+//X(enum, "str", argc, prior)
+#define OP_TYPE_LIST()       \
+  X(OP_IF,     "if",   2, 1) \
+  X(OP_SEMIC, ";",     2, 1) \
+  X(OP_ASG,  "=",      2, 1) \
+  X(OP_ADD,  "+",      2, 1) \
+  X(OP_SUB,  "-",      2, 1) \
+  X(OP_MUL,  "*",      2, 2) \
+  X(OP_DIV,  "/",      2, 2) \
+  X(OP_POW,  "^",      2, 3) \
+  X(OP_SIN,  "sin",    1, 3) \
+  X(OP_COS,  "cos",    1, 3) \
+  X(OP_TAN,  "tan",    1, 3) \
+  X(OP_COT,  "cot",    1, 3) \
+  X(OP_LOG,  "log",    2, 3) \
+  X(OP_LN,   "ln",     1, 3) \
+  X(OP_ASIN, "arcsin", 1, 3) \
+  X(OP_ACOS, "arccos", 1, 3) \
+  X(OP_ATAN, "arctan", 1, 3) \
+  X(OP_ACOT, "arccot", 1, 3) \
+  X(OP_SINH, "sinh",   1, 3) \
+  X(OP_COSH, "cosh",   1, 3) \
+  X(OP_TANH, "tanh",   1, 3) \
+  X(OP_COTH, "coth",   1, 3)
 
 typedef enum OpType {
   #define X(enm, ...) enm,
@@ -61,10 +60,8 @@ typedef enum OpType {
 typedef struct OpTypeInfo {
   OpType type;
   const char* str;
-  const char* alt;
   uint argCount;
   uint priority;
-  bool isSupported;
 } OpTypeInfo;
 
 const OpTypeInfo* parseOpType(OpType type);

@@ -23,13 +23,12 @@ const NodeTypeInfo* parseNodeType(NodeType t) {
 }
 
 static const OpTypeInfo OP_TYPES[] = {
-  #define X(enm, s, aS, aC, pr, supp)       \
+  #define X(enm, s, aC, pr)                 \
     [enm] = {.type = enm,                   \
              .str = s,                      \
-             .alt = aS,                     \
              .argCount = aC,                \
              .priority = pr,                \
-             .isSupported = supp},                                                   
+             },                                                   
   
   OP_TYPE_LIST()
   #undef X
@@ -49,8 +48,7 @@ int getOpType(const char* str) {
   for (int i = 0; (size_t)i < OP_TYPES_SIZE; i++) {
     const OpTypeInfo* t = parseOpType((OpType)i);
     if (!t) continue;
-    if ((t->str && strcmp(str, t->str) == 0) || 
-        (t->alt && strcmp(str, t->alt) == 0)) 
+    if ((t->str && strcmp(str, t->str) == 0)) 
       return (OpType)i;
   }
   return -1;
