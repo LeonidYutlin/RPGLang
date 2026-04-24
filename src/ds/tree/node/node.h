@@ -12,7 +12,8 @@
 typedef union NodeValue {
   OpType op;
   StringView var;
-  double num; //TODO: change this to uint64_t and add a new union field for float-point nums
+  double num; 
+  // TODO: change this to uint64_t and add a new union field for float-point nums
 } NodeValue;
 
 typedef struct NodeUnit {

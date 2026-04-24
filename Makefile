@@ -11,6 +11,7 @@ BINARY_PATH   := bin
 LOG_PATH      := .log
 
 PROGRAM_NAME  := $(BINARY_PATH)/rpgc
+TODO_FILE     := TODO.txt
 
 define to_object
 	$(patsubst %.c, $(ARTIFACT_PATH)/%.o, $(notdir $(1)))
@@ -47,7 +48,7 @@ C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
 				   shift,signed-integer-overflow,undefined,$\
 				   unreachable,vla-bound,vptr
 
-build: ensure_directories_exist $(PROGRAM_NAME)
+build: ensure_directories_exist $(PROGRAM_NAME) update_todo
 
 $(PROGRAM_NAME): $(OBJECTS)
 	@echo -e "•Linking the project together"
@@ -63,7 +64,7 @@ $(foreach src,$(SOURCES),$(eval $(strip $(call declare_recipe,$(src)))))
 	@echo -e "•Compiling" $<
 	@$(COMPILER) -c $(DEFINE_FLAGS) $(INCLUDE_FLAGS) $(LIBS) $(C_FLAGS) $< -o $@
 
-.PHONY: ensure_directories_exist clean run build clean_logs
+.PHONY: ensure_directories_exist clean run build clean_logs update_todo
 
 run: build
 	./$(PROGRAM_NAME)
@@ -79,3 +80,8 @@ clean:
 clean_logs:
 	rm -f -r $(LOG_PATH)
 	mkdir -p $(LOG_PATH)
+
+update_todo:
+	rm -f $(TODO_FILE)
+	touch $(TODO_FILE)
+	grep -r -n "TODO" --exclude="Makefile" --exclude="$(TODO_FILE)" --exclude-dir=.git | sed G >> $(TODO_FILE)

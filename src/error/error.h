@@ -11,8 +11,6 @@
 
 typedef int Error;
 
-//TODO: new Error param for whether it is soft or not
-
 //INFO: Use this one when you want to iterate through every single one, since it keeps the same order
 #define UNITED_ERROR_LIST()  \
   GENERIC_ERROR_LIST()       \

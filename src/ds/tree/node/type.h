@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+//TODO: add a new node type for different control flow nodes
 #define NODE_TYPE_LIST()          \
   X(UNKNOWN_TYPE, "UNKNOWN TYPE") \
   X(OP_TYPE,      "OP")           \
@@ -24,10 +25,12 @@ typedef struct NodeTypeInfo {
 
 const NodeTypeInfo* parseNodeType(NodeType type);
 
+//TODO: remove unneccesary fields
 //NOTE:
 //X(enum, "str", "altstr", argc, prior, isSupp)
 #define OP_TYPE_LIST()                        \
-  X(OP_SEMIC,  ";",      NULL,     2, 1, false) \
+  X(OP_IF,     "if",   NULL,     2, 1, false) \
+  X(OP_SEMIC, ";",     NULL,     2, 1, false) \
   X(OP_ASG,  "=",      NULL,     2, 1, false) \
   X(OP_ADD,  "+",      NULL,     2, 1, false) \
   X(OP_SUB,  "-",      NULL,     2, 1, false) \

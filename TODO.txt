@@ -1,0 +1,12 @@
+grammar.txt:25:(* TODO: finish this list, it isn't exhaustive *)
+
+src/ds/tree/node/callback.h:7://TODO: remove this unneeded file
+
+src/ds/tree/node/node.h:16:  // TODO: change this to uint64_t and add a new union field for float-point nums
+
+src/ds/tree/node/type.h:8://TODO: add a new node type for different control flow nodes
+
+src/ds/tree/node/type.h:28://TODO: remove unneccesary fields
+
+src/parser/parser.h:8:// TODO: new struct Parser that gets needed fields from lexer
+
