@@ -1,6 +1,7 @@
 #include "ds/tree/root.h"
-#include "ds/tree/node/callback.h"
 #include <stdlib.h>
+
+static Error countNodesCallback(TreeNode* node, void* data, uint level);
 
 TreeRoot* attachRoot(TreeNode* node, Error* status) {
   TreeRoot* root = (TreeRoot*)calloc(1, sizeof(TreeRoot));
@@ -39,5 +40,15 @@ Error rootDestroy(TreeRoot* root) {
   nodeDestroy(root->rootNode);
   free(root);
 
+  return OK;
+}
+
+Error countNodesCallback(_unused TreeNode* node, 
+                         void* data, 
+                         _unused uint level) {
+  if (!data)
+    return BadArgs;
+  size_t* nodeCount = (size_t*)data;
+  (*nodeCount)++;
   return OK;
 }
