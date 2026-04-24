@@ -1,6 +1,7 @@
 #include "parser/parser.h"
 
 static TreeNode* getStatement(Tokens* t, size_t* i, char* buf);
+static TreeNode* getIf(Tokens* t, size_t* i, char* buf);
 static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf);
 static TreeNode* getExpression(Tokens* t, size_t* i);
 static TreeNode* getTerm(Tokens* t, size_t* i);
@@ -38,13 +39,47 @@ TreeNode* parse(Tokens* t, char* buf) {
 #define PEEK() ((Token*)daGet(t, (*i)))
 #define CHECK(T) (PEEK()->type == T)
 
+static TreeNode* getIf(Tokens* t, size_t* i, char* buf) {
+  logln(DEBUG, "Assignment parsing!");
+  if (!CHECK(TOK_IF))
+    return NULL;
+  (*i)++;
+  if (!CHECK(TOK_LPAREN))
+    return NULL;
+  (*i)++;
+  TreeNode* lhs = getExpression(t, i);
+  if (!lhs)
+    return NULL;
+
+  if (!CHECK(TOK_RPAREN)) {
+    nodeDestroy(lhs);
+    return NULL;
+  }
+  (*i)++;
+
+  TreeNode* rhs = getStatement(t, i, buf);
+  if (!rhs) {
+    nodeDestroy(lhs);
+    return NULL;
+  }
+  return IF_(lhs, rhs);
+}
+
 static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
-  TreeNode* stmt = getExpression(t, i);
+  bool requiresSemicolon = false;
+  TreeNode* stmt = getIf(t, i, buf);
+  if (!stmt) {
+    requiresSemicolon = true;
+    stmt = getExpression(t, i);
+  }
   if (!stmt)
     stmt = getAssignment(t, i, buf);
 
   if (!stmt)
     return NULL;
+
+  if (!requiresSemicolon)
+    return stmt;
 
   if (!CHECK(TOK_SEMIC)) {
     nodeDestroy(stmt);

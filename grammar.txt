@@ -1,8 +1,11 @@
 (* RPGLang's Expanded Backus-Naur Form *)
 
 Grammar ::= Statement+, EOF
-Statement ::= Expression, ";"
+Statement ::= If
+            | Expression, ";"
             | Assignment, ";"
+
+If ::= "if", "(", Expression, ")", Statement
 
 Expression ::= Term, (("unite" | "hit"), Term)*          (* "+" | "-" *)
 Term ::= Primary, (("empower" | "shatter"), Primary)*    (* "*" | "/" *)

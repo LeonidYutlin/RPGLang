@@ -29,7 +29,8 @@ const NodeTypeInfo* parseNodeType(NodeType type);
 //X(enum, "str")
 #define CTRL_TYPE_LIST() \
   X(CTRL_SEMIC, ";")     \
-  X(CTRL_ASG,   "=")
+  X(CTRL_ASG,   "=")     \
+  X(CTRL_IF,    "if")
 
 //NOTE:
 //X(enum, "str", argc, prior)
@@ -109,6 +110,8 @@ const char* getCtrlTypeStr(CtrlType type);
         nodeAllocCtrl(CTRL_SEMIC, l, NULL)
 #define ASG_(l, r) \
         nodeAllocCtrl(CTRL_ASG, l, r)
+#define IF_(l, r) \
+        nodeAllocCtrl(CTRL_IF, l, r)
 
 #define nodeAllocBinop(op, l, r) \
   nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)
