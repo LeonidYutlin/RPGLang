@@ -8,7 +8,9 @@ static bool getConditionBlock(TokenType tokType, CtrlType ctrlType,
 static bool getIf(Tokens* t, size_t* i, char* buf, TreeNode** result);
 #define getWhile(t, i, buf, result) getConditionBlock(TOK_WHILE, CTRL_WHILE, t, i, buf, result)
 #define getUntil(t, i, buf, result) getConditionBlock(TOK_UNTIL, CTRL_UNTIL, t, i, buf, result)
+static bool getVariableDeclaration(Tokens* t, size_t* i, char* buf, TreeNode** result);
 static bool getAssignment(Tokens* t, size_t* i, char* buf, TreeNode** result);
+static bool getAssignmentBody(Tokens* t, size_t* i, TreeNode** result);
 static bool getExpression(Tokens* t, size_t* i, TreeNode** result);
 static bool getTerm(Tokens* t, size_t* i, TreeNode** result);
 static bool getPrimary(Tokens* t, size_t* i, TreeNode** result);
@@ -74,7 +76,8 @@ static bool getStatement(Tokens* t, size_t* i, char* buf, TreeNode** result) {
   } 
 
   // statements that require a semicolon
-  if (getExpression(t, i, &stmt) ||
+  if (getExpression(t, i, &stmt)               ||
+      getVariableDeclaration(t, i, buf, &stmt) ||
       getAssignment(t, i, buf, &stmt)) {
     if (!consumeToken(t, i, TOK_SEMIC)) {
       nodeDestroy(stmt);
@@ -168,18 +171,47 @@ static bool getIf(Tokens* t, size_t* i, char* buf, TreeNode** result) {
   return false; 
 }
 
+static bool getVariableDeclaration(Tokens* t, size_t* i, char* buf, TreeNode** result) {
+  TreeNode* lhs = NULL;
+  if (consumeToken(t, i, TOK_PRIM) &&
+      getIdentifier(t, i, buf, &lhs)) {
+    TreeNode* rhs = NULL;
+    if (getAssignmentBody(t, i, &rhs)) {
+      *result = VAR_DECL_(PRIM_(), ASG_(lhs, rhs));
+      return true;
+    }
+    nodeDestroy(rhs);
+    *result = VAR_DECL_(PRIM_(), lhs);
+    return true;
+  }
+
+  nodeDestroy(lhs);
+  return false;
+}
+
 static bool getAssignment(Tokens* t, size_t* i, char* buf, TreeNode** result) {
   TreeNode* lhs = NULL;
   TreeNode* rhs = NULL;
   if (getIdentifier(t, i, buf, &lhs) &&
-      consumeToken(t, i, TOK_MIRROR) &&
-      getExpression(t, i, &rhs)) {
+      getAssignmentBody(t, i, &rhs)) {
     *result = ASG_(lhs, rhs);
     return true;
   }
 
   nodeDestroy(lhs);
   nodeDestroy(rhs);
+  return false;
+}
+
+static bool getAssignmentBody(Tokens* t, size_t* i, TreeNode** result) {
+  TreeNode* expr = NULL;
+  if (consumeToken(t, i, TOK_MIRROR) &&
+      getExpression(t, i, &expr)) {
+    *result = expr;
+    return true;
+  }
+
+  nodeDestroy(expr);
   return false;
 }
 

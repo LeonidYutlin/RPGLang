@@ -287,6 +287,7 @@ static Error keywordInit() {
 #define SV(str) (StringView){ .data = str, .size = sizeof(str) - 1 }
 #define X(tok, str) if ((err = hashTablePut(&KEYWORD_HT, SV(str), tok))) return err;
   KEYWORD_LIST()
+  KEYWORD_ALIAS_LIST()
 #undef X
 #undef SV
 

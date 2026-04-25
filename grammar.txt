@@ -4,8 +4,9 @@ Grammar ::= Statement+, EOF
 Statement ::= StatementBlock
             | If
             | While
-            | Until 
+            | Until
             | Expression, ";"
+            | VariableDeclaration, ";"
             | Assignment, ";"
             | ";"
 
@@ -22,8 +23,11 @@ Primary ::= Number
           | "(", Expression, ")"
 Number ::= "0", (RomanDigit)+
 
-Assignment ::= Identifier, "mirror", Expression          (* = *)
+VariableDeclaration ::= Type, Identifier, AssignmentBody?
+Assignment ::= Identifier, AssignmentBody
+AssignmentBody ::= "mirror", Expression      (* = *)
 Identifier ::= Character, (Character | "0")*
+Type ::= "prim" | "primordial"
 
 Character ::= Letter
             | NonZeroDecimalDigit

@@ -45,7 +45,11 @@
   X(TOK_NAT_AGE, "natage")       \
   X(TOK_NAT_GROWTH, "natgrowth") \
   X(TOK_EMPOWER, "empower")      \
-  X(TOK_SYMBIOSIS, "symbiosis")
+  X(TOK_SYMBIOSIS, "symbiosis")  \
+  X(TOK_PRIM, "prim")
+
+#define KEYWORD_ALIAS_LIST() \
+  X(TOK_PRIM, "primordial")
 
 
 #define TOKEN_TYPE_LIST()          \

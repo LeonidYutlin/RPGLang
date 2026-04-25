@@ -5,12 +5,13 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#define NODE_TYPE_LIST()          \
-  X(UNKNOWN_TYPE, "UNKNOWN TYPE") \
-  X(OP_TYPE,      "OP")           \
-  X(CTRL_TYPE,    "CTRL")         \
-  X(NUM_TYPE,     "NUM")          \
-  X(VAR_TYPE,     "VAR")
+#define NODE_TYPE_LIST()           \
+  X(UNKNOWN_TYPE,  "UNKNOWN TYPE") \
+  X(OP_TYPE,       "OP")           \
+  X(CTRL_TYPE,     "CTRL")         \
+  X(NUM_TYPE,      "NUM")          \
+  X(VAR_TYPE,      "VAR")          \
+  X(VAR_TYPE_TYPE, "TYPE")
 
 typedef enum NodeType {
   #define X(enm, ...) enm,
@@ -27,13 +28,19 @@ const NodeTypeInfo* parseNodeType(NodeType type);
 
 //NOTE:
 //X(enum, "str")
+#define VAR_TYPE_LIST() \
+  X(TYPE_PRIM, "prim")
+
+//NOTE:
+//X(enum, "str")
 #define CTRL_TYPE_LIST() \
   X(CTRL_SEMIC, ";")     \
   X(CTRL_ASG,   "=")     \
   X(CTRL_IF,    "if")    \
   X(CTRL_ELSE,  "else")  \
   X(CTRL_WHILE, "while") \
-  X(CTRL_UNTIL, "until")
+  X(CTRL_UNTIL, "until") \
+  X(CTRL_VAR_DECL, "var decl")
 
 //NOTE:
 //X(enum, "str", argc, prior)
@@ -85,11 +92,23 @@ typedef enum CtrlType {
 
 const char* getCtrlTypeStr(CtrlType type);
 
+typedef enum VarType {
+  #define X(enm, ...) enm,
+  VAR_TYPE_LIST()
+  #undef X
+} VarType;
+
+const char* getVarTypeStr(VarType type);
+
 //Node utility macros
-#define IS_OP(node)   ((node) && (node)->data.type == OP_TYPE)
-#define IS_NUM(node)  ((node) && (node)->data.type == NUM_TYPE)
-#define IS_VAR(node)  ((node) && (node)->data.type == VAR_TYPE)
-#define IS_CTRL(node) ((node) && (node)->data.type == CTRL_TYPE)
+#define IS_TYPE(node, t) ((node) && (node)->data.type == t) 
+#define IS_OP(node)   IS_TYPE(node, OP_TYPE)
+#define IS_NUM(node)  IS_TYPE(node, NUM_TYPE)
+#define IS_VAR(node)  IS_TYPE(node, VAR_TYPE)
+#define IS_CTRL(node) IS_TYPE(node, CTRL_TYPE)
+#define IS_VAR_TYPE(node) IS_TYPE(node, VAR_TYPE_TYPE)
+#define OF_VAR_TYPE(node, varType) \
+  (IS_VAR_TYPE((node)) && (node)->data.value.varType == (varType))
 #define OF_CTRL(node, ctrlType) \
   (IS_CTRL((node)) && (node)->data.value.ctrl == (ctrlType))
 #define OF_OP(node, opType) \
@@ -102,9 +121,12 @@ const char* getCtrlTypeStr(CtrlType type);
 #define CTRL_UNIT_(i) (NodeUnit){.type = CTRL_TYPE, .value = {.ctrl = i}}
 #define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE,  .value = {.num = i}}
 #define VAR_UNIT_(name, len)  (NodeUnit){.type = VAR_TYPE, .value = {.var = (StringView){name, len}}}
+#define VAR_TYPE_UNIT_(i)  (NodeUnit){.type = VAR_TYPE_TYPE, .value = {.varType = i}}
 
 #define NUM_(i) nodeAlloc(NUM_UNIT_(i))
 #define VAR_(name, len) nodeAlloc(VAR_UNIT_(name, len))
+
+#define PRIM_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_PRIM))
 
 #define nodeAllocCtrl(ctrl, l, r) \
   nodeAlloc(.data = CTRL_UNIT_(ctrl), .left = l, .right = r)
@@ -117,6 +139,8 @@ const char* getCtrlTypeStr(CtrlType type);
         nodeAllocCtrl(CTRL_IF, l, r)
 #define ELSE_(r) \
         nodeAllocCtrl(CTRL_ELSE, NULL, r)
+#define VAR_DECL_(l, r) \
+        nodeAllocCtrl(CTRL_VAR_DECL, l, r)
 
 #define nodeAllocBinop(op, l, r) \
   nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)

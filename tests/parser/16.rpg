@@ -1,0 +1,4 @@
+prim FirstPrim mirror 0III;
+prim SecondPrim;
+prim ThirdPrim mirror 0;
+primordial FancyPrim mirror 0III;

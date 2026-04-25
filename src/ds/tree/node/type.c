@@ -92,3 +92,17 @@ const char* getCtrlTypeStr(CtrlType t) {
          ? NULL
          : CTRL_TYPES[t];
 }
+
+static const char* VAR_TYPES[] = {
+  #define X(enm, str) [enm] = str,
+  VAR_TYPE_LIST()
+  #undef X
+};
+
+static const size_t VAR_TYPES_SIZE = sizer(VAR_TYPES);
+
+const char* getVarTypeStr(VarType t) {
+  return (t < 0 || (size_t)t >= VAR_TYPES_SIZE)
+         ? NULL
+         : VAR_TYPES[t];
+}

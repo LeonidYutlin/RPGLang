@@ -26,6 +26,7 @@ static const char* OP_CELL       = "#A6E3A1";
 static const char* NUM_CELL      = "#6CA1F9";
 static const char* VAR_CELL      = "#B581F4";
 static const char* CTRL_CELL     = "#F9E2AF";
+static const char* TYPE_CELL     = "#FAB387";
 static const char* TABLE_OUTLINE = "#101510";
 static const char* TABLE_FILL    = "#10151034";
 static const char* ADDRESS_FILL  = "#10151034";
@@ -616,10 +617,11 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
   const NodeTypeInfo* nodeInfo = parseNodeType(node->data.type);
   const char* nodeColor = DEFAULT_CELL;
   switch (node->data.type) {
-    case NUM_TYPE:  nodeColor = NUM_CELL;  break;
-    case OP_TYPE:   nodeColor = OP_CELL;   break;
-    case VAR_TYPE:  nodeColor = VAR_CELL;  break;
-    case CTRL_TYPE: nodeColor = CTRL_CELL; break;
+    case NUM_TYPE:      nodeColor = NUM_CELL;  break;
+    case OP_TYPE:       nodeColor = OP_CELL;   break;
+    case VAR_TYPE:      nodeColor = VAR_CELL;  break;
+    case CTRL_TYPE:     nodeColor = CTRL_CELL; break;
+    case VAR_TYPE_TYPE: nodeColor = TYPE_CELL; break;
     default: break;
   }
   fprintf(dot,
@@ -686,6 +688,17 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
                 "</tr>",
                 str ? VALUE_FILL : BAD_FILL, 
                 str ? str : "ERROR: no info for such CtrlType");
+      }
+      break;
+    case VAR_TYPE_TYPE:
+      {
+        const char* str = getVarTypeStr(node->data.value.varType);
+        fprintf(dot,
+                "<tr>"
+                  "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %s</td>"
+                "</tr>",
+                str ? VALUE_FILL : BAD_FILL, 
+                str ? str : "ERROR: no info for such VarType");
       }
       break;
     default:

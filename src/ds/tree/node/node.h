@@ -10,6 +10,7 @@
 #include "utils/utils.h"
 
 typedef union NodeValue {
+  VarType varType;
   OpType op;
   CtrlType ctrl;
   StringView var;
