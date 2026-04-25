@@ -1,37 +1,41 @@
 #include "parser/parser.h"
 
 //TODO: add asserts in every static function
-static TreeNode* getStatement(Tokens* t, size_t* i, char* buf);
-static TreeNode* getStatementBlock(Tokens* t, size_t* i, char* buf);
-static TreeNode* getConditionBlock(TokenType tokType, CtrlType ctrlType, 
-                                   Tokens* t, size_t* i, char* buf);
-#define getIf(t, i, buf)    getConditionBlock(TOK_IF, CTRL_IF, t, i, buf)
-#define getWhile(t, i, buf) getConditionBlock(TOK_WHILE, CTRL_WHILE, t, i, buf)
-#define getUntil(t, i, buf) getConditionBlock(TOK_UNTIL, CTRL_UNTIL, t, i, buf)
-static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf);
-static TreeNode* getExpression(Tokens* t, size_t* i);
-static TreeNode* getTerm(Tokens* t, size_t* i);
-static TreeNode* getPrimary(Tokens* t, size_t* i);
+static bool getStatement(Tokens* t, size_t* i, char* buf, TreeNode** result);
+static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result);
+static bool getConditionBlock(TokenType tokType, CtrlType ctrlType, 
+                              Tokens* t, size_t* i, char* buf, TreeNode** result);
+#define getIf(t, i, buf, result)    getConditionBlock(TOK_IF, CTRL_IF, t, i, buf, result)
+#define getWhile(t, i, buf, result) getConditionBlock(TOK_WHILE, CTRL_WHILE, t, i, buf, result)
+#define getUntil(t, i, buf, result) getConditionBlock(TOK_UNTIL, CTRL_UNTIL, t, i, buf, result)
+static bool getAssignment(Tokens* t, size_t* i, char* buf, TreeNode** result);
+static bool getExpression(Tokens* t, size_t* i, TreeNode** result);
+static bool getTerm(Tokens* t, size_t* i, TreeNode** result);
+static bool getPrimary(Tokens* t, size_t* i, TreeNode** result);
+static bool getIdentifier(Tokens* t, size_t* i, char* buf, TreeNode** result);
+static bool getNumber(Tokens* t, size_t* i, TreeNode** result);
+static bool consumeToken(Tokens* t, size_t* i, TokenType type);
 
+// this function isn't finalized. 
+// represents Grammar in grammar.txt, which is currently Statement+, EOF
 TreeNode* parse(Tokens* t, char* buf) {
   if (daVerify(t) || !buf)
     return NULL;
 
   size_t i = 0;
-  TreeNode* val = getStatement(t, &i, buf);
-  if (!val) {
+  TreeNode* firstStmt = NULL;
+  if (!getStatement(t, &i, buf, &firstStmt)) {
     logln(ERROR, "Invalid Statement");
     return NULL;
   }
 
-  TreeNode* nextStmt = getStatement(t, &i, buf);
-  for (TreeNode* curStmt = val; 
-       nextStmt; 
-       nextStmt = getStatement(t, &i, buf)) {
+  TreeNode* nextStmt = NULL;
+  for (TreeNode* curStmt = firstStmt;
+       getStatement(t, &i, buf, &nextStmt);) {
     TreeNode* lastStmt = curStmt;
-    while (!OF_CTRL(lastStmt, CTRL_SEMIC)) {
+    while (!OF_CTRL(lastStmt, CTRL_SEMIC))
       lastStmt = lastStmt->right;
-    }
+
     lastStmt->right = nextStmt;
     curStmt = nextStmt;
   }
@@ -39,194 +43,209 @@ TreeNode* parse(Tokens* t, char* buf) {
   TokenType nextType = ((Token*)daGet(t, i++))->type; 
   if (nextType != TOK_EOF) {
     logln(ERROR, "Expected EOF, got %s", getTokenTypeStr(nextType));
-    nodeDestroy(val);
+    nodeDestroy(firstStmt);
     return NULL;
   }
-  nodeFixParents(val);
-  return val;
+  nodeFixParents(firstStmt);
+  return firstStmt;
 }
 
 #define PEEK() ((Token*)daGet(t, (*i)))
 #define CHECK(T) (PEEK()->type == T)
 
-static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
-  if (CHECK(TOK_SEMIC)) {
-    (*i)++;
-    return SEMIC_(NULL);
+static bool getStatement(Tokens* t, size_t* i, char* buf, TreeNode** result) {
+  if (consumeToken(t, i, TOK_SEMIC)) {
+    *result = SEMIC_(NULL);
+    return true;
   }
 
-  bool requiresSemicolon = false;
-  TreeNode* stmt = getStatementBlock(t, i, buf);
-  if (!stmt)
-    stmt = getIf(t, i, buf);
-  if (!stmt)
-    stmt = getWhile(t, i, buf);
-  if (!stmt)
-    stmt = getUntil(t, i, buf);
-  if (!stmt) {
-    requiresSemicolon = true;
-    stmt = getExpression(t, i);
+  TreeNode* stmt = NULL;
+  // statements that do not require a semicolon
+  if (getStatementBlock(t, i, buf, &stmt) ||
+      getIf(t, i, buf, &stmt)             ||
+      getWhile(t, i, buf, &stmt)          ||
+      getUntil(t, i, buf, &stmt)) {
+    *result = stmt;
+    return true;
+  } 
+
+  // statements that require a semicolon
+  if (getExpression(t, i, &stmt) ||
+      getAssignment(t, i, buf, &stmt)) {
+    if (!consumeToken(t, i, TOK_SEMIC)) {
+      nodeDestroy(stmt);
+      return false;
+    }
+
+    *result = SEMIC_(stmt);
+    return true;
   }
-  if (!stmt)
-    stmt = getAssignment(t, i, buf);
 
-  if (!stmt)
-    return NULL;
-
-  if (!requiresSemicolon)
-    return stmt;
-
-  if (!CHECK(TOK_SEMIC)) {
-    nodeDestroy(stmt);
-    return NULL;
-  }
-  (*i)++;
-
-  return SEMIC_(stmt);
+  return false;
 }
 
-static TreeNode* getStatementBlock(Tokens* t, size_t* i, char* buf) {
+static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result) {
   logln(DEBUG, "Stmt block parsing!");
-  if (!CHECK(TOK_LBRACE))
-    return NULL;
-  (*i)++;
-  if (CHECK(TOK_RBRACE)) {
-    (*i)++;
-    return SEMIC_(NULL);
+  if (!consumeToken(t, i, TOK_LBRACE))
+    return false;
+  if (consumeToken(t, i, TOK_RBRACE)) {
+    *result = SEMIC_(NULL); // empty block "{}"
+    return true;
   }
 
-  TreeNode* firstStmt = getStatement(t, i, buf);
-  if (!firstStmt) {
-    return NULL;
-  }
+  TreeNode* firstStmt = NULL;
+  if (!getStatement(t, i, buf, &firstStmt))
+    return false;
 
-  TreeNode* nextStmt = getStatement(t, i, buf);
-  for (TreeNode* curStmt = firstStmt; 
-       nextStmt;
-       nextStmt = getStatement(t, i, buf)) {
+  TreeNode* nextStmt = NULL;
+  for (TreeNode* curStmt = firstStmt;
+       getStatement(t, i, buf, &nextStmt);) {
     TreeNode* lastStmt = curStmt;
-    while (!OF_CTRL(lastStmt, CTRL_SEMIC)) {
+    while (!OF_CTRL(lastStmt, CTRL_SEMIC))
       lastStmt = lastStmt->right;
-    }
+
     lastStmt->right = nextStmt;
     curStmt = nextStmt;
   }
 
-  if (!CHECK(TOK_RBRACE)) {
+  if (!consumeToken(t, i, TOK_RBRACE)) {
     nodeDestroy(firstStmt);
-    return NULL;
+    return false;
   }
-  (*i)++;
 
-  return SEMIC_(firstStmt);
+  *result = SEMIC_(firstStmt);
+  return true;
 }
 
-static TreeNode* getConditionBlock(TokenType tokType, CtrlType ctrlType, 
-                                   Tokens* t, size_t* i, char* buf) {
+static bool getConditionBlock(TokenType tokType, CtrlType ctrlType, 
+                              Tokens* t, size_t* i, char* buf, TreeNode** result) {
   logln(DEBUG, "Condition Block parsing!");
-  if (!CHECK(tokType))
-    return NULL;
-  (*i)++;
-  if (!CHECK(TOK_LPAREN))
-    return NULL;
-  (*i)++;
-  TreeNode* lhs = getExpression(t, i);
-  if (!lhs)
-    return NULL;
 
-  if (!CHECK(TOK_RPAREN)) {
-    nodeDestroy(lhs);
-    return NULL;
-  }
-  (*i)++;
-
-  TreeNode* rhs = getStatement(t, i, buf);
-  if (!rhs) {
-    nodeDestroy(lhs);
-    return NULL;
-  }
-  return nodeAllocCtrl(ctrlType, lhs, rhs);
-}
-
-static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf) {
-  logln(DEBUG, "Assignment parsing!");
   TreeNode* lhs = NULL;
-  if (CHECK(TOK_IDENTIFIER)) {
-    lhs = VAR_(buf + PEEK()->pos, PEEK()->len);
-    (*i)++;
-  } else
-    return NULL;
-
-  if (!CHECK(TOK_MIRROR)) {
-    nodeDestroy(lhs);
-    return NULL;
+  TreeNode* rhs = NULL;
+  if (consumeToken(t, i, tokType)    &&
+      consumeToken(t, i, TOK_LPAREN) &&
+      getExpression(t, i, &lhs)      &&
+      consumeToken(t, i, TOK_RPAREN) &&
+      getStatement(t, i, buf, &rhs)) {
+    *result = nodeAllocCtrl(ctrlType, lhs, rhs);
+    return true;
   }
-  (*i)++;
 
-  TreeNode* rhs = getExpression(t, i);
-  if (!rhs) {
-    nodeDestroy(lhs);
-    return NULL;
-  }
-  return ASG_(lhs, rhs);
+  nodeDestroy(lhs);
+  nodeDestroy(rhs);
+  return false;
 }
 
-static TreeNode* getExpression(Tokens* t, size_t* i) {
+static bool getAssignment(Tokens* t, size_t* i, char* buf, TreeNode** result) {
+  logln(DEBUG, "Assignment parsing!");
+
+  TreeNode* lhs = NULL;
+  TreeNode* rhs = NULL;
+  if (getIdentifier(t, i, buf, &lhs) &&
+      consumeToken(t, i, TOK_MIRROR) &&
+      getExpression(t, i, &rhs)) {
+    *result = ASG_(lhs, rhs);
+    return true;
+  }
+
+  nodeDestroy(lhs);
+  nodeDestroy(rhs);
+  return false;
+}
+
+static bool getExpression(Tokens* t, size_t* i, TreeNode** result) {
   logln(DEBUG, "Expression parsing!");
-  TreeNode* val = getTerm(t, i);
-  for (Token* next = PEEK(); 
-       next->type == TOK_UNITE ||
-       next->type == TOK_HIT;
-       next = PEEK()) {
-    logln(DEBUG, "Next is %s", getTokenTypeStr(next->type));
-    (*i)++;
-    logln(DEBUG, "we are on the %zu elem out of %zu elems", *i, t->count);
-    TreeNode* val2 = getTerm(t, i);
-    if (next->type == TOK_UNITE)
-      val = ADD_(val, val2);
-    else
-      val = SUB_(val, val2);
-  }
-  return val;
-}
 
-static TreeNode* getTerm(Tokens* t, size_t* i) {
-  logln(DEBUG, "Term parsing!");
-  TreeNode* val = getPrimary(t, i);
-  for (Token* next = PEEK(); 
-       next->type == TOK_EMPOWER ||
-       next->type == TOK_SHATTER;
-       next = PEEK()) {
-    logln(DEBUG, "Next is %s", getTokenTypeStr(next->type));
+  TreeNode* first = NULL;
+  if (!getTerm(t, i, &first))
+    return false;
+  for (Token* opTok = PEEK(); 
+       opTok->type == TOK_UNITE ||
+       opTok->type == TOK_HIT;
+       opTok = PEEK()) {
     (*i)++;
-    logln(DEBUG, "we are on the %zu elem out of %zu elems", *i, t->count);
-    TreeNode* val2 = getPrimary(t, i);
-    if (next->type == TOK_EMPOWER)
-      val = MUL_(val, val2);
-    else
-      val = DIV_(val, val2);
-  }
-  return val;
-}
-
-static TreeNode* getPrimary(Tokens* t, size_t* i) {
-  if (CHECK(TOK_LPAREN)) {
-    (*i)++;
-    TreeNode* val = getExpression(t, i);
-    if (val && CHECK(TOK_RPAREN)) {
-      (*i)++;
-      return val;
-    } else {
-      nodeDestroy(val);
-      return NULL;
+    TreeNode* next = NULL;
+    if (!getTerm(t, i, &next)) {
+      nodeDestroy(first);
+      return false;
     }
+    first = opTok->type == TOK_UNITE
+            ? ADD_(first, next)
+            : SUB_(first, next);
   }
+  *result = first;
+  return true;
+}
 
-  if (CHECK(TOK_NUM_LIT)) {
-    TreeNode* num = NUM_(PEEK()->value);
+static bool getTerm(Tokens* t, size_t* i, TreeNode** result) {
+  logln(DEBUG, "Term parsing!");
+
+  TreeNode* first = NULL;
+  if (!getPrimary(t, i, &first))
+    return false;
+  for (Token* opTok = PEEK(); 
+       opTok->type == TOK_EMPOWER ||
+       opTok->type == TOK_SHATTER;
+       opTok = PEEK()) {
     (*i)++;
-    return num;
+    TreeNode* next = NULL;
+    if (!getPrimary(t, i, &next)) {
+      nodeDestroy(first);
+      return false;
+    }
+    first = opTok->type == TOK_EMPOWER
+            ? MUL_(first, next)
+            : DIV_(first, next);
+  }
+  *result = first;
+  return true;
+}
+
+static bool getPrimary(Tokens* t, size_t* i, TreeNode** result) {
+  if (consumeToken(t, i, TOK_LPAREN)) {
+    TreeNode* expr = NULL;
+    if (getExpression(t, i, &expr) &&
+        consumeToken(t, i, TOK_RPAREN)) {
+      *result = expr;
+      return true;
+    }
+
+    nodeDestroy(expr);
+    return false;
   }
 
-  return NULL;
+  TreeNode* num = NULL;
+  if (getNumber(t, i, &num)) {
+    *result = num;
+    return true;
+  }
+
+  return false;
+}
+
+static bool consumeToken(Tokens* t, size_t* i, TokenType type) {
+  if (CHECK(type)) {
+    (*i)++;
+    return true;
+  }
+  return false;
+}
+
+static bool getIdentifier(Tokens* t, size_t* i, char* buf, TreeNode** result) {
+  if (CHECK(TOK_IDENTIFIER)) {
+    *result = VAR_(buf + PEEK()->pos, PEEK()->len);
+    (*i)++;
+    return true;
+  }
+  return false;
+}
+
+static bool getNumber(Tokens* t, size_t* i, TreeNode** result) {
+  if (CHECK(TOK_NUM_LIT)) {
+    *result = NUM_(PEEK()->value);
+    (*i)++;
+    return true;
+  }
+  return false;
 }
