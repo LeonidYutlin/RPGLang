@@ -1,7 +1,6 @@
 #include "parser/parser.h"
 
 //TODO: add asserts in every static function
-//TODO: instead of storing empty statements in AST, skip them
 static bool getStatement(Tokens* t, size_t* i, char* buf, TreeNode** result);
 static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result);
 static bool getConditionBlock(TokenType tokType, CtrlType ctrlType, 
@@ -29,10 +28,14 @@ TreeNode* parse(Tokens* t, char* buf) {
     logln(ERROR, "Invalid Statement");
     return NULL;
   }
+  if (!firstStmt) 
+    firstStmt = SEMIC_(NULL);
 
   TreeNode* nextStmt = NULL;
   for (TreeNode* curStmt = firstStmt;
        getStatement(t, &i, buf, &nextStmt);) {
+    if (!nextStmt)
+      continue;
     TreeNode* lastStmt = curStmt;
     while (lastStmt->right)
       lastStmt = lastStmt->right;
@@ -56,7 +59,7 @@ TreeNode* parse(Tokens* t, char* buf) {
 
 static bool getStatement(Tokens* t, size_t* i, char* buf, TreeNode** result) {
   if (consumeToken(t, i, TOK_SEMIC)) {
-    *result = SEMIC_(NULL);
+    *result = NULL;
     return true;
   }
 
@@ -89,7 +92,7 @@ static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result
   if (!consumeToken(t, i, TOK_LBRACE))
     return false;
   if (consumeToken(t, i, TOK_RBRACE)) {
-    *result = SEMIC_(NULL); // empty block "{}"
+    *result = NULL; // empty block "{}"
     return true;
   }
 
@@ -100,6 +103,8 @@ static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result
   TreeNode* nextStmt = NULL;
   for (TreeNode* curStmt = firstStmt;
        getStatement(t, i, buf, &nextStmt);) {
+    if (!nextStmt)
+      continue;
     TreeNode* lastStmt = curStmt;
     while (lastStmt->right)
       lastStmt = lastStmt->right;
@@ -113,7 +118,9 @@ static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result
     return false;
   }
 
-  *result = SEMIC_(firstStmt);
+  *result = firstStmt 
+            ? SEMIC_(firstStmt)
+            : NULL;
   return true;
 }
 
