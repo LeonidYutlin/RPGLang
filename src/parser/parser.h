@@ -4,7 +4,10 @@
 #include "ds/tree/node/node.h"
 #include "lexer/lexer.h"
 
+//TODO: do something with buf: 
+//1. Store absolute pointers in tokens. 
+//2. Store relative pointers in AST, but carry buf with AST's Root
+//3. Store buf in Parser, but transform relative pointers to absolute pointers in AST
 TreeNode* parse(Tokens* tokens, char* buf); 
-// TODO: new struct Parser that gets needed fields from lexer
 
 #endif
