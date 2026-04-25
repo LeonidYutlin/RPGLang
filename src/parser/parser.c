@@ -14,6 +14,7 @@ static bool getAssignmentBody(Tokens* t, size_t* i, TreeNode** result);
 static bool getExpression(Tokens* t, size_t* i, TreeNode** result);
 static bool getTerm(Tokens* t, size_t* i, TreeNode** result);
 static bool getPrimary(Tokens* t, size_t* i, TreeNode** result);
+static bool getNonVoidType(Tokens* t, size_t* i, TreeNode** result);
 static bool getIdentifier(Tokens* t, size_t* i, char* buf, TreeNode** result);
 static bool getNumber(Tokens* t, size_t* i, TreeNode** result);
 static bool consumeToken(Tokens* t, size_t* i, TokenType type);
@@ -172,16 +173,17 @@ static bool getIf(Tokens* t, size_t* i, char* buf, TreeNode** result) {
 }
 
 static bool getVariableDeclaration(Tokens* t, size_t* i, char* buf, TreeNode** result) {
+  TreeNode* type = NULL;
   TreeNode* lhs = NULL;
-  if (consumeToken(t, i, TOK_PRIM) &&
+  if (getNonVoidType(t, i, &type) &&
       getIdentifier(t, i, buf, &lhs)) {
     TreeNode* rhs = NULL;
     if (getAssignmentBody(t, i, &rhs)) {
-      *result = VAR_DECL_(PRIM_(), ASG_(lhs, rhs));
+      *result = VAR_DECL_(type, ASG_(lhs, rhs));
       return true;
     }
     nodeDestroy(rhs);
-    *result = VAR_DECL_(PRIM_(), lhs);
+    *result = VAR_DECL_(type, lhs);
     return true;
   }
 
@@ -305,4 +307,13 @@ static bool getNumber(Tokens* t, size_t* i, TreeNode** result) {
     return true;
   }
   return false;
+}
+
+static bool getNonVoidType(Tokens* t, size_t* i, TreeNode** result) {
+  switch (PEEK()->type) {
+    case TOK_PRIM: *result = PRIM_(); (*i)++; return true;
+    case TOK_FRAC: *result = FRAC_(); (*i)++; return true;
+    case TOK_LOC:  *result = LOC_();  (*i)++; return true;
+    default: return false;
+  }
 }

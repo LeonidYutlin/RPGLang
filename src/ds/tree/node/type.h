@@ -29,7 +29,9 @@ const NodeTypeInfo* parseNodeType(NodeType type);
 //NOTE:
 //X(enum, "str")
 #define VAR_TYPE_LIST() \
-  X(TYPE_PRIM, "prim")
+  X(TYPE_PRIM, "prim")  \
+  X(TYPE_FRAC, "frac")  \
+  X(TYPE_LOC,  "loc")
 
 //NOTE:
 //X(enum, "str")
@@ -127,6 +129,8 @@ const char* getVarTypeStr(VarType type);
 #define VAR_(name, len) nodeAlloc(VAR_UNIT_(name, len))
 
 #define PRIM_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_PRIM))
+#define FRAC_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_FRAC))
+#define LOC_()  nodeAlloc(VAR_TYPE_UNIT_(TYPE_LOC))
 
 #define nodeAllocCtrl(ctrl, l, r) \
   nodeAlloc(.data = CTRL_UNIT_(ctrl), .left = l, .right = r)

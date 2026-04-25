@@ -46,11 +46,14 @@
   X(TOK_NAT_GROWTH, "natgrowth") \
   X(TOK_EMPOWER, "empower")      \
   X(TOK_SYMBIOSIS, "symbiosis")  \
-  X(TOK_PRIM, "prim")
+  X(TOK_PRIM, "prim")            \
+  X(TOK_FRAC, "frac")            \
+  X(TOK_LOC,  "loc")
 
 #define KEYWORD_ALIAS_LIST() \
-  X(TOK_PRIM, "primordial")
-
+  X(TOK_PRIM, "primordial")  \
+  X(TOK_FRAC, "fractured")   \
+  X(TOK_LOC,  "location")
 
 #define TOKEN_TYPE_LIST()          \
   X(TOK_EOF,        "EOF")         \

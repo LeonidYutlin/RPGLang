@@ -23,11 +23,12 @@ Primary ::= Number
           | "(", Expression, ")"
 Number ::= "0", (RomanDigit)+
 
-VariableDeclaration ::= Type, Identifier, AssignmentBody?
+VariableDeclaration ::= NonVoidType, Identifier, AssignmentBody?
 Assignment ::= Identifier, AssignmentBody
 AssignmentBody ::= "mirror", Expression      (* = *)
 Identifier ::= Character, (Character | "0")*
-Type ::= "prim" | "primordial"
+Type       ::= "void" | NonVoidType
+NonVoidType ::= "prim" | "primordial" | "frac" | "fractured" | "loc" | "location"
 
 Character ::= Letter
             | NonZeroDecimalDigit
