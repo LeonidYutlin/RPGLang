@@ -35,8 +35,8 @@ Error lexerInit(Lexer* lexer, int fd, size_t initCap) {
     return err;
 
   lexer->pos        = 0;
-  lexer->line       = 1;
-  lexer->lineStart  = 1;
+  lexer->line       = lexer->mf.data + 1;
+  lexer->lineStart  = lexer->mf.data + 1;
 
   if (!KEYWORD_HT_REFCOUNT &&
       (err = keywordInit())) {
@@ -47,7 +47,7 @@ Error lexerInit(Lexer* lexer, int fd, size_t initCap) {
 }
 
 Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
-  if (fd < 0 || 
+  if (fd < 0 ||
       !initCap)
     RETURN_WITH_STATUS(BadArgs, NULL);
 
@@ -69,7 +69,7 @@ Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
     newToken = (Token){                \
       __VA_ARGS__ __VA_OPT__(,)        \
       .type = T,                       \
-      .pos = position,                 \
+      .pos = lexer->mf.data + position,\
       .len = length,                   \
       .line = lexer->line,             \
       .lineStart = lexer->lineStart,   \
@@ -102,7 +102,7 @@ Error lexerAnalyze(Lexer* lexer) {
     if (isspace(c)) {
       if (c == '\n') {
         lexer->line++;
-        lexer->lineStart = lexer->pos;
+        lexer->lineStart = lexer->mf.data + lexer->pos;
       }
       lexer->pos++;
       continue;
@@ -111,8 +111,8 @@ Error lexerAnalyze(Lexer* lexer) {
     // one-character long tokens
     switch (c) {
       case ';': CONSUME_CHAR(TOK_SEMIC);  continue;
-      case '(': CONSUME_CHAR(TOK_LPAREN);   continue;
-      case ')': CONSUME_CHAR(TOK_RPAREN);   continue;
+      case '(': CONSUME_CHAR(TOK_LPAREN); continue;
+      case ')': CONSUME_CHAR(TOK_RPAREN); continue;
       case '{': CONSUME_CHAR(TOK_LBRACE); continue;
       case '}': CONSUME_CHAR(TOK_RBRACE); continue;
       default: break;
@@ -229,12 +229,12 @@ Error lexerPrintTokens(FILE* sink, Lexer* lexer) {
         fprintf(sink, 
                 "%s(%lu)(%.*s)\n", 
                 tStr, t->value, 
-                (int)t->len, lexer->mf.data + t->pos);
+                (int)t->len, t->pos);
         break;
       case TOK_IDENTIFIER:
         fprintf(sink, 
                 "%s(%.*s)\n", 
-                tStr, (int)t->len, lexer->mf.data + t->pos);
+                tStr, (int)t->len, t->pos);
         break;
       default:
         fprintf(sink, "%s\n", tStr);

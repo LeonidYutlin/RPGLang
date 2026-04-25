@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
   }
 
   lexerPrintTokens(stdout, &lexer);
-  TreeNode* ast = parse(&lexer.tokens, lexer.mf.data);
+  TreeNode* ast = parse(&lexer.tokens);
   if (!ast) {
     fprintf(stderr, "Failed to parse token stream\n");
     exitValue = Fail;

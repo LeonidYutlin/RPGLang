@@ -79,9 +79,9 @@ const char* getTokenTypeStr(TokenType type);
 typedef struct Token {
   TokenType type;
   uint64_t value;
-  size_t line;
-  size_t lineStart;
-  size_t pos;
+  char* line;
+  char* lineStart;
+  char* pos;
   size_t len;
 } Token;
 
@@ -90,8 +90,8 @@ typedef DynamicArray Tokens;
 typedef struct Lexer {
   Tokens tokens;
   MappedFile mf;
-  size_t line;
-  size_t lineStart;
+  char* line;
+  char* lineStart;
   size_t pos;
 } Lexer;
 
