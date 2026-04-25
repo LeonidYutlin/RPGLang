@@ -5,45 +5,46 @@
 #include "utils/utils.h"
 #include <stdint.h>
 
-#define KEYWORD_LIST() \
-  X(TOK_MAGE, "#mage") \
-  X(TOK_WARRIOR, "#warrior") \
-  X(TOK_PRIEST, "#priest") \
-  X(TOK_WARLOCK, "#warlock") \
-  X(TOK_ENCRYPT, "encrypt") \
-  X(TOK_FREEZE, "freeze") \
-  X(TOK_SCRY, "scry") \
-  X(TOK_DELAYED, "delayed") \
-  X(TOK_PREPARE, "prepare") \
-  X(TOK_EQUIP, "equip") \
-  X(TOK_MIRROR, "mirror") \
-  X(TOK_CONJURE, "conjure") \
-  X(TOK_SLICE, "slice") \
-  X(TOK_SLAM, "slam") \
-  X(TOK_HIT, "hit") \
-  X(TOK_DUEL, "duel!") \
-  X(TOK_TRAIN, "train") \
-  X(TOK_PUSHL, "push") \
-  X(TOK_PUSHR, "shove") \
-  X(TOK_PURIFY, "purify") \
-  X(TOK_SHADOW, "shadow") \
+#define KEYWORD_LIST()           \
+  X(TOK_MAGE, "#mage")           \
+  X(TOK_WARRIOR, "#warrior")     \
+  X(TOK_PRIEST, "#priest")       \
+  X(TOK_WARLOCK, "#warlock")     \
+  X(TOK_ENCRYPT, "encrypt")      \
+  X(TOK_FREEZE, "freeze")        \
+  X(TOK_SCRY, "scry")            \
+  X(TOK_DELAYED, "delayed")      \
+  X(TOK_PREPARE, "prepare")      \
+  X(TOK_EQUIP, "equip")          \
+  X(TOK_MIRROR, "mirror")        \
+  X(TOK_CONJURE, "conjure")      \
+  X(TOK_SLICE, "slice")          \
+  X(TOK_SLAM, "slam")            \
+  X(TOK_HIT, "hit")              \
+  X(TOK_DUEL, "duel!")           \
+  X(TOK_TRAIN, "train")          \
+  X(TOK_PUSHL, "push")           \
+  X(TOK_PUSHR, "shove")          \
+  X(TOK_PURIFY, "purify")        \
+  X(TOK_SHADOW, "shadow")        \
   X(TOK_ENGLIGHTEN, "enlighten") \
-  X(TOK_UNTIL, "until") \
-  X(TOK_IF, "if") \
-  X(TOK_ELSE, "else") \
-  X(TOK_PENANCE, "penance") \
-  X(TOK_UNITE, "unite") \
-  X(TOK_AND, "and") \
-  X(TOK_NOT, "not") \
-  X(TOK_BLIGHTEN, "blighten") \
-  X(TOK_SHATTER, "shatter") \
-  X(TOK_LEECH, "leech") \
-  X(TOK_SACRIFICE, "sacrifice") \
-  X(TOK_OR, "or") \
-  X(TOK_ROOTS, "roots") \
-  X(TOK_NAT_AGE, "natage") \
+  X(TOK_UNTIL, "until")          \
+  X(TOK_WHILE, "while")          \
+  X(TOK_IF, "if")                \
+  X(TOK_ELSE, "else")            \
+  X(TOK_PENANCE, "penance")      \
+  X(TOK_UNITE, "unite")          \
+  X(TOK_AND, "and")              \
+  X(TOK_NOT, "not")              \
+  X(TOK_BLIGHTEN, "blighten")    \
+  X(TOK_SHATTER, "shatter")      \
+  X(TOK_LEECH, "leech")          \
+  X(TOK_SACRIFICE, "sacrifice")  \
+  X(TOK_OR, "or")                \
+  X(TOK_ROOTS, "roots")          \
+  X(TOK_NAT_AGE, "natage")       \
   X(TOK_NAT_GROWTH, "natgrowth") \
-  X(TOK_EMPOWER, "empower") \
+  X(TOK_EMPOWER, "empower")      \
   X(TOK_SYMBIOSIS, "symbiosis")
 
 

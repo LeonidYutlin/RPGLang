@@ -3,13 +3,18 @@
 Grammar ::= Statement+, EOF
 Statement ::= StatementBlock
             | If
+            | While
+            | Until
             | Expression, ";"
             | Assignment, ";"
             | ";"
 
 StatementBlock ::= "{", Statement*, "}" 
 
-If ::= "if", "(", Expression, ")", Statement
+If ::= "if", ConditionalBody
+While ::= "while", ConditionalBody
+Until ::= "until", ConditionalBody
+ConditionalBody ::= "(", Expression, ")", Statement
 
 Expression ::= Term, (("unite" | "hit"), Term)*          (* "+" | "-" *)
 Term ::= Primary, (("empower" | "shatter"), Primary)*    (* "*" | "/" *)

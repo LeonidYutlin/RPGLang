@@ -30,7 +30,9 @@ const NodeTypeInfo* parseNodeType(NodeType type);
 #define CTRL_TYPE_LIST() \
   X(CTRL_SEMIC, ";")     \
   X(CTRL_ASG,   "=")     \
-  X(CTRL_IF,    "if")
+  X(CTRL_IF,    "if")    \
+  X(CTRL_WHILE, "while") \
+  X(CTRL_UNTIL, "until")
 
 //NOTE:
 //X(enum, "str", argc, prior)

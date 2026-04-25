@@ -3,7 +3,11 @@
 //TODO: add asserts in every static function
 static TreeNode* getStatement(Tokens* t, size_t* i, char* buf);
 static TreeNode* getStatementBlock(Tokens* t, size_t* i, char* buf);
-static TreeNode* getIf(Tokens* t, size_t* i, char* buf);
+static TreeNode* getConditionBlock(TokenType tokType, CtrlType ctrlType, 
+                                   Tokens* t, size_t* i, char* buf);
+#define getIf(t, i, buf)    getConditionBlock(TOK_IF, CTRL_IF, t, i, buf)
+#define getWhile(t, i, buf) getConditionBlock(TOK_WHILE, CTRL_WHILE, t, i, buf)
+#define getUntil(t, i, buf) getConditionBlock(TOK_UNTIL, CTRL_UNTIL, t, i, buf)
 static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf);
 static TreeNode* getExpression(Tokens* t, size_t* i);
 static TreeNode* getTerm(Tokens* t, size_t* i);
@@ -25,7 +29,7 @@ TreeNode* parse(Tokens* t, char* buf) {
        nextStmt; 
        nextStmt = getStatement(t, &i, buf)) {
     TreeNode* lastStmt = curStmt;
-    while (OF_CTRL(lastStmt, CTRL_IF)) {
+    while (!OF_CTRL(lastStmt, CTRL_SEMIC)) {
       lastStmt = lastStmt->right;
     }
     lastStmt->right = nextStmt;
@@ -55,6 +59,10 @@ static TreeNode* getStatement(Tokens* t, size_t* i, char* buf) {
   TreeNode* stmt = getStatementBlock(t, i, buf);
   if (!stmt)
     stmt = getIf(t, i, buf);
+  if (!stmt)
+    stmt = getWhile(t, i, buf);
+  if (!stmt)
+    stmt = getUntil(t, i, buf);
   if (!stmt) {
     requiresSemicolon = true;
     stmt = getExpression(t, i);
@@ -97,7 +105,7 @@ static TreeNode* getStatementBlock(Tokens* t, size_t* i, char* buf) {
        nextStmt;
        nextStmt = getStatement(t, i, buf)) {
     TreeNode* lastStmt = curStmt;
-    while (OF_CTRL(lastStmt, CTRL_IF)) {
+    while (!OF_CTRL(lastStmt, CTRL_SEMIC)) {
       lastStmt = lastStmt->right;
     }
     lastStmt->right = nextStmt;
@@ -113,9 +121,10 @@ static TreeNode* getStatementBlock(Tokens* t, size_t* i, char* buf) {
   return SEMIC_(firstStmt);
 }
 
-static TreeNode* getIf(Tokens* t, size_t* i, char* buf) {
-  logln(DEBUG, "If parsing!");
-  if (!CHECK(TOK_IF))
+static TreeNode* getConditionBlock(TokenType tokType, CtrlType ctrlType, 
+                                   Tokens* t, size_t* i, char* buf) {
+  logln(DEBUG, "Condition Block parsing!");
+  if (!CHECK(tokType))
     return NULL;
   (*i)++;
   if (!CHECK(TOK_LPAREN))
@@ -136,7 +145,7 @@ static TreeNode* getIf(Tokens* t, size_t* i, char* buf) {
     nodeDestroy(lhs);
     return NULL;
   }
-  return IF_(lhs, rhs);
+  return nodeAllocCtrl(ctrlType, lhs, rhs);
 }
 
 static TreeNode* getAssignment(Tokens* t, size_t* i, char* buf) {
