@@ -1,11 +1,12 @@
 #include "parser/parser.h"
 
 //TODO: add asserts in every static function
+//TODO: instead of storing empty statements in AST, skip them
 static bool getStatement(Tokens* t, size_t* i, char* buf, TreeNode** result);
 static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result);
 static bool getConditionBlock(TokenType tokType, CtrlType ctrlType, 
                               Tokens* t, size_t* i, char* buf, TreeNode** result);
-#define getIf(t, i, buf, result)    getConditionBlock(TOK_IF, CTRL_IF, t, i, buf, result)
+static bool getIf(Tokens* t, size_t* i, char* buf, TreeNode** result);
 #define getWhile(t, i, buf, result) getConditionBlock(TOK_WHILE, CTRL_WHILE, t, i, buf, result)
 #define getUntil(t, i, buf, result) getConditionBlock(TOK_UNTIL, CTRL_UNTIL, t, i, buf, result)
 static bool getAssignment(Tokens* t, size_t* i, char* buf, TreeNode** result);
@@ -33,7 +34,7 @@ TreeNode* parse(Tokens* t, char* buf) {
   for (TreeNode* curStmt = firstStmt;
        getStatement(t, &i, buf, &nextStmt);) {
     TreeNode* lastStmt = curStmt;
-    while (!OF_CTRL(lastStmt, CTRL_SEMIC))
+    while (lastStmt->right)
       lastStmt = lastStmt->right;
 
     lastStmt->right = nextStmt;
@@ -100,7 +101,7 @@ static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result
   for (TreeNode* curStmt = firstStmt;
        getStatement(t, i, buf, &nextStmt);) {
     TreeNode* lastStmt = curStmt;
-    while (!OF_CTRL(lastStmt, CTRL_SEMIC))
+    while (lastStmt->right)
       lastStmt = lastStmt->right;
 
     lastStmt->right = nextStmt;
@@ -132,6 +133,32 @@ static bool getConditionBlock(TokenType tokType, CtrlType ctrlType,
   nodeDestroy(lhs);
   nodeDestroy(rhs);
   return false;
+}
+
+static bool getIf(Tokens* t, size_t* i, char* buf, TreeNode** result) {
+  TreeNode* ifNode   = NULL;
+  TreeNode* elseStmt = NULL;
+  if (getConditionBlock(TOK_IF, CTRL_IF, t, i, buf, &ifNode)) {
+    if (consumeToken(t, i, TOK_ELSE)) {
+      if (getStatement(t, i, buf, &elseStmt)) {
+        TreeNode* lastStmt = ifNode;
+        while (lastStmt->right)
+          lastStmt = lastStmt->right;
+
+        lastStmt->right = ELSE_(elseStmt);
+      } else {
+        nodeDestroy(ifNode);
+        return false;
+      }
+    }
+
+    *result = ifNode;
+    return true;
+  }
+
+  nodeDestroy(ifNode);
+  nodeDestroy(elseStmt);
+  return false; 
 }
 
 static bool getAssignment(Tokens* t, size_t* i, char* buf, TreeNode** result) {

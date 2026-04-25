@@ -31,6 +31,7 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(CTRL_SEMIC, ";")     \
   X(CTRL_ASG,   "=")     \
   X(CTRL_IF,    "if")    \
+  X(CTRL_ELSE,  "else")  \
   X(CTRL_WHILE, "while") \
   X(CTRL_UNTIL, "until")
 
@@ -114,6 +115,8 @@ const char* getCtrlTypeStr(CtrlType type);
         nodeAllocCtrl(CTRL_ASG, l, r)
 #define IF_(l, r) \
         nodeAllocCtrl(CTRL_IF, l, r)
+#define ELSE_(r) \
+        nodeAllocCtrl(CTRL_ELSE, NULL, r)
 
 #define nodeAllocBinop(op, l, r) \
   nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)

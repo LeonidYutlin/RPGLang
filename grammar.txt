@@ -4,14 +4,14 @@ Grammar ::= Statement+, EOF
 Statement ::= StatementBlock
             | If
             | While
-            | Until
+            | Until 
             | Expression, ";"
             | Assignment, ";"
             | ";"
 
 StatementBlock ::= "{", Statement*, "}" 
 
-If ::= "if", ConditionalBody
+If ::= "if", ConditionalBody, ("else", Statement)?
 While ::= "while", ConditionalBody
 Until ::= "until", ConditionalBody
 ConditionalBody ::= "(", Expression, ")", Statement
