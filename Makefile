@@ -17,8 +17,9 @@ define to_object
 	$(patsubst %.c, $(ARTIFACT_PATH)/%.o, $(notdir $(1)))
 endef
 
-SOURCES := $(shell find src/ -type f -name '*.c')
-OBJECTS := $(call to_object,$(SOURCES))
+SOURCES      := $(shell find src/ -type f -name '*.c')
+OBJECTS      := $(call to_object,$(SOURCES))
+DEPENDENCIES := $(OBJECTS:.o=.d)
 
 C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
 				   -Waggressive-loop-optimizations                                \
@@ -48,7 +49,10 @@ C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
 				   shift,signed-integer-overflow,undefined,$\
 				   unreachable,vla-bound,vptr
 
+
 build: ensure_directories_exist $(PROGRAM_NAME) update_todo
+
+-include $(DEPENDENCIES)
 
 $(PROGRAM_NAME): $(OBJECTS)
 	@echo -e "•Linking the project together"
@@ -62,7 +66,7 @@ $(foreach src,$(SOURCES),$(eval $(strip $(call declare_recipe,$(src)))))
 
 %.o:
 	@echo -e "•Compiling" $<
-	@$(COMPILER) -c $(DEFINE_FLAGS) $(INCLUDE_FLAGS) $(LIBS) $(C_FLAGS) $< -o $@
+	@$(COMPILER) -c -MMD $(DEFINE_FLAGS) $(INCLUDE_FLAGS) $(LIBS) $(C_FLAGS) $< -o $@
 
 .PHONY: ensure_directories_exist clean run build clean_logs update_todo
 
@@ -82,6 +86,7 @@ clean_logs:
 	mkdir -p $(LOG_PATH)
 
 update_todo:
-	rm -f $(TODO_FILE)
-	touch $(TODO_FILE)
-	grep -r -n "TODO" --exclude="Makefile" --exclude="$(TODO_FILE)" --exclude-dir=.git | sed G >> $(TODO_FILE)
+	@echo -e "•Updating $(TODO_FILE)"
+	@rm -f $(TODO_FILE)
+	@touch $(TODO_FILE)
+	@grep -r -n "TODO" --exclude="Makefile" --exclude="$(TODO_FILE)" --exclude-dir=.git | sed G >> $(TODO_FILE)
