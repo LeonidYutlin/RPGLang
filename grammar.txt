@@ -20,6 +20,7 @@ ConditionalBody ::= "(", Expression, ")", Statement
 Expression ::= Term, (("unite" | "hit"), Term)*          (* "+" | "-" *)
 Term ::= Primary, (("empower" | "shatter"), Primary)*    (* "*" | "/" *)
 Primary ::= Number
+          | Identifier
           | "(", Expression, ")"
 Number ::= "0", (RomanDigit)+
 

@@ -1,0 +1,2 @@
+frac f mirror 0III;
+fractured fCopy mirror (f unite 0II) shatter f;
