@@ -85,7 +85,6 @@ static bool getStatement(Tokens* t, size_t* i, char* buf, TreeNode** result) {
 }
 
 static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result) {
-  logln(DEBUG, "Stmt block parsing!");
   if (!consumeToken(t, i, TOK_LBRACE))
     return false;
   if (consumeToken(t, i, TOK_RBRACE)) {
@@ -119,8 +118,6 @@ static bool getStatementBlock(Tokens* t, size_t* i, char* buf, TreeNode** result
 
 static bool getConditionBlock(TokenType tokType, CtrlType ctrlType, 
                               Tokens* t, size_t* i, char* buf, TreeNode** result) {
-  logln(DEBUG, "Condition Block parsing!");
-
   TreeNode* lhs = NULL;
   TreeNode* rhs = NULL;
   if (consumeToken(t, i, tokType)    &&
@@ -138,8 +135,6 @@ static bool getConditionBlock(TokenType tokType, CtrlType ctrlType,
 }
 
 static bool getAssignment(Tokens* t, size_t* i, char* buf, TreeNode** result) {
-  logln(DEBUG, "Assignment parsing!");
-
   TreeNode* lhs = NULL;
   TreeNode* rhs = NULL;
   if (getIdentifier(t, i, buf, &lhs) &&
@@ -155,8 +150,6 @@ static bool getAssignment(Tokens* t, size_t* i, char* buf, TreeNode** result) {
 }
 
 static bool getExpression(Tokens* t, size_t* i, TreeNode** result) {
-  logln(DEBUG, "Expression parsing!");
-
   TreeNode* first = NULL;
   if (!getTerm(t, i, &first))
     return false;
@@ -179,8 +172,6 @@ static bool getExpression(Tokens* t, size_t* i, TreeNode** result) {
 }
 
 static bool getTerm(Tokens* t, size_t* i, TreeNode** result) {
-  logln(DEBUG, "Term parsing!");
-
   TreeNode* first = NULL;
   if (!getPrimary(t, i, &first))
     return false;
