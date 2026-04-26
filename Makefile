@@ -21,8 +21,6 @@ SOURCES      := $(shell find src/ -type f -name '*.c')
 OBJECTS      := $(call to_object,$(SOURCES))
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
--include $(DEPENDENCIES)
-
 C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
 				   -Waggressive-loop-optimizations                                \
 				   -Wmissing-declarations -Wcast-align -Wcast-qual                \
@@ -57,6 +55,8 @@ build: ensure_directories_exist $(PROGRAM_NAME) update_todo
 $(PROGRAM_NAME): $(OBJECTS)
 	@echo -e "•Linking the project together"
 	@$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $^ -o $@ $(LIBS)
+
+-include $(DEPENDENCIES)
 
 define declare_recipe
 $(call to_object,$(1)): $(1)
