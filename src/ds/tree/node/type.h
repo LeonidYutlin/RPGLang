@@ -46,7 +46,8 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(CTRL_DECL,      "decl")      \
   X(CTRL_PARAM,     "parameter") \
   X(CTRL_FUNC_DECL, "func decl") \
-  X(CTRL_SIGNATURE, "signature")
+  X(CTRL_SIGNATURE, "signature") \
+  X(CTRL_RETURN,    "return")
 
 //NOTE:
 //X(enum, "str", argc, prior)
@@ -135,7 +136,7 @@ const char* getVarTypeStr(VarType type);
 #define PRIM_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_PRIM))
 #define FRAC_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_FRAC))
 #define LOC_()  nodeAlloc(VAR_TYPE_UNIT_(TYPE_LOC))
-#define VOID_()  nodeAlloc(VAR_TYPE_UNIT_(TYPE_VOID))
+#define VOID_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_VOID))
 
 #define nodeAllocCtrl(ctrl, l, r) \
   nodeAlloc(.data = CTRL_UNIT_(ctrl), .left = l, .right = r)
@@ -156,6 +157,8 @@ const char* getVarTypeStr(VarType type);
         nodeAllocCtrl(CTRL_FUNC_DECL, l, r)
 #define SIGNATURE_(l, r) \
         nodeAllocCtrl(CTRL_SIGNATURE, l, r)
+#define RETURN_(l) \
+        nodeAllocCtrl(CTRL_RETURN, l, NULL)
 
 #define nodeAllocBinop(op, l, r) \
   nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)

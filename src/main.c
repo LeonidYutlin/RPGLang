@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
   bool lexerInited   = false;
   bool htmlLogInited = false;
   bool astInited     = false;
-  loggerInit(NULL, DEBUG);
+  loggerInit(NULL, ERROR);
   loggerInited = true;
 
   int fd = open(argv[1], O_RDONLY);

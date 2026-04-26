@@ -46,6 +46,7 @@
   X(TOK_NAT_GROWTH, "natgrowth") \
   X(TOK_EMPOWER, "empower")      \
   X(TOK_SYMBIOSIS, "symbiosis")  \
+  X(TOK_COMPLETE, "complete")    \
   X(TOK_PRIM, "prim")            \
   X(TOK_FRAC, "frac")            \
   X(TOK_LOC,  "loc")             \

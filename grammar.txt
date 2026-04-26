@@ -13,6 +13,7 @@ Statement ::= StatementBlock
             | Expression, ";"
             | VariableDeclaration, ";"
             | Assignment, ";"
+            | Return, ";"
             | ";"
 
 StatementBlock ::= "{", Statement*, "}" 
@@ -35,6 +36,8 @@ AssignmentBody ::= "mirror", Expression      (* = *)
 Identifier ::= Character, (Character | "0")*
 Type       ::= "void" | NonVoidType
 NonVoidType ::= "prim" | "primordial" | "frac" | "fractured" | "loc" | "location"
+
+Return ::= "complete", Expression?
 
 Character ::= Letter
             | NonZeroDecimalDigit

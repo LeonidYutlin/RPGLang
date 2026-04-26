@@ -1,0 +1,8 @@
+prim main () {
+  frac apple mirror 0I;
+  complete apple hit 0III;
+}
+
+void foo()
+  complete;
+
