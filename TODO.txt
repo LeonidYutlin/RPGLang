@@ -2,5 +2,7 @@ grammar.txt:43:(* TODO: finish this list, it isn't exhaustive *)
 
 src/ds/tree/node/node.h:18:  // TODO: change this to uint64_t and add a new union field for float-point nums
 
+src/lexer/lexer.h:79:// TODO: add const qualifiers to char* here
+
 src/parser/parser.c:8://TODO: add asserts in every static function
 
