@@ -2,7 +2,7 @@ prim main () {
   frac apple mirror 0I;
   loc newLoc;
   foo();
-  apple mirror bar(newLoc; newLoc) unite 0XXX;
+  apple mirror bar(newLoc; bar(newLoc; 0 unite 0V)) unite 0XXX;
   complete 0X;
 }
 
