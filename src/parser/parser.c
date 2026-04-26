@@ -19,6 +19,8 @@ static bool getVariableDeclaration(Parser* p, TreeNode** result);
 static bool getAssignment(Parser* p, TreeNode** result);
 static bool getAssignmentBody(Parser* p, TreeNode** result);
 static bool getReturn(Parser* p, TreeNode** result);
+static bool getBreak(Parser* p, TreeNode** result);
+static bool getContinue(Parser* p, TreeNode** result);
 static bool getFunctionCall(Parser* p, TreeNode** result);
 static bool getArgumentList(Parser* p, TreeNode** result);
 static bool getExpression(Parser* p, TreeNode** result);
@@ -157,6 +159,8 @@ static bool getStatement(Parser* p, TreeNode** result) {
   if (getVariableDeclaration(p, &stmt) ||
       getAssignment(p, &stmt)          ||
       getReturn(p, &stmt)              ||
+      getContinue(p, &stmt)            ||
+      getBreak(p, &stmt)               ||
       getExpression(p, &stmt)) {
 
     if (!consumeToken(p, TOK_SEMIC)) {
@@ -314,6 +318,26 @@ static bool getReturn(Parser* p, TreeNode** result) {
               ? RETURN_(expr)
               : RETURN_(NULL);
     
+    return true;
+  }
+
+  return false;
+}
+
+static bool getContinue(Parser* p, TreeNode** result) {
+  PRELUDE();
+  if (consumeToken(p, TOK_ROLLBACK)) {
+    *result = CONTINUE_();
+    return true;
+  }
+
+  return false;
+}
+
+static bool getBreak(Parser* p, TreeNode** result) {
+  PRELUDE();
+  if (consumeToken(p, TOK_SKIP)) {
+    *result = BREAK_(); 
     return true;
   }
 

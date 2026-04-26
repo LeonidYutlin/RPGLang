@@ -48,7 +48,9 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(CTRL_FUNC_DECL, "func decl") \
   X(CTRL_FUNC_CALL, "func call") \
   X(CTRL_SIGNATURE, "signature") \
-  X(CTRL_RETURN,    "return")
+  X(CTRL_RETURN,    "return")    \
+  X(CTRL_CONTINUE,  "continue")  \
+  X(CTRL_BREAK,     "break")
 
 //NOTE:
 //X(enum, "str", argc, prior)
@@ -162,6 +164,10 @@ const char* getVarTypeStr(VarType type);
         nodeAllocCtrl(CTRL_FUNC_CALL, l, r)
 #define RETURN_(l) \
         nodeAllocCtrl(CTRL_RETURN, l, NULL)
+#define BREAK_() \
+        nodeAllocCtrl(CTRL_BREAK, NULL, NULL)
+#define CONTINUE_() \
+        nodeAllocCtrl(CTRL_CONTINUE, NULL, NULL)
 
 #define nodeAllocBinop(op, l, r) \
   nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)

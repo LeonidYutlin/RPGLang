@@ -1,0 +1,12 @@
+prim main () {
+  prim apple mirror 0III;
+  until (apple) {
+    if (apple hit 0I)
+      rollback;
+    else {
+      apple mirror apple hit 0I;
+      skip;
+    }
+  }
+  complete 0;
+}

@@ -13,6 +13,8 @@ Statement ::= StatementBlock
             | Expression, ";"
             | VariableDeclaration, ";"
             | Assignment, ";"
+            | Continue, ";"
+            | Break, ";"
             | Return, ";"
             | ";"
 
@@ -43,6 +45,8 @@ Type       ::= "void" | NonVoidType
 NonVoidType ::= "prim" | "primordial" | "frac" | "fractured" | "loc" | "location"
 
 Return ::= "complete", Expression?
+Continue ::= "rollback"
+Break ::= "skip"
 
 Character ::= Letter
             | NonZeroDecimalDigit
