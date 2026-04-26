@@ -6,6 +6,9 @@ typedef struct {
 } Parser;
 
 //TODO: add asserts in every static function
+static bool getFunctionDeclaration(Parser* p, TreeNode** result);
+static bool getParameterList(Parser* p, TreeNode** result);
+static bool getParameter(Parser* p, TreeNode** result);
 static bool getStatement(Parser* p, TreeNode** result);
 static bool getStatementBlock(Parser* p, TreeNode** result);
 static bool getConditionBlock(TokenType tokType, CtrlType ctrlType, 
@@ -19,55 +22,115 @@ static bool getAssignmentBody(Parser* p, TreeNode** result);
 static bool getExpression(Parser* p, TreeNode** result);
 static bool getTerm(Parser* p, TreeNode** result);
 static bool getPrimary(Parser* p, TreeNode** result);
+static bool getType(Parser* p, TreeNode** result);
 static bool getNonVoidType(Parser* p, TreeNode** result);
 static bool getIdentifier(Parser* p, TreeNode** result);
 static bool getNumber(Parser* p, TreeNode** result);
 static bool consumeToken(Parser* p, TokenType type);
 
 // this function isn't finalized. 
-// represents Grammar in grammar.txt, which is currently Statement+, EOF
+// represents Grammar in grammar.txt, which is currently FunctionDeclaration+, EOF
 TreeNode* parse(Tokens* t) {
   if (daVerify(t))
     return NULL;
 
   Parser p = (Parser){ .t = t, .i = 0 };
-  TreeNode* firstStmt = NULL;
-  if (!getStatement(&p, &firstStmt)) {
-    logln(ERROR, "Invalid Statement");
+  TreeNode* firstFunc = NULL;
+  if (!getFunctionDeclaration(&p, &firstFunc)) {
+    logln(ERROR, "Program has no functions. Try writing \"prim main() {}\"");
     return NULL;
   }
-  if (!firstStmt) 
-    firstStmt = SEMIC_(NULL);
+  firstFunc = SEMIC_(firstFunc);
 
-  TreeNode* nextStmt = NULL;
-  for (TreeNode* curStmt = firstStmt;
-       getStatement(&p, &nextStmt);) {
-    if (!nextStmt)
-      continue;
-    TreeNode* lastStmt = curStmt;
-    while (lastStmt->right)
-      lastStmt = lastStmt->right;
+  TreeNode* nextFunc = NULL;
+  for (TreeNode* curFunc = firstFunc;
+       getFunctionDeclaration(&p, &nextFunc);) {
+    nextFunc = SEMIC_(nextFunc);
+    while (curFunc->right)
+      curFunc = curFunc->right;
 
-    lastStmt->right = nextStmt;
-    curStmt = nextStmt;
+    curFunc->right = nextFunc;
+    curFunc = nextFunc;
   }
 
   TokenType nextType = ((Token*)daGet(t, p.i++))->type; 
   if (nextType != TOK_EOF) {
     logln(ERROR, "Expected EOF, got %s", getTokenTypeStr(nextType));
-    nodeDestroy(firstStmt);
+    nodeDestroy(firstFunc);
     return NULL;
   }
-  nodeFixParents(firstStmt);
-  return firstStmt;
+  nodeFixParents(firstFunc);
+  return firstFunc;
 }
 
 #define PEEK() ((Token*)daGet(p->t, p->i))
 #define CHECK(T) (PEEK()->type == T)
 
+static bool getFunctionDeclaration(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
+  TreeNode* type   = NULL;
+  TreeNode* ident  = NULL;
+  TreeNode* params = NULL;
+  TreeNode* body   = NULL;
+  if (getType(p, &type)                &&
+      getIdentifier(p, &ident)         &&
+      consumeToken(p, TOK_LPAREN)      &&
+      (consumeToken(p, TOK_RPAREN) || 
+       (getParameterList(p, &params) && 
+        consumeToken(p, TOK_RPAREN)))  &&
+      getStatement(p, &body)) {
+    *result = FUNC_DECL_(SIGNATURE_(DECL_(type, ident), params), body);
+    return true;
+  }
+
+  nodeDestroy(type);
+  nodeDestroy(ident);
+  nodeDestroy(params);
+  nodeDestroy(body);
+  return false;
+}
+
+static bool getParameterList(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
+  TreeNode* first = NULL;
+  if (!getParameter(p, &first))
+    return false;
+
+  first = SEMIC_(first);
+  for (TreeNode* last = first; 
+       consumeToken(p, TOK_SEMIC);) {
+    TreeNode* next = NULL;
+    if (!getParameter(p, &next)) {
+      nodeDestroy(first);
+      return false;
+    }
+    next = SEMIC_(next);
+    last->right = next;
+    last = next;
+  }
+  *result = first;
+  return true;
+}
+
+static bool getParameter(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
+  TreeNode* type  = NULL;
+  TreeNode* ident = NULL;
+  if (getNonVoidType(p, &type) &&
+      getIdentifier(p, &ident)) {
+    *result = PARAM_(type, ident);
+    return true;
+  }
+
+  nodeDestroy(type);
+  nodeDestroy(ident);
+  return false;
+}
+
 static bool getStatement(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   if (consumeToken(p, TOK_SEMIC)) {
-    *result = NULL;
+    *result = SEMIC_(NULL);
     return true;
   }
 
@@ -82,9 +145,10 @@ static bool getStatement(Parser* p, TreeNode** result) {
   } 
 
   // statements that require a semicolon
-  if (getExpression(p, &stmt)               ||
-      getVariableDeclaration(p, &stmt) ||
-      getAssignment(p, &stmt)) {
+  if (getVariableDeclaration(p, &stmt) ||
+      getAssignment(p, &stmt)          ||
+      getExpression(p, &stmt)) {
+
     if (!consumeToken(p, TOK_SEMIC)) {
       nodeDestroy(stmt);
       return false;
@@ -98,10 +162,11 @@ static bool getStatement(Parser* p, TreeNode** result) {
 }
 
 static bool getStatementBlock(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   if (!consumeToken(p, TOK_LBRACE))
     return false;
   if (consumeToken(p, TOK_RBRACE)) {
-    *result = NULL; // empty block "{}"
+    *result = SEMIC_(NULL);
     return true;
   }
 
@@ -110,16 +175,20 @@ static bool getStatementBlock(Parser* p, TreeNode** result) {
     return false;
 
   TreeNode* nextStmt = NULL;
-  for (TreeNode* curStmt = firstStmt;
+  for (TreeNode* lastStmt = firstStmt;
        getStatement(p, &nextStmt);) {
-    if (!nextStmt)
+    // if the statement is empty
+    if (OF_CTRL(nextStmt, CTRL_SEMIC) && 
+        !nextStmt->left) {
+      nodeDestroy(nextStmt);
       continue;
-    TreeNode* lastStmt = curStmt;
+    }
+
     while (lastStmt->right)
       lastStmt = lastStmt->right;
 
     lastStmt->right = nextStmt;
-    curStmt = nextStmt;
+    lastStmt = nextStmt;
   }
 
   if (!consumeToken(p, TOK_RBRACE)) {
@@ -127,14 +196,13 @@ static bool getStatementBlock(Parser* p, TreeNode** result) {
     return false;
   }
 
-  *result = firstStmt 
-            ? SEMIC_(firstStmt)
-            : NULL;
+  *result = SEMIC_(firstStmt);
   return true;
 }
 
 static bool getConditionBlock(TokenType tokType, CtrlType ctrlType, 
                               Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   TreeNode* lhs = NULL;
   TreeNode* rhs = NULL;
   if (consumeToken(p, tokType)    &&
@@ -152,6 +220,7 @@ static bool getConditionBlock(TokenType tokType, CtrlType ctrlType,
 }
 
 static bool getIf(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   TreeNode* ifNode   = NULL;
   TreeNode* elseStmt = NULL;
   if (getConditionBlock(TOK_IF, CTRL_IF, p, &ifNode)) {
@@ -178,17 +247,18 @@ static bool getIf(Parser* p, TreeNode** result) {
 }
 
 static bool getVariableDeclaration(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   TreeNode* type = NULL;
   TreeNode* lhs = NULL;
   if (getNonVoidType(p, &type) &&
       getIdentifier(p, &lhs)) {
     TreeNode* rhs = NULL;
     if (getAssignmentBody(p, &rhs)) {
-      *result = VAR_DECL_(type, ASG_(lhs, rhs));
+      *result = DECL_(type, ASG_(lhs, rhs));
       return true;
     }
     nodeDestroy(rhs);
-    *result = VAR_DECL_(type, lhs);
+    *result = DECL_(type, lhs);
     return true;
   }
 
@@ -197,6 +267,8 @@ static bool getVariableDeclaration(Parser* p, TreeNode** result) {
 }
 
 static bool getAssignment(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
+  size_t oldI = p->i;
   TreeNode* lhs = NULL;
   TreeNode* rhs = NULL;
   if (getIdentifier(p, &lhs) &&
@@ -207,10 +279,12 @@ static bool getAssignment(Parser* p, TreeNode** result) {
 
   nodeDestroy(lhs);
   nodeDestroy(rhs);
+  p->i = oldI;
   return false;
 }
 
 static bool getAssignmentBody(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   TreeNode* expr = NULL;
   if (consumeToken(p, TOK_MIRROR) &&
       getExpression(p, &expr)) {
@@ -223,6 +297,7 @@ static bool getAssignmentBody(Parser* p, TreeNode** result) {
 }
 
 static bool getExpression(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   TreeNode* first = NULL;
   if (!getTerm(p, &first))
     return false;
@@ -245,6 +320,7 @@ static bool getExpression(Parser* p, TreeNode** result) {
 }
 
 static bool getTerm(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   TreeNode* first = NULL;
   if (!getPrimary(p, &first))
     return false;
@@ -267,6 +343,7 @@ static bool getTerm(Parser* p, TreeNode** result) {
 }
 
 static bool getPrimary(Parser* p, TreeNode** result) {
+  logln(DEBUG, "%s is at this token: %s", __PRETTY_FUNCTION__, getTokenTypeStr(PEEK()->type));
   if (consumeToken(p, TOK_LPAREN)) {
     TreeNode* expr = NULL;
     if (getExpression(p, &expr) &&
@@ -293,6 +370,7 @@ static bool getPrimary(Parser* p, TreeNode** result) {
 static bool consumeToken(Parser* p, TokenType type) {
   if (CHECK(type)) {
     p->i++;
+    logln(DEBUG, "consumed %s", getTokenTypeStr(type));
     return true;
   }
   return false;
@@ -314,6 +392,14 @@ static bool getNumber(Parser* p, TreeNode** result) {
     return true;
   }
   return false;
+}
+
+static bool getType(Parser* p, TreeNode** result) {
+  if (consumeToken(p, TOK_VOID)) {
+    *result = VOID_();
+    return true;
+  }
+  return getNonVoidType(p, result);
 }
 
 static bool getNonVoidType(Parser* p, TreeNode** result) {

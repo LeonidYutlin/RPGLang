@@ -1,4 +1,4 @@
-frac f mirror 0III;
+loc wow() {frac f mirror 0III;
 fractured 23ffff;
 loc loc'ation mirror 0;
-location bigWord mirror 0III; prim 1prim; primordial 1Prim;
+location bigWord mirror 0III; prim 1prim; primordial 1Prim;}

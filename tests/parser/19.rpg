@@ -1,0 +1,8 @@
+prim main ()
+  frac 1+2 mirror 0I unite 0II;
+
+prim 2main2 (loc param1; prim param2 ; fractured param3 ; prim paramF0UR) {
+  frac 1+2 mirror 0I unite 0II;
+  param2 mirror param1 hit param3;
+}
+

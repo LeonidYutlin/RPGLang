@@ -1,2 +1,4 @@
-apple mirror 0X;
-cat mirror 0III; 0V; 0 hit 0III;
+void main() {
+  apple mirror 0X;
+  cat mirror 0III; 0V; 0 hit 0III;
+}

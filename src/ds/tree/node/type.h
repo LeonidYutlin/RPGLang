@@ -31,18 +31,22 @@ const NodeTypeInfo* parseNodeType(NodeType type);
 #define VAR_TYPE_LIST() \
   X(TYPE_PRIM, "prim")  \
   X(TYPE_FRAC, "frac")  \
-  X(TYPE_LOC,  "loc")
+  X(TYPE_LOC,  "loc")   \
+  X(TYPE_VOID, "void")
 
 //NOTE:
 //X(enum, "str")
-#define CTRL_TYPE_LIST() \
-  X(CTRL_SEMIC, ";")     \
-  X(CTRL_ASG,   "=")     \
-  X(CTRL_IF,    "if")    \
-  X(CTRL_ELSE,  "else")  \
-  X(CTRL_WHILE, "while") \
-  X(CTRL_UNTIL, "until") \
-  X(CTRL_VAR_DECL, "var decl")
+#define CTRL_TYPE_LIST()         \
+  X(CTRL_SEMIC,     ";")         \
+  X(CTRL_ASG,       "=")         \
+  X(CTRL_IF,        "if")        \
+  X(CTRL_ELSE,      "else")      \
+  X(CTRL_WHILE,     "while")     \
+  X(CTRL_UNTIL,     "until")     \
+  X(CTRL_DECL,      "decl")      \
+  X(CTRL_PARAM,     "parameter") \
+  X(CTRL_FUNC_DECL, "func decl") \
+  X(CTRL_SIGNATURE, "signature")
 
 //NOTE:
 //X(enum, "str", argc, prior)
@@ -131,6 +135,7 @@ const char* getVarTypeStr(VarType type);
 #define PRIM_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_PRIM))
 #define FRAC_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_FRAC))
 #define LOC_()  nodeAlloc(VAR_TYPE_UNIT_(TYPE_LOC))
+#define VOID_()  nodeAlloc(VAR_TYPE_UNIT_(TYPE_VOID))
 
 #define nodeAllocCtrl(ctrl, l, r) \
   nodeAlloc(.data = CTRL_UNIT_(ctrl), .left = l, .right = r)
@@ -143,8 +148,14 @@ const char* getVarTypeStr(VarType type);
         nodeAllocCtrl(CTRL_IF, l, r)
 #define ELSE_(r) \
         nodeAllocCtrl(CTRL_ELSE, NULL, r)
-#define VAR_DECL_(l, r) \
-        nodeAllocCtrl(CTRL_VAR_DECL, l, r)
+#define DECL_(l, r) \
+        nodeAllocCtrl(CTRL_DECL, l, r)
+#define PARAM_(l, r) \
+        nodeAllocCtrl(CTRL_PARAM, l, r)
+#define FUNC_DECL_(l, r) \
+        nodeAllocCtrl(CTRL_FUNC_DECL, l, r)
+#define SIGNATURE_(l, r) \
+        nodeAllocCtrl(CTRL_SIGNATURE, l, r)
 
 #define nodeAllocBinop(op, l, r) \
   nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)

@@ -1,3 +1,4 @@
+prim main () {
 if (0V) {
   apple mirror 0I;
   cat mirror 0III;
@@ -8,3 +9,4 @@ if (0V) {
 } else apple mirror 0VIII;
 0VII;
 0XXX;
+}

@@ -1,3 +1,4 @@
+void main() {
 if (0I) {
   cat mirror 0;
   if (0) 0XXX;
@@ -5,4 +6,5 @@ if (0I) {
   if (0III) {
     example mirror 0CCC;
   }
+}
 }

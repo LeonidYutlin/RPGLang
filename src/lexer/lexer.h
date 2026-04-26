@@ -48,7 +48,8 @@
   X(TOK_SYMBIOSIS, "symbiosis")  \
   X(TOK_PRIM, "prim")            \
   X(TOK_FRAC, "frac")            \
-  X(TOK_LOC,  "loc")
+  X(TOK_LOC,  "loc")             \
+  X(TOK_VOID, "void")
 
 #define KEYWORD_ALIAS_LIST() \
   X(TOK_PRIM, "primordial")  \

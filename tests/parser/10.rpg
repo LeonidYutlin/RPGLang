@@ -1,3 +1,4 @@
+void main() {
 if (0X) {
   0V;
   cat mirror 0X;
@@ -8,3 +9,4 @@ if (0X) {
 }
 {}
 apple mirror 0;
+}

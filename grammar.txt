@@ -1,6 +1,11 @@
 (* RPGLang's Expanded Backus-Naur Form *)
 
-Grammar ::= Statement+, EOF
+Grammar ::= FunctionDeclaration+, EOF
+
+FunctionDeclaration ::= Type, Identifier, "(", ParameterList?, ")", Statement
+ParameterList ::= Parameter, (";", Parameter)*
+Parameter ::= NonVoidType, Identifier
+
 Statement ::= StatementBlock
             | If
             | While
