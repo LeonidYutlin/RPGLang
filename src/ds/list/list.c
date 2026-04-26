@@ -260,6 +260,7 @@ Error listVerify(List* lst) {
 #define RETURN_IF_LOOPED(index)               \
 {                                             \
   if (beenVisited[cur]) {                     \
+    free(beenVisited);                        \
     return (lst->status = LoopedConnections); \
   }                                           \
   beenVisited[cur] = true;                    \
@@ -271,8 +272,9 @@ Error listLoopCheck(List* lst) {
   if (err)
     return err;
 
-  bool* beenVisited = (bool*)alloca(lst->capacity * sizeof(bool));
-  memset(beenVisited, 0, lst->capacity * sizeof(bool));
+  bool* beenVisited = (bool*)calloc(lst->capacity, sizeof(bool));
+  if (!beenVisited)
+    return FailMemoryAllocation;
   uint64_t totalVisited = 0;
   if (lst->next[0]) {
     for (ListIndex cur = lst->next[0];
@@ -293,6 +295,7 @@ Error listLoopCheck(List* lst) {
     }
   }
 
+  free(beenVisited);
   return totalVisited == lst->capacity - 1
          ? OK
          : (lst->status = DanglingUnit);

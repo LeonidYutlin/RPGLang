@@ -76,6 +76,7 @@ extern const size_t TOKEN_TYPES_SIZE;
 
 const char* getTokenTypeStr(TokenType type);
 
+// TODO: add const qualifiers to char* here
 typedef struct Token {
   TokenType type;
   uint64_t value;
