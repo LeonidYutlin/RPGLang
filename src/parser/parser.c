@@ -19,6 +19,8 @@ static bool getVariableDeclaration(Parser* p, TreeNode** result);
 static bool getAssignment(Parser* p, TreeNode** result);
 static bool getAssignmentBody(Parser* p, TreeNode** result);
 static bool getReturn(Parser* p, TreeNode** result);
+static bool getFunctionCall(Parser* p, TreeNode** result);
+static bool getArgumentList(Parser* p, TreeNode** result);
 static bool getExpression(Parser* p, TreeNode** result);
 static bool getTerm(Parser* p, TreeNode** result);
 static bool getPrimary(Parser* p, TreeNode** result);
@@ -318,6 +320,48 @@ static bool getReturn(Parser* p, TreeNode** result) {
   return false;
 }
 
+static bool getFunctionCall(Parser* p, TreeNode** result) {
+  PRELUDE();
+  size_t oldI = p->i;
+  TreeNode* ident = NULL;
+  TreeNode* args  = NULL;
+  if (getIdentifier(p, &ident)        &&
+      consumeToken(p, TOK_LPAREN)     &&
+      (consumeToken(p, TOK_RPAREN) || 
+       (getArgumentList(p, &args)  && 
+        consumeToken(p, TOK_RPAREN)))) {
+    *result = FUNC_CALL_(ident, args);
+    return true;
+  }
+
+  nodeDestroy(ident);
+  nodeDestroy(args);
+  p->i = oldI;
+  return false;
+}
+
+static bool getArgumentList(Parser* p, TreeNode** result) {
+  PRELUDE();
+  TreeNode* first = NULL;
+  if (!getExpression(p, &first))
+    return false;
+
+  first = SEMIC_(first);
+  for (TreeNode* last = first; 
+       consumeToken(p, TOK_SEMIC);) {
+    TreeNode* next = NULL;
+    if (!getExpression(p, &next)) {
+      nodeDestroy(first);
+      return false;
+    }
+    next = SEMIC_(next);
+    last->right = next;
+    last = next;
+  }
+  *result = first;
+  return true;
+}
+
 static bool getExpression(Parser* p, TreeNode** result) {
   PRELUDE();
   TreeNode* first = NULL;
@@ -379,7 +423,8 @@ static bool getPrimary(Parser* p, TreeNode** result) {
   }
 
   TreeNode* prim = NULL;
-  if (getNumber(p, &prim) ||
+  if (getNumber(p, &prim)       ||
+      getFunctionCall(p, &prim) ||
       getIdentifier(p, &prim)) {
     *result = prim;
     return true;
@@ -402,7 +447,7 @@ static bool consumeToken(Parser* p, TokenType type) {
 static bool getIdentifier(Parser* p, TreeNode** result) {
   PRELUDE();
   if (CHECK(TOK_IDENTIFIER)) {
-    *result = VAR_(PEEK()->pos, PEEK()->len);
+    *result = IDENT_(PEEK()->pos, PEEK()->len);
     p->i++;
     return true;
   }

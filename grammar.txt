@@ -27,7 +27,12 @@ Expression ::= Term, (("unite" | "hit"), Term)*          (* "+" | "-" *)
 Term ::= Primary, (("empower" | "shatter"), Primary)*    (* "*" | "/" *)
 Primary ::= Number
           | Identifier
+          | FunctionCall
           | "(", Expression, ")"
+
+FunctionCall ::= Identifier, "(", ArgumentList?,")"
+ArgumentList ::= Expression, (";", Expression)*
+
 Number ::= "0", (RomanDigit)+
 
 VariableDeclaration ::= NonVoidType, Identifier, AssignmentBody?

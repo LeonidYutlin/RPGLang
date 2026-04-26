@@ -619,7 +619,7 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
   switch (node->data.type) {
     case NUM_TYPE:      nodeColor = NUM_CELL;  break;
     case OP_TYPE:       nodeColor = OP_CELL;   break;
-    case VAR_TYPE:      nodeColor = VAR_CELL;  break;
+    case IDENT_TYPE:    nodeColor = VAR_CELL;  break;
     case CTRL_TYPE:     nodeColor = CTRL_CELL; break;
     case VAR_TYPE_TYPE: nodeColor = TYPE_CELL; break;
     default: break;
@@ -653,9 +653,9 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
                 opInfo ? opInfo->str : "ERROR: no info for such OpType");
       }
       break;
-    case VAR_TYPE:
+    case IDENT_TYPE:
       {
-        StringView var = node->data.value.var;
+        StringView var = node->data.value.id;
         if (var.data) 
           fprintf(dot,
                   "<tr>"

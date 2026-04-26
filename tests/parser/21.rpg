@@ -1,0 +1,16 @@
+prim main () {
+  frac apple mirror 0I;
+  loc newLoc;
+  foo();
+  apple mirror bar(newLoc; newLoc) unite 0XXX;
+  complete 0X;
+}
+
+void foo()
+  complete;
+
+prim bar(loc someLoc; loc anotherLoc) {
+  if (someLoc)
+    complete 0I;
+  complete 0;
+}

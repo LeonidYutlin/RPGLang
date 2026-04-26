@@ -10,7 +10,7 @@
   X(OP_TYPE,       "OP")           \
   X(CTRL_TYPE,     "CTRL")         \
   X(NUM_TYPE,      "NUM")          \
-  X(VAR_TYPE,      "VAR")          \
+  X(IDENT_TYPE,    "IDENT")        \
   X(VAR_TYPE_TYPE, "TYPE")
 
 typedef enum NodeType {
@@ -46,6 +46,7 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(CTRL_DECL,      "decl")      \
   X(CTRL_PARAM,     "parameter") \
   X(CTRL_FUNC_DECL, "func decl") \
+  X(CTRL_FUNC_CALL, "func call") \
   X(CTRL_SIGNATURE, "signature") \
   X(CTRL_RETURN,    "return")
 
@@ -109,10 +110,10 @@ const char* getVarTypeStr(VarType type);
 
 //Node utility macros
 #define IS_TYPE(node, t) ((node) && (node)->data.type == t) 
-#define IS_OP(node)   IS_TYPE(node, OP_TYPE)
-#define IS_NUM(node)  IS_TYPE(node, NUM_TYPE)
-#define IS_VAR(node)  IS_TYPE(node, VAR_TYPE)
-#define IS_CTRL(node) IS_TYPE(node, CTRL_TYPE)
+#define IS_OP(node)    IS_TYPE(node, OP_TYPE)
+#define IS_NUM(node)   IS_TYPE(node, NUM_TYPE)
+#define IS_IDENT(node) IS_TYPE(node, IDENT_TYPE)
+#define IS_CTRL(node)  IS_TYPE(node, CTRL_TYPE)
 #define IS_VAR_TYPE(node) IS_TYPE(node, VAR_TYPE_TYPE)
 #define OF_VAR_TYPE(node, varType) \
   (IS_VAR_TYPE((node)) && (node)->data.value.varType == (varType))
@@ -127,11 +128,11 @@ const char* getVarTypeStr(VarType type);
 #define OP_UNIT_(i)   (NodeUnit){.type = OP_TYPE,   .value = {.op = i}}
 #define CTRL_UNIT_(i) (NodeUnit){.type = CTRL_TYPE, .value = {.ctrl = i}}
 #define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE,  .value = {.num = i}}
-#define VAR_UNIT_(name, len)  (NodeUnit){.type = VAR_TYPE, .value = {.var = (StringView){name, len}}}
+#define IDENT_UNIT_(name, len)  (NodeUnit){.type = IDENT_TYPE, .value = {.id = (StringView){name, len}}}
 #define VAR_TYPE_UNIT_(i)  (NodeUnit){.type = VAR_TYPE_TYPE, .value = {.varType = i}}
 
 #define NUM_(i) nodeAlloc(NUM_UNIT_(i))
-#define VAR_(name, len) nodeAlloc(VAR_UNIT_(name, len))
+#define IDENT_(name, len) nodeAlloc(IDENT_UNIT_(name, len))
 
 #define PRIM_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_PRIM))
 #define FRAC_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_FRAC))
@@ -157,6 +158,8 @@ const char* getVarTypeStr(VarType type);
         nodeAllocCtrl(CTRL_FUNC_DECL, l, r)
 #define SIGNATURE_(l, r) \
         nodeAllocCtrl(CTRL_SIGNATURE, l, r)
+#define FUNC_CALL_(l, r) \
+        nodeAllocCtrl(CTRL_FUNC_CALL, l, r)
 #define RETURN_(l) \
         nodeAllocCtrl(CTRL_RETURN, l, NULL)
 
