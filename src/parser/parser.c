@@ -24,7 +24,13 @@ static bool getContinue(Parser* p, TreeNode** result);
 static bool getFunctionCall(Parser* p, TreeNode** result);
 static bool getArgumentList(Parser* p, TreeNode** result);
 static bool getExpression(Parser* p, TreeNode** result);
+static bool getAnd(Parser* p, TreeNode** result);
+static bool getZeroEquality(Parser* p, TreeNode** result);
+static bool getRelation(Parser* p, TreeNode** result);
+static bool getShift(Parser* p, TreeNode** result);
+static bool getAddition(Parser* p, TreeNode** result);
 static bool getTerm(Parser* p, TreeNode** result);
+static bool getUnary(Parser* p, TreeNode** result);
 static bool getPrimary(Parser* p, TreeNode** result);
 static bool getType(Parser* p, TreeNode** result);
 static bool getNonVoidType(Parser* p, TreeNode** result);
@@ -409,10 +415,16 @@ static bool getExpression(Parser* p, TreeNode** result) {
   return true;
 }
 
+// static bool getAnd(Parser* p, TreeNode** result);
+// static bool getZeroEquality(Parser* p, TreeNode** result);
+// static bool getRelation(Parser* p, TreeNode** result);
+// static bool getShift(Parser* p, TreeNode** result);
+// static bool getAddition(Parser* p, TreeNode** result);
+
 static bool getTerm(Parser* p, TreeNode** result) {
   PRELUDE();
   TreeNode* first = NULL;
-  if (!getPrimary(p, &first))
+  if (!getUnary(p, &first))
     return false;
   for (Token* opTok = PEEK(); 
        opTok->type == TOK_EMPOWER ||
@@ -420,7 +432,7 @@ static bool getTerm(Parser* p, TreeNode** result) {
        opTok = PEEK()) {
     p->i++;
     TreeNode* next = NULL;
-    if (!getPrimary(p, &next)) {
+    if (!getUnary(p, &next)) {
       nodeDestroy(first);
       return false;
     }
@@ -428,6 +440,33 @@ static bool getTerm(Parser* p, TreeNode** result) {
             ? MUL_(first, next)
             : DIV_(first, next);
   }
+  *result = first;
+  return true;
+}
+
+static bool getUnary(Parser* p, TreeNode** result) {
+  PRELUDE();
+  TreeNode*  first   = NULL;
+  TreeNode** primary = NULL;
+  for (Token* opTok = PEEK(); 
+       opTok->type == TOK_SHADOW ||
+       opTok->type == TOK_NOT;
+       opTok = PEEK()) {
+    p->i++;
+    first = opTok->type == TOK_SHADOW
+            ? NEG_(first)
+            : NOT_(first);
+    if (!primary)
+      primary = &first->right;
+  }
+  if (!first)
+    primary = &first;
+
+  if (!getPrimary(p, primary)) {
+    nodeDestroy(first);
+    return false;
+  }
+
   *result = first;
   return true;
 }

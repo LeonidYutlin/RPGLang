@@ -1,0 +1,4 @@
+prim main () {
+  prim apple mirror shadow shadow not shadow 0III unite 0;
+  complete 0;
+}

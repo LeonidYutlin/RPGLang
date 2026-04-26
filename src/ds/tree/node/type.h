@@ -59,6 +59,7 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(OP_SUB,  "-",      2, 1) \
   X(OP_MUL,  "*",      2, 2) \
   X(OP_DIV,  "/",      2, 2) \
+  X(OP_NOT,  "!",      1, 3) \
   X(OP_POW,  "^",      2, 3) \
   X(OP_SIN,  "sin",    1, 3) \
   X(OP_COS,  "cos",    1, 3) \
@@ -186,6 +187,8 @@ const char* getVarTypeStr(VarType type);
         nodeAllocBinop(OP_POW, l, r)
 #define SQ_(l) \
         POW_(l, NUM_(2))
+#define NOT_(r) \
+        nodeAllocUnop(OP_NOT, r)
 #define NEG_(r) \
         nodeAllocBinop(OP_MUL, NUM_(-1), r)
 #define INV_(r) \
