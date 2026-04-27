@@ -21,10 +21,13 @@
   X(TOK_SLICE, "slice")          \
   X(TOK_SLAM, "slam")            \
   X(TOK_HIT, "hit")              \
-  X(TOK_DUEL, "duel!")           \
+  X(TOK_DUELL, "duel!<")         \
+  X(TOK_DUELR, "duel!>")         \
+  X(TOK_DUELLR, "duel!<>")       \
+  X(TOK_WORTHY, "worthy")        \
   X(TOK_TRAIN, "train")          \
-  X(TOK_PUSHL, "push")           \
-  X(TOK_PUSHR, "shove")          \
+  X(TOK_PUSHL, "<push")          \
+  X(TOK_PUSHR, "push>")          \
   X(TOK_PURIFY, "purify")        \
   X(TOK_SHADOW, "shadow")        \
   X(TOK_ENGLIGHTEN, "enlighten") \

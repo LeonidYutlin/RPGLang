@@ -52,14 +52,23 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(CTRL_CONTINUE,  "continue")  \
   X(CTRL_BREAK,     "break")
 
+//TODO: priorities here are messed up; fix them
 //NOTE:
 //X(enum, "str", argc, prior)
 #define OP_TYPE_LIST()       \
+  X(OP_NOT,  "!",      1, 0) \
   X(OP_ADD,  "+",      2, 1) \
   X(OP_SUB,  "-",      2, 1) \
   X(OP_MUL,  "*",      2, 2) \
   X(OP_DIV,  "/",      2, 2) \
-  X(OP_NOT,  "!",      1, 3) \
+  X(OP_SHL,  "shl",    1, 3) \
+  X(OP_SHR,  "shr",    1, 3) \
+  X(OP_GRT,  "grt",    1, 4) \
+  X(OP_LSR,  "lsr",    1, 4) \
+  X(OP_EQ,   "==",     1, 5) \
+  X(OP_NEQ,  "!=",     1, 5) \
+  X(OP_AND,  "and",     1, 5) \
+  X(OP_OR,   "or",     1, 5) \
   X(OP_POW,  "^",      2, 3) \
   X(OP_SIN,  "sin",    1, 3) \
   X(OP_COS,  "cos",    1, 3) \
@@ -189,6 +198,22 @@ const char* getVarTypeStr(VarType type);
         POW_(l, NUM_(2))
 #define NOT_(r) \
         nodeAllocUnop(OP_NOT, r)
+#define AND_(l, r) \
+        nodeAllocBinop(OP_AND, l, r)
+#define OR_(l, r) \
+        nodeAllocBinop(OP_OR, l, r)
+#define GRT_(l, r) \
+        nodeAllocBinop(OP_GRT, l, r)
+#define LSR_(l, r) \
+        nodeAllocBinop(OP_LSR, l, r)
+#define EQ_(l, r) \
+        nodeAllocBinop(OP_EQ, l, r)
+#define NEQ_(l, r) \
+        nodeAllocBinop(OP_NEQ, l, r)
+#define SHR_(l, r) \
+        nodeAllocBinop(OP_SHR, l, r)
+#define SHL_(l, r) \
+        nodeAllocBinop(OP_SHL, l, r)
 #define NEG_(r) \
         nodeAllocBinop(OP_MUL, NUM_(-1), r)
 #define INV_(r) \

@@ -26,9 +26,9 @@ Until ::= "until", ConditionalBody
 ConditionalBody ::= "(", Expression, ")", Statement
 
 Expression ::= And, ("or", And)*
-And ::= ZeroEquality, ("and", ZeroEquality)*
-ZeroEquality ::= Relation, ("puny?", Relation)*
-Relation ::= Shift, (("duel!<" | "duel!>" | "duel!<>"), Shift)*
+And ::= Equality, ("and", Equality)*
+Equality ::= Relation, (("worthy" | "duel!<>"), Relation)*
+Relation ::= Shift, (("duel!<" | "duel!>"), Shift)*
 Shift ::= Addition, (("push>" | "<push"), Addition)*
 Addition ::= Term, (("unite" | "hit"), Term)*            (* "+" | "-" *)
 Term ::= Unary, (("empower" | "shatter"), Unary)*    (* "*" | "/" *)

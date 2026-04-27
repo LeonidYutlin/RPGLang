@@ -1,0 +1,5 @@
+prim main() {
+prim x mirror 0VII;
+prim y mirror 0CLVI;
+x mirror x unite y;
+}

@@ -25,7 +25,7 @@ static bool getFunctionCall(Parser* p, TreeNode** result);
 static bool getArgumentList(Parser* p, TreeNode** result);
 static bool getExpression(Parser* p, TreeNode** result);
 static bool getAnd(Parser* p, TreeNode** result);
-static bool getZeroEquality(Parser* p, TreeNode** result);
+static bool getEquality(Parser* p, TreeNode** result);
 static bool getRelation(Parser* p, TreeNode** result);
 static bool getShift(Parser* p, TreeNode** result);
 static bool getAddition(Parser* p, TreeNode** result);
@@ -395,6 +395,109 @@ static bool getArgumentList(Parser* p, TreeNode** result) {
 static bool getExpression(Parser* p, TreeNode** result) {
   PRELUDE();
   TreeNode* first = NULL;
+  if (!getAnd(p, &first))
+    return false;
+  while (consumeToken(p, TOK_OR)) {
+    TreeNode* next = NULL;
+    if (!getAnd(p, &next)) {
+      nodeDestroy(first);
+      return false;
+    }
+    first = OR_(first, next);
+  }
+  *result = first;
+  return true;
+}
+
+static bool getAnd(Parser* p, TreeNode** result) {
+  PRELUDE();
+  TreeNode* first = NULL;
+  if (!getEquality(p, &first))
+    return false;
+  while (consumeToken(p, TOK_AND)) {
+    TreeNode* next = NULL;
+    if (!getEquality(p, &next)) {
+      nodeDestroy(first);
+      return false;
+    }
+    first = AND_(first, next);
+  }
+  *result = first;
+  return true;
+}
+
+static bool getEquality(Parser* p, TreeNode** result) {
+  PRELUDE();
+  TreeNode* first = NULL;
+  if (!getRelation(p, &first))
+    return false;
+  for (Token* opTok = PEEK(); 
+       opTok->type == TOK_WORTHY ||
+       opTok->type == TOK_DUELLR;
+       opTok = PEEK()) {
+    p->i++;
+    TreeNode* next = NULL;
+    if (!getRelation(p, &next)) {
+      nodeDestroy(first);
+      return false;
+    }
+    first = opTok->type == TOK_WORTHY
+            ? EQ_(first, next)
+            : NEQ_(first, next);
+  }
+  *result = first;
+  return true;
+}
+
+static bool getRelation(Parser* p, TreeNode** result) {
+  PRELUDE();
+  TreeNode* first = NULL;
+  if (!getShift(p, &first))
+    return false;
+  for (Token* opTok = PEEK(); 
+       opTok->type == TOK_DUELL ||
+       opTok->type == TOK_DUELR;
+       opTok = PEEK()) {
+    p->i++;
+    TreeNode* next = NULL;
+    if (!getShift(p, &next)) {
+      nodeDestroy(first);
+      return false;
+    }
+    first = opTok->type == TOK_DUELR
+            ? LSR_(first, next)
+            : GRT_(first, next);
+  }
+  *result = first;
+  return true;
+}
+
+static bool getShift(Parser* p, TreeNode** result) {
+  PRELUDE();
+  TreeNode* first = NULL;
+  if (!getAddition(p, &first))
+    return false;
+  for (Token* opTok = PEEK(); 
+       opTok->type == TOK_PUSHL ||
+       opTok->type == TOK_PUSHR;
+       opTok = PEEK()) {
+    p->i++;
+    TreeNode* next = NULL;
+    if (!getAddition(p, &next)) {
+      nodeDestroy(first);
+      return false;
+    }
+    first = opTok->type == TOK_PUSHL
+            ? SHL_(first, next)
+            : SHR_(first, next);
+  }
+  *result = first;
+  return true;
+}
+
+static bool getAddition(Parser* p, TreeNode** result) {
+  PRELUDE();
+  TreeNode* first = NULL;
   if (!getTerm(p, &first))
     return false;
   for (Token* opTok = PEEK(); 
@@ -414,12 +517,6 @@ static bool getExpression(Parser* p, TreeNode** result) {
   *result = first;
   return true;
 }
-
-// static bool getAnd(Parser* p, TreeNode** result);
-// static bool getZeroEquality(Parser* p, TreeNode** result);
-// static bool getRelation(Parser* p, TreeNode** result);
-// static bool getShift(Parser* p, TreeNode** result);
-// static bool getAddition(Parser* p, TreeNode** result);
 
 static bool getTerm(Parser* p, TreeNode** result) {
   PRELUDE();

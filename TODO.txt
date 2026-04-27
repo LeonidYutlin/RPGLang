@@ -2,5 +2,7 @@ grammar.txt:66:(* TODO: finish this list, it isn't exhaustive *)
 
 src/ds/tree/node/node.h:18:  // TODO: change this to uint64_t and add a new union field for float-point nums
 
-src/lexer/lexer.h:83:// TODO: add const qualifiers to char* here
+src/ds/tree/node/type.h:55://TODO: priorities here are messed up; fix them
+
+src/lexer/lexer.h:86:// TODO: add const qualifiers to char* here
 
