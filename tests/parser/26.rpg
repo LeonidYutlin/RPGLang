@@ -1,0 +1,3 @@
+prim main(prim foo; prim baz) {
+  foo(bar; baz);
+}

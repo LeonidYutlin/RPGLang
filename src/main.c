@@ -43,14 +43,17 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
+  /*
+```
+foo(bar; baz);
+```   
+  */
   //lexerPrintTokens(stdout, &lexer);
-  TreeNode* ast = IF_(AND_(IDENT_("apple", 5), IDENT_("dog", 3)), NULL);
-  TreeNode* ast2 = SEMIC_(IDENT_("foo", 3));
-  TreeNode* ast3 = ELSE_(SEMIC_(IDENT_("bar", 5)));
-  TreeNode* ast4 = SEMIC_(IDENT_("baz", 3));
-  ast->right = ast2;
-  ast2->right = ast3;
-  ast3->right->right = ast4;
+  TreeNode* ast = FUNC_CALL_(SIGNATURE_(DECL_(PRIM_(), IDENT_("func", 4)), SEMIC_(PARAM_(PRIM_(), IDENT_("param1", 6)))), SEMIC_(SEMIC_(IDENT_("param1", 6))));
+  TreeNode* ast2 = SEMIC_(RETURN_(IDENT_("param2", 6)));
+  TreeNode* ast3 = SEMIC_(PARAM_(FRAC_(), IDENT_("param2", 6)));
+  ast->right->right = ast2;
+  ast->left->right->right = ast3;
   nodeFixParents(ast);
   //parse(&lexer.tokens);
   if (!ast) {

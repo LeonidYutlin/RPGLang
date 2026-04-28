@@ -105,6 +105,58 @@ baz;
 
 _Figure 11. If statement with an else branch_
 
-### Variable Assignment
+### Variable Declaration
 
+Consists of `decl` node, `left` field is a variable's type, and `right` is either an assignment statement, or an identifier
 
+```
+prim 1var;
+prim 2var mirror 1var;
+```
+
+![Variable Declaration Example](assets/ast_standard/var_decl.svg);
+
+_Figure 11. Variable declarations (with and without an initialization)_
+
+### Function Declaration
+
+Consists of `func decl` node, `left` field is a `signature`, and `right` is functions body.
+
+`signature`: `left` is a `decl`, right is a parameter list
+
+`decl`: `left` is a return type, `right` is a function's name
+
+parameter list: `param` nodes chained together with `;` nodes (in the same way the statements are chained). If the function accepts no parameters, this field is `NULL`
+
+`param`: `left` is a parameter's type, `right` is a parameters name
+
+Note: `complete` keyword denotes a return statement
+
+```
+prim func(prim param1; frac param2) {
+    param1;
+    complete param2;
+}
+```
+
+![Function Declaration Example](assets/ast_standard/func_decl.svg);
+
+_Figure 12. Function declaration_
+
+### Function Call
+
+Consists of `func call` node, `left` field is a function's name (identifier),
+and `right` is an argument list, which are expressions chained together with ';' nodes (same way the statements are chained). If the function call has no arguments, `right` is `NULL`
+
+```
+foo(bar; baz);
+```
+
+![Function Call Example](assets/ast_standard/func_call.svg);
+
+_Figure 13. Function call_
+
+### Other
+
+1. return statement stores the return expression in `left` field
+2. function declarations are chained with `;` nodes in the same way statements are. So, from a topdown view, the tree is just a chain of function declarations chained with ';'
