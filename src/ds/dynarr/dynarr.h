@@ -15,16 +15,16 @@ typedef struct DynamicArray {
   free_f freeFunc;
 } DynamicArray;
 
-Error daInit(DynamicArray* dynamicArray, 
+Error dynArrInit(DynamicArray* dynamicArray, 
              size_t initialCapacity, 
              size_t itemSize, free_f freeFunc);
-DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize,
+DynamicArray* dynArrAlloc(size_t initialCapacity, size_t itemSize,
                       free_f freeFunc, Error* status);
-Error daAppend(DynamicArray* dynamicArray, void* elem);
-Error daDestroy(DynamicArray* dynamicArray, bool isAlloced);
-Error daVerify(DynamicArray* dynamicArray);
+Error dynArrAppend(DynamicArray* dynamicArray, void* elem);
+Error dynArrDestroy(DynamicArray* dynamicArray, bool isAlloced);
+Error dynArrVerify(DynamicArray* dynamicArray);
 
-#define daGet(da, index) ((char*)((da)->items) + index * (da)->itemSize)
+#define dynArrGet(da, index) ((char*)((da)->items) + index * (da)->itemSize)
 
 
 #endif

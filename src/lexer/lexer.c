@@ -28,7 +28,7 @@ Error lexerInit(Lexer* lexer, int fd, size_t initCap) {
     return BadArgs;
 
   Error err = OK;
-  if ((err = daInit(&lexer->tokens, initCap, sizeof(Token), NULL)))
+  if ((err = dynArrInit(&lexer->tokens, initCap, sizeof(Token), NULL)))
     return err;
 
   if ((err = mappedFileInit(fd, &lexer->mf)))
@@ -74,7 +74,7 @@ Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
       .line = lexer->line,             \
       .lineStart = lexer->lineStart,   \
     };                                 \
-    daAppend(tokens, &newToken);       \
+    dynArrAppend(tokens, &newToken);   \
   }
 
 #define CONSUME_CHAR(T, ...)        \
@@ -201,7 +201,7 @@ Error lexerDestroy(Lexer* lexer, bool isAlloced) {
   if (!lexer)
     return BadArgs;
   
-  daDestroy(&lexer->tokens, false);
+  dynArrDestroy(&lexer->tokens, false);
   if (lexer->mf.data)
     mappedFileDestroy(&lexer->mf);
     
@@ -222,7 +222,7 @@ Error lexerPrintTokens(FILE* sink, Lexer* lexer) {
     return err;
 
   for (size_t i = 0; i < lexer->tokens.count; i++) {
-    Token* t = (Token*)daGet(&lexer->tokens, i);
+    Token* t = (Token*)dynArrGet(&lexer->tokens, i);
     const char* tStr = getTokenTypeStr(t->type);
     switch (t->type) {
       case TOK_NUM_LIT:
@@ -251,7 +251,7 @@ Error lexerVerify(Lexer* lexer) {
   if (!lexer->mf.size)
     return ZeroSize;
   Error err = OK;
-  if ((err = daVerify(&lexer->tokens)))
+  if ((err = dynArrVerify(&lexer->tokens)))
     return err;
   return OK;
 }

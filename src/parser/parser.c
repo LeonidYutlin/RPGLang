@@ -41,7 +41,7 @@ static bool consumeToken(Parser* p, TokenType type);
 // this function isn't finalized. 
 // represents Grammar in grammar.txt, which is currently FunctionDeclaration+, EOF
 TreeNode* parse(Tokens* t) {
-  if (daVerify(t))
+  if (dynArrVerify(t))
     return NULL;
 
   Parser p = (Parser){ .t = t, .i = 0 };
@@ -63,7 +63,7 @@ TreeNode* parse(Tokens* t) {
     curFunc = nextFunc;
   }
 
-  TokenType nextType = ((Token*)daGet(t, p.i++))->type; 
+  TokenType nextType = ((Token*)dynArrGet(t, p.i++))->type; 
   if (nextType != TOK_EOF) {
     logln(ERROR, "Expected EOF, got %s", getTokenTypeStr(nextType));
     nodeDestroy(firstFunc);
@@ -73,7 +73,7 @@ TreeNode* parse(Tokens* t) {
   return firstFunc;
 }
 
-#define PEEK() ((Token*)daGet(p->t, p->i))
+#define PEEK() ((Token*)dynArrGet(p->t, p->i))
 #define CHECK(T) (PEEK()->type == T)
 #define PRELUDE()                         \
   assert(p);                              \

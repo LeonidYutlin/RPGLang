@@ -1,7 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "ds/da/da.h"
+#include "ds/dynarr/dynarr.h"
 #include "utils/utils.h"
 #include <stdint.h>
 

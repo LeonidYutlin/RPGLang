@@ -1,9 +1,9 @@
-#include "ds/da/da.h"
+#include "ds/dynarr/dynarr.h"
 #include <stdlib.h>
 #include <string.h>
 
-DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize, 
-                      free_f freeFunc, Error* status) {
+DynamicArray* dynArrAlloc(size_t initialCapacity, size_t itemSize, 
+                          free_f freeFunc, Error* status) {
   if (!initialCapacity || !itemSize)
     RETURN_WITH_STATUS(BadArgs, NULL);
 
@@ -12,7 +12,7 @@ DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize,
     RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
 
   Error err = OK;
-  if ((err = daInit(da, initialCapacity, itemSize, freeFunc))) {
+  if ((err = dynArrInit(da, initialCapacity, itemSize, freeFunc))) {
     free(da);
     RETURN_WITH_STATUS(err, NULL);
   }
@@ -20,7 +20,7 @@ DynamicArray* daAlloc(size_t initialCapacity, size_t itemSize,
   return da;
 }
 
-Error daInit(DynamicArray* da, size_t initialCapacity, 
+Error dynArrInit(DynamicArray* da, size_t initialCapacity, 
              size_t itemSize, free_f freeFunc) {
   if (!initialCapacity ||
       !itemSize ||
@@ -40,7 +40,7 @@ Error daInit(DynamicArray* da, size_t initialCapacity,
   return OK;
 }
 
-Error daDestroy(DynamicArray* da, bool isAlloced) {
+Error dynArrDestroy(DynamicArray* da, bool isAlloced) {
   if (!da)
     return BadArgs;
 
@@ -58,10 +58,10 @@ Error daDestroy(DynamicArray* da, bool isAlloced) {
   return OK;
 }
 
-Error daAppend(DynamicArray* da, void* elem) {
+Error dynArrAppend(DynamicArray* da, void* elem) {
   if (!elem)
     return BadArgs;
-  Error err = daVerify(da);
+  Error err = dynArrVerify(da);
   if (err)
     return err;
  
@@ -80,7 +80,7 @@ Error daAppend(DynamicArray* da, void* elem) {
   return OK;
 }
 
-Error daVerify(DynamicArray* da) {
+Error dynArrVerify(DynamicArray* da) {
   if (!da)
     return BadArgs;
   if (!da->items)
