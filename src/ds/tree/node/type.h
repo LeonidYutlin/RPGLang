@@ -120,7 +120,7 @@ typedef enum VarType {
 
 const char* getVarTypeStr(VarType type);
 
-//Node utility macros
+// Node utility macros
 #define IS_TYPE(node, t) ((node) && (node)->data.type == t) 
 #define IS_OP(node)    IS_TYPE(node, OP_TYPE)
 #define IS_NUM(node)   IS_TYPE(node, NUM_TYPE)
@@ -136,7 +136,7 @@ const char* getVarTypeStr(VarType type);
 #define OF_NUM(node, i) \
   (IS_NUM((node)) && doubleEqual((node)->data.value.num, (i)))
 
-//Quick TreeNode and NodeUnit initializers
+// Quick TreeNode and NodeUnit initializers
 #define OP_UNIT_(i)   (NodeUnit){.type = OP_TYPE,   .value = {.op = i}}
 #define CTRL_UNIT_(i) (NodeUnit){.type = CTRL_TYPE, .value = {.ctrl = i}}
 #define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE,  .value = {.num = i}}

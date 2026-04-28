@@ -43,7 +43,8 @@ int main(int argc, char* argv[]) {
   }
 
   //lexerPrintTokens(stdout, &lexer);
-  TreeNode* ast = SEMIC_(NULL);
+  TreeNode* ast = NOT_(NUM_(1));
+  nodeFixParents(ast);
   //parse(&lexer.tokens);
   if (!ast) {
     fprintf(stderr, "Failed to parse token stream\n");

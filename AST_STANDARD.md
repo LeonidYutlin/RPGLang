@@ -1,6 +1,6 @@
 # RPGLang's AST Standard
 
-### Node Types
+## Node Types
 **Non-Terminal:**
 1. Operand (`OP_TYPE`) - stores `OpType`
 2. Control Flow (`CTRL_TYPE`) - stores `CtrlType`
@@ -18,4 +18,12 @@
 
 _Figures 1-5. Simplified orphan nodes of all types_
 
-### AST Node Connection Rules
+## AST Node Connection Rules
+
+### Unary Operations
+
+Unary Operations (`not`, unary `-`, etc.) have only one child located in their `right` field
+
+![Unary Operation Example](assets/ast_standard/unary.svg)
+
+_Figure 6. Unary operations_
