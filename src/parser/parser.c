@@ -39,7 +39,8 @@ static bool getNumber(Parser* p, TreeNode** result);
 static bool consumeToken(Parser* p, TokenType type);
 
 // this function isn't finalized. 
-// represents Grammar in grammar.txt, which is currently FunctionDeclaration+, EOF
+// represents Grammar in grammar.txt, 
+// which is currently FunctionDeclaration+, EOF
 TreeNode* parse(Tokens* t) {
   if (dynArrVerify(t))
     return NULL;
@@ -89,12 +90,11 @@ static bool getFunctionDeclaration(Parser* p, TreeNode** result) {
   TreeNode* ident  = NULL;
   TreeNode* params = NULL;
   TreeNode* body   = NULL;
-  if (getType(p, &type)                &&
-      getIdentifier(p, &ident)         &&
-      consumeToken(p, TOK_LPAREN)      &&
-      (consumeToken(p, TOK_RPAREN) || 
-       (getParameterList(p, &params) && 
-        consumeToken(p, TOK_RPAREN)))  &&
+  if (getType(p, &type)                     &&
+      getIdentifier(p, &ident)              &&
+      consumeToken(p, TOK_LPAREN)           &&
+      (getParameterList(p, &params) || 1)   && 
+      consumeToken(p, TOK_RPAREN)           &&
       getStatement(p, &body)) {
     *result = FUNC_DECL_(SIGNATURE_(DECL_(type, ident), params), body);
     return true;
@@ -355,11 +355,10 @@ static bool getFunctionCall(Parser* p, TreeNode** result) {
   size_t oldI = p->i;
   TreeNode* ident = NULL;
   TreeNode* args  = NULL;
-  if (getIdentifier(p, &ident)        &&
-      consumeToken(p, TOK_LPAREN)     &&
-      (consumeToken(p, TOK_RPAREN) || 
-       (getArgumentList(p, &args)  && 
-        consumeToken(p, TOK_RPAREN)))) {
+  if (getIdentifier(p, &ident)          &&
+      consumeToken(p, TOK_LPAREN)       &&
+      (getArgumentList(p, &args) || 1)  && 
+      consumeToken(p, TOK_RPAREN)) {
     *result = FUNC_CALL_(ident, args);
     return true;
   }
@@ -541,6 +540,7 @@ static bool getTerm(Parser* p, TreeNode** result) {
   return true;
 }
 
+//TODO: here and everywhere else opTok can be changed to TokenType type
 static bool getUnary(Parser* p, TreeNode** result) {
   PRELUDE();
   TreeNode*  first   = NULL;
