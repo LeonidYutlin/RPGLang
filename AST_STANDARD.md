@@ -139,14 +139,14 @@ prim func(prim param1; frac param2) {
 }
 ```
 
-![Function Declaration Example](assets/ast_standard/func_decl.svg);
+![Function Declaration Example](assets/ast_standard/func_decl.svg)
 
 _Figure 12. Function declaration_
 
 ### Function Call
 
 Consists of `func call` node, `left` field is a function's name (identifier),
-and `right` is an argument list, which are expressions chained together with ';' nodes (same way the statements are chained). If the function call has no arguments, `right` is `NULL`
+and `right` is an argument list, which are expressions chained together with `;` nodes (same way the statements are chained). If the function call has no arguments, `right` is `NULL`
 
 ```
 foo(bar; baz);
@@ -159,4 +159,5 @@ _Figure 13. Function call_
 ### Other
 
 1. return statement stores the return expression in `left` field
-2. function declarations are chained with `;` nodes in the same way statements are. So, from a topdown view, the tree is just a chain of function declarations chained with ';'
+2. assignment, while being a control node, follows the logic of binary operations
+3. function declarations are chained with `;` nodes in the same way statements are. So, from a topdown view, the tree is just a chain of function declarations chained with `;`

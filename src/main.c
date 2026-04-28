@@ -45,15 +45,14 @@ int main(int argc, char* argv[]) {
 
   /*
 ```
-foo(bar; baz);
-```   
+prim 1var;
+prim 2var mirror 1var;
+```  
   */
   //lexerPrintTokens(stdout, &lexer);
-  TreeNode* ast = FUNC_CALL_(SIGNATURE_(DECL_(PRIM_(), IDENT_("func", 4)), SEMIC_(PARAM_(PRIM_(), IDENT_("param1", 6)))), SEMIC_(SEMIC_(IDENT_("param1", 6))));
-  TreeNode* ast2 = SEMIC_(RETURN_(IDENT_("param2", 6)));
-  TreeNode* ast3 = SEMIC_(PARAM_(FRAC_(), IDENT_("param2", 6)));
-  ast->right->right = ast2;
-  ast->left->right->right = ast3;
+  TreeNode* ast = SEMIC_(DECL_(PRIM_(), IDENT_("1var", 4)));
+  TreeNode* ast2 = SEMIC_(DECL_(PRIM_(), ASG_(IDENT_("2var", 4), IDENT_("1var", 4))));
+  ast->right = ast2;
   nodeFixParents(ast);
   //parse(&lexer.tokens);
   if (!ast) {
