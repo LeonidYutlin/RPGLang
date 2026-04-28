@@ -1,4 +1,4 @@
-#include "lexer/lexer.h"
+#include "frontend/lexer.h"
 #include "ds/hashtable/hashtable.h"
 #include "logger/logger.h"
 #include "utils/utils.h"

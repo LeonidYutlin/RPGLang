@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include "error/modules/da.h"
+#include "error/modules/dynarr.h"
 #include "error/modules/generic.h"
 #include "error/modules/hashtable.h"
 #include "error/modules/list.h"

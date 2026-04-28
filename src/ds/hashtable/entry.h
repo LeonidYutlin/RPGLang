@@ -1,7 +1,7 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-#include "lexer/lexer.h"
+#include "frontend/lexer.h"
 #include <stddef.h>
 #include <stdint.h>
 

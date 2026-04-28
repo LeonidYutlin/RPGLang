@@ -1,10 +1,9 @@
 #include "ds/dump.h"
-#include "ds/tree/node/type.h"
-#include "lexer/lexer.h"
+#include "frontend/lexer.h"
 #include "logger/logger.h"
 #include "error/error.h"
-#include "parser/parser.h"
-#include "preparser/preparser.h"
+#include "frontend/parser.h"
+#include "frontend/preparser.h"
 #include <fcntl.h>
 #include <unistd.h>
 

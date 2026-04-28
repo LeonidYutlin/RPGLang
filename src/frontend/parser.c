@@ -1,4 +1,4 @@
-#include "parser/parser.h"
+#include "frontend/parser.h"
 
 typedef struct {
   Tokens* t;
