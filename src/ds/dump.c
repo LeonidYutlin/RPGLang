@@ -18,38 +18,38 @@ static uint CALL_COUNT = 0;
 #define IMG_PATH_BUF_SZ  128
 #define DOT_CMD_BUF_SZ   512
 
-static const char* BG_COLOR      = "#FFFFFF";
-static const char* BAD_OUTLINE   = "#602222";
-static const char* BAD_FILL      = "#F02222";
-static const char* DEFAULT_CELL  = "#F02222";
-static const char* OP_CELL       = "#A6E3A1";
-static const char* NUM_CELL      = "#6CA1F9";
-static const char* VAR_CELL      = "#B581F4";
-static const char* CTRL_CELL     = "#F9E2AF";
-static const char* TYPE_CELL     = "#FAB387";
-static const char* TABLE_OUTLINE = "#101510";
-static const char* TABLE_FILL    = "#10151034";
-static const char* ADDRESS_FILL  = "#10151034";
-static const char* LEFT_FILL     = "#10151034";
-static const char* RIGHT_FILL    = "#10151034";
-static const char* PARENT_FILL   = "#10151034";
-static const char* VALUE_FILL    = "#10151034";
-static const char* TYPE_FILL     = "#10151034";
-static const char* OK_EDGE       = "#2222E0";
-static const char* BAD_EDGE      = "#E02222";
-static const char* ROOT_OUTLINE  = "#666666";
-static const char* ROOT_FILL     = "#DDDDDD";
-static const char* LIST_CELL     = "#8673BA";
-static const char* NEXT_FILL     = "#10151034";
-static const char* PREV_FILL     = "#10151034";
-static const char* INDEX_FILL    = "#10151034";
-static const char* FREE_EDGE     = "#20B412";
-static const char* FREE_OUTLINE  = "#26721F";
-static const char* FREE_FILL     = "#64BD6C";
-static const char* TAIL_OUTLINE  = "#666666";
-static const char* TAIL_FILL     = "#DDDDDD";
-static const char* HEAD_OUTLINE  = "#666666";
-static const char* HEAD_FILL     = "#DDDDDD";
+_unused static const char* BG_COLOR      = "#FFFFFF";
+_unused static const char* BAD_OUTLINE   = "#602222";
+_unused static const char* BAD_FILL      = "#F02222";
+_unused static const char* DEFAULT_CELL  = "#F02222";
+_unused static const char* OP_CELL       = "#A6E3A1";
+_unused static const char* NUM_CELL      = "#6CA1F9";
+_unused static const char* VAR_CELL      = "#B581F4";
+_unused static const char* CTRL_CELL     = "#F9E2AF";
+_unused static const char* TYPE_CELL     = "#FAB387";
+_unused static const char* TABLE_OUTLINE = "#101510";
+_unused static const char* TABLE_FILL    = "#10151034";
+_unused static const char* ADDRESS_FILL  = "#10151034";
+_unused static const char* LEFT_FILL     = "#10151034";
+_unused static const char* RIGHT_FILL    = "#10151034";
+_unused static const char* PARENT_FILL   = "#10151034";
+_unused static const char* VALUE_FILL    = "#10151034";
+_unused static const char* TYPE_FILL     = "#10151034";
+_unused static const char* OK_EDGE       = "#2222E0";
+_unused static const char* BAD_EDGE      = "#E02222";
+_unused static const char* ROOT_OUTLINE  = "#666666";
+_unused static const char* ROOT_FILL     = "#DDDDDD";
+_unused static const char* LIST_CELL     = "#8673BA";
+_unused static const char* NEXT_FILL     = "#10151034";
+_unused static const char* PREV_FILL     = "#10151034";
+_unused static const char* INDEX_FILL    = "#10151034";
+_unused static const char* FREE_EDGE     = "#20B412";
+_unused static const char* FREE_OUTLINE  = "#26721F";
+_unused static const char* FREE_FILL     = "#64BD6C";
+_unused static const char* TAIL_OUTLINE  = "#666666";
+_unused static const char* TAIL_FILL     = "#DDDDDD";
+_unused static const char* HEAD_OUTLINE  = "#666666";
+_unused static const char* HEAD_FILL     = "#DDDDDD";
 
 static Error listTextDump(FILE* f, List* lst,
                           const char* commentary, 
@@ -624,6 +624,22 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
     case VAR_TYPE_TYPE: nodeColor = TYPE_CELL; break;
     default: break;
   }
+
+#ifdef SIMPLIFIED_NODES
+  fprintf(dot,
+          "node%p"
+          "[shape=box, style=\"rounded, filled\", color=\"%s\", fillcolor=\"%s\", penwidth=2.1, fontsize=14, label="
+          "<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\" cellpadding=\"4\" color=\"%s\">"
+          "<tr>"
+              "<td colspan=\"6\" bgcolor=\"%s\"><b>type:</b> %s</td>"
+          "</tr>",
+          node,
+          TABLE_OUTLINE,
+          nodeColor,
+          TABLE_OUTLINE,
+          nodeInfo ? TYPE_FILL     : BAD_FILL,  
+          nodeInfo ? nodeInfo->str : "ERROR: no info for such NodeType");
+#else
   fprintf(dot,
           "node%p"
           "[shape=box, style=\"rounded, filled\", color=\"%s\", fillcolor=\"%s\", penwidth=2.1, fontsize=14, label="
@@ -641,6 +657,8 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           PARENT_FILL,  node->parent,
           nodeInfo ? TYPE_FILL     : BAD_FILL,  
           nodeInfo ? nodeInfo->str : "ERROR: no info for such NodeType");
+#endif
+  
   switch (node->data.type) {
     case OP_TYPE:
       {
@@ -704,6 +722,12 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
     default:
       break;
   }
+
+#ifdef SIMPLIFIED_NODES
+  fprintf(dot,
+          "</table>"
+          ">];\n");
+#else
   fprintf(dot,
           "<tr>"
               "<td colspan=\"6\" bgcolor=\"%s\"><b>address:</b> %p</td>"
@@ -721,6 +745,8 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           !IS_OP(node) && !IS_CTRL(node) && node->right
           ? DEFAULT_CELL
           : RIGHT_FILL, node->right);
+#endif
+
   if (node->parent && bondFailed)
     fprintf(dot, "node%p -> node%p [color=\"%s\"]\n", node, node->parent, BAD_EDGE);
   DECLARE_CHILD_NODE(node->left);

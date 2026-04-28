@@ -42,8 +42,9 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
-  lexerPrintTokens(stdout, &lexer);
-  TreeNode* ast = parse(&lexer.tokens);
+  //lexerPrintTokens(stdout, &lexer);
+  TreeNode* ast = SEMIC_(NULL);
+  //parse(&lexer.tokens);
   if (!ast) {
     fprintf(stderr, "Failed to parse token stream\n");
     exitValue = Fail;

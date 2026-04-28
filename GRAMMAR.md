@@ -1,5 +1,6 @@
-(* RPGLang's Expanded Backus-Naur Form *)
+# RPGLang's Expanded Backus-Naur Form
 
+```
 Grammar ::= FunctionDeclaration+, EOF
 
 FunctionDeclaration ::= Type, Identifier, "(", ParameterList?, ")", Statement
@@ -31,7 +32,7 @@ Equality ::= Relation, (("worthy" | "duel!<>"), Relation)*
 Relation ::= Shift, (("duel!<" | "duel!>"), Shift)*
 Shift ::= Addition, (("push>" | "<push"), Addition)*
 Addition ::= Term, (("unite" | "hit"), Term)*            (* "+" | "-" *)
-Term ::= Unary, (("empower" | "shatter"), Unary)*    (* "*" | "/" *)
+Term ::= Unary, (("empower" | "shatter"), Unary)*        (* "*" | "/" *)
 Unary ::= ("shadow" | "not")*, Primary
 Primary ::= Number
           | Identifier
@@ -67,3 +68,4 @@ NonZeroDecimalDigit ::= [1-9]
 SpecialCharacter ::= "+" | "-" | "*" | "/" | "_" | "."
 
 RomanDigit ::= "I" | "V" | "X" | "L" | "C"
+```
