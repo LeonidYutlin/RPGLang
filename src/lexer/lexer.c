@@ -4,8 +4,10 @@
 #include "utils/utils.h"
 #include <assert.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static HashTable KEYWORD_HT = (HashTable){};
 static size_t KEYWORD_HT_REFCOUNT = 0;
@@ -22,10 +24,15 @@ static const char* const TOKEN_TYPES[] = {
 };
 const size_t TOKEN_TYPES_SIZE = sizer(TOKEN_TYPES);
 
-Error lexerInit(Lexer* lexer, int fd, size_t initCap) {
-  if (fd < 0 || 
+Error lexerInit(Lexer* lexer, const char* filename, size_t initCap) {
+  if (!lexer    ||
+      !filename || 
       !initCap)
     return BadArgs;
+
+  int fd = open(filename, O_RDONLY);
+  if (fd < 0)
+    return FailFileOpen;
 
   Error err = OK;
   if ((err = dynArrInit(&lexer->tokens, initCap, sizeof(Token), NULL)))
@@ -33,6 +40,8 @@ Error lexerInit(Lexer* lexer, int fd, size_t initCap) {
 
   if ((err = mappedFileInit(fd, &lexer->mf)))
     return err;
+
+  close(fd);
 
   lexer->pos        = 0;
   lexer->line       = lexer->mf.data + 1;
@@ -46,8 +55,8 @@ Error lexerInit(Lexer* lexer, int fd, size_t initCap) {
   return OK;
 }
 
-Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
-  if (fd < 0 ||
+Lexer* lexerAlloc(const char* filename, size_t initCap, Error* status) {
+  if (!filename ||
       !initCap)
     RETURN_WITH_STATUS(BadArgs, NULL);
 
@@ -56,7 +65,7 @@ Lexer* lexerAlloc(int fd, size_t initCap, Error* status) {
     RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
 
   Error err = OK;
-  if ((err = lexerInit(lexer, fd, initCap))) {
+  if ((err = lexerInit(lexer, filename, initCap))) {
     free(lexer);
     RETURN_WITH_STATUS(err, NULL);
   }

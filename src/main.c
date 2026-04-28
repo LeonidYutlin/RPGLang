@@ -20,23 +20,14 @@ int main(int argc, char* argv[]) {
   loggerInit(NULL, ERROR);
   loggerInited = true;
 
-  int fd = open(argv[1], O_RDONLY);
-  if (fd < 0) {
-    logln(FATAL, "Failed to open \"%s\"", argv[1]);
-    exitValue = FailFileOpen;
-    goto exit;
-  }
-
   Error err = OK;
   Lexer lexer = (Lexer){};
-  if ((err = lexerInit(&lexer, fd, 16))) {
+  if ((err = lexerInit(&lexer, argv[1], 16))) {
     logln(FATAL, "lexerInit returned %s", parseError(err)->str);
-    close(fd);
     exitValue = err;
     goto exit;
   }
   lexerInited = true;
-  close(fd);
 
   FILE* logFile = openHtmlLogFile("./.log/");
   if (!logFile) {
