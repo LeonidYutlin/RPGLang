@@ -1,5 +1,15 @@
 prim main () {
-  if (0I push> 0II unite 0III worthy 0XX or 0II and 0)
+  if (#mage 0I 
+      #warrior push> 
+      #mage 0II 
+      #priest unite 
+      #mage 0III 
+      #warrior worthy 
+      #mage 0XX 
+      #warlock or 
+      #mage 0II 
+      #priest and 
+      #mage 0)
     complete 1;
   complete 0;
 }

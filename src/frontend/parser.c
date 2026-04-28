@@ -17,7 +17,7 @@ static bool getIf(Parser* p, TreeNode** result);
 #define getUntil(p, result) getConditionBlock(TOK_UNTIL, CTRL_UNTIL, p, result)
 static bool getVariableDeclaration(Parser* p, TreeNode** result);
 static bool getAssignment(Parser* p, TreeNode** result);
-static bool getAssignmentBody(Parser* p, TreeNode** result);
+static bool getAssignmentBody(Parser* p, TreeNode** result, bool* isInvalid);
 static bool getReturn(Parser* p, TreeNode** result);
 static bool getBreak(Parser* p, TreeNode** result);
 static bool getContinue(Parser* p, TreeNode** result);
@@ -37,6 +37,7 @@ static bool getNonVoidType(Parser* p, TreeNode** result);
 static bool getIdentifier(Parser* p, TreeNode** result);
 static bool getNumber(Parser* p, TreeNode** result);
 static bool consumeToken(Parser* p, TokenType type);
+static bool consumeClassifiedToken(Parser* p, TokenType type, bool* isInvalid);
 
 // this function isn't finalized. 
 // represents Grammar in grammar.txt, 
@@ -225,12 +226,13 @@ static bool getConditionBlock(TokenType tokType, CtrlType ctrlType,
   PRELUDE();
   TreeNode* lhs = NULL;
   TreeNode* rhs = NULL;
-  if (consumeToken(p, tokType)    &&
+  bool inv = false;
+  if (consumeClassifiedToken(p, tokType, &inv)    &&
       consumeToken(p, TOK_LPAREN) &&
       getExpression(p, &lhs)      &&
       consumeToken(p, TOK_RPAREN) &&
       getStatement(p, &rhs)) {
-    *result = nodeAllocCtrl(ctrlType, lhs, rhs);
+    *result = nodeAllocCtrl(ctrlType, inv, lhs, rhs);
     return true;
   }
 
@@ -244,13 +246,14 @@ static bool getIf(Parser* p, TreeNode** result) {
   TreeNode* ifNode   = NULL;
   TreeNode* elseStmt = NULL;
   if (getConditionBlock(TOK_IF, CTRL_IF, p, &ifNode)) {
-    if (consumeToken(p, TOK_ELSE)) {
+    bool inv = false;
+    if (consumeClassifiedToken(p, TOK_ELSE, &inv)) {
       if (getStatement(p, &elseStmt)) {
         TreeNode* lastStmt = ifNode;
         while (lastStmt->right)
           lastStmt = lastStmt->right;
 
-        lastStmt->right = ELSE_(elseStmt);
+        lastStmt->right = ELSE_(elseStmt, inv);
       } else {
         nodeDestroy(ifNode);
         return false;
@@ -273,8 +276,9 @@ static bool getVariableDeclaration(Parser* p, TreeNode** result) {
   if (getNonVoidType(p, &type) &&
       getIdentifier(p, &lhs)) {
     TreeNode* rhs = NULL;
-    if (getAssignmentBody(p, &rhs)) {
-      *result = DECL_(type, ASG_(lhs, rhs));
+    bool inv = false;
+    if (getAssignmentBody(p, &rhs, &inv)) {
+      *result = DECL_(type, ASG_(lhs, rhs, inv));
       return true;
     }
     nodeDestroy(rhs);
@@ -291,9 +295,10 @@ static bool getAssignment(Parser* p, TreeNode** result) {
   size_t oldI = p->i;
   TreeNode* lhs = NULL;
   TreeNode* rhs = NULL;
+  bool inv = false;
   if (getIdentifier(p, &lhs) &&
-      getAssignmentBody(p, &rhs)) {
-    *result = ASG_(lhs, rhs);
+      getAssignmentBody(p, &rhs, &inv)) {
+    *result = ASG_(lhs, rhs, inv);
     return true;
   }
 
@@ -303,10 +308,10 @@ static bool getAssignment(Parser* p, TreeNode** result) {
   return false;
 }
 
-static bool getAssignmentBody(Parser* p, TreeNode** result) {
+static bool getAssignmentBody(Parser* p, TreeNode** result, bool* isInvalid) {
   PRELUDE();
   TreeNode* expr = NULL;
-  if (consumeToken(p, TOK_MIRROR) &&
+  if (consumeClassifiedToken(p, TOK_MIRROR, isInvalid) &&
       getExpression(p, &expr)) {
     *result = expr;
     return true;
@@ -396,13 +401,14 @@ static bool getExpression(Parser* p, TreeNode** result) {
   TreeNode* first = NULL;
   if (!getAnd(p, &first))
     return false;
-  while (consumeToken(p, TOK_OR)) {
+  bool inv = false;
+  while (consumeClassifiedToken(p, TOK_OR, &inv)) {
     TreeNode* next = NULL;
     if (!getAnd(p, &next)) {
       nodeDestroy(first);
       return false;
     }
-    first = OR_(first, next);
+    first = OR_(first, next, inv);
   }
   *result = first;
   return true;
@@ -413,13 +419,14 @@ static bool getAnd(Parser* p, TreeNode** result) {
   TreeNode* first = NULL;
   if (!getEquality(p, &first))
     return false;
-  while (consumeToken(p, TOK_AND)) {
+  bool inv = false;
+  while (consumeClassifiedToken(p, TOK_AND, &inv)) {
     TreeNode* next = NULL;
     if (!getEquality(p, &next)) {
       nodeDestroy(first);
       return false;
     }
-    first = AND_(first, next);
+    first = AND_(first, next, inv);
   }
   *result = first;
   return true;
@@ -441,8 +448,8 @@ static bool getEquality(Parser* p, TreeNode** result) {
       return false;
     }
     first = opTok->type == TOK_WORTHY
-            ? EQ_(first, next)
-            : NEQ_(first, next);
+            ?  EQ_(first, next, opTok->isInvalidClass)
+            : NEQ_(first, next, opTok->isInvalidClass);
   }
   *result = first;
   return true;
@@ -464,8 +471,8 @@ static bool getRelation(Parser* p, TreeNode** result) {
       return false;
     }
     first = opTok->type == TOK_DUELR
-            ? LSR_(first, next)
-            : GRT_(first, next);
+            ? LSR_(first, next, opTok->isInvalidClass)
+            : GRT_(first, next, opTok->isInvalidClass);
   }
   *result = first;
   return true;
@@ -487,8 +494,8 @@ static bool getShift(Parser* p, TreeNode** result) {
       return false;
     }
     first = opTok->type == TOK_PUSHL
-            ? SHL_(first, next)
-            : SHR_(first, next);
+            ? SHL_(first, next, opTok->isInvalidClass)
+            : SHR_(first, next, opTok->isInvalidClass);
   }
   *result = first;
   return true;
@@ -510,8 +517,8 @@ static bool getAddition(Parser* p, TreeNode** result) {
       return false;
     }
     first = opTok->type == TOK_UNITE
-            ? ADD_(first, next)
-            : SUB_(first, next);
+            ? ADD_(first, next, opTok->isInvalidClass)
+            : SUB_(first, next, opTok->isInvalidClass);
   }
   *result = first;
   return true;
@@ -533,14 +540,13 @@ static bool getTerm(Parser* p, TreeNode** result) {
       return false;
     }
     first = opTok->type == TOK_EMPOWER
-            ? MUL_(first, next)
-            : DIV_(first, next);
+            ? MUL_(first, next, opTok->isInvalidClass)
+            : DIV_(first, next, opTok->isInvalidClass);
   }
   *result = first;
   return true;
 }
 
-//TODO: here and everywhere else opTok can be changed to TokenType type
 static bool getUnary(Parser* p, TreeNode** result) {
   PRELUDE();
   TreeNode*  first   = NULL;
@@ -551,8 +557,8 @@ static bool getUnary(Parser* p, TreeNode** result) {
        opTok = PEEK()) {
     p->i++;
     first = opTok->type == TOK_SHADOW
-            ? NEG_(first)
-            : NOT_(first);
+            ? NEG_(first, opTok->isInvalidClass)
+            : NOT_(first, opTok->isInvalidClass);
     if (!primary)
       primary = &first->right;
   }
@@ -604,6 +610,12 @@ static bool consumeToken(Parser* p, TokenType type) {
   return false;
 }
 
+static bool consumeClassifiedToken(Parser* p, TokenType type, bool* isInvalid) {
+  assert(p && p->t && isInvalid);
+  *isInvalid = PEEK()->isInvalidClass;
+  return consumeToken(p, type);
+}
+
 static bool getIdentifier(Parser* p, TreeNode** result) {
   PRELUDE();
   if (CHECK(TOK_IDENTIFIER)) {
@@ -617,7 +629,7 @@ static bool getIdentifier(Parser* p, TreeNode** result) {
 static bool getNumber(Parser* p, TreeNode** result) {
   PRELUDE();
   if (CHECK(TOK_NUM_LIT)) {
-    *result = NUM_(PEEK()->value);
+    *result = NUM_(PEEK()->value, PEEK()->isInvalidClass);
     p->i++;
     return true;
   }

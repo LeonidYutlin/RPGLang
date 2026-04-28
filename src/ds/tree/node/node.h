@@ -19,8 +19,9 @@ typedef union NodeValue {
 } NodeValue;
 
 typedef struct NodeUnit {
-  NodeType type;
+  NodeType  type;
   NodeValue value;
+  uint64_t  exceptionCount;
 } NodeUnit;
 
 #define TREE_NODE_FIELDS    \

@@ -233,6 +233,7 @@ Error lexerPrintTokens(FILE* sink, Lexer* lexer) {
   for (size_t i = 0; i < lexer->tokens.count; i++) {
     Token* t = (Token*)dynArrGet(&lexer->tokens, i);
     const char* tStr = getTokenTypeStr(t->type);
+    fprintf(sink, "%-2s", t->isInvalidClass ? "!" : "");
     switch (t->type) {
       case TOK_NUM_LIT:
         fprintf(sink, 

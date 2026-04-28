@@ -2,8 +2,8 @@ COMPILER := gcc
 
 INCLUDE_FLAGS := -I src/
 DEFINE_FLAGS  := -D _DEBUG \
-							   -D LOG_STATUSES \
-								 -D SIMPLIFIED_NODES
+							   -D LOG_STATUSES
+								# -D SIMPLIFIED_NODES
 								# -D LOG_FORCE_TRACE
 LIBS          := -lm -lc
 
@@ -92,4 +92,4 @@ update_todo:
 	@echo -e "•Updating $(TODO_FILE)"
 	@rm -f $(TODO_FILE)
 	@touch $(TODO_FILE)
-	@grep -r -n "TODO" --exclude="Makefile" --exclude="$(TODO_FILE)" --exclude-dir=.git | sed G >> $(TODO_FILE)
+	@grep -r -n "TODO" --exclude="Makefile" --exclude=".gitignore" --exclude="$(TODO_FILE)" --exclude-dir=.git | sed G >> $(TODO_FILE)

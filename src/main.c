@@ -4,8 +4,11 @@
 #include "logger/logger.h"
 #include "error/error.h"
 #include "parser/parser.h"
+#include "preparser/preparser.h"
 #include <fcntl.h>
 #include <unistd.h>
+
+//TODO: do a tree traverse moving the exceptionCount upstream (up to statements)
 
 int main(int argc, char* argv[]) {
   if (argc < 2) {
@@ -43,6 +46,9 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
+  lexerPrintTokens(stdout, &lexer);
+  preparse(&lexer.tokens);
+  printf("After Preparsing ------------\n");
   lexerPrintTokens(stdout, &lexer);
   TreeNode* ast = parse(&lexer.tokens);
   if (!ast) {

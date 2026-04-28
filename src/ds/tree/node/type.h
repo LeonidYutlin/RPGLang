@@ -53,6 +53,7 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(CTRL_BREAK,     "break")
 
 //TODO: priorities here are messed up; fix them
+//TODO: purge unneeded ops
 //NOTE:
 //X(enum, "str", argc, prior)
 #define OP_TYPE_LIST()       \
@@ -137,13 +138,17 @@ const char* getVarTypeStr(VarType type);
   (IS_NUM((node)) && doubleEqual((node)->data.value.num, (i)))
 
 // Quick TreeNode and NodeUnit initializers
-#define OP_UNIT_(i)   (NodeUnit){.type = OP_TYPE,   .value = {.op = i}}
-#define CTRL_UNIT_(i) (NodeUnit){.type = CTRL_TYPE, .value = {.ctrl = i}}
-#define NUM_UNIT_(i)  (NodeUnit){.type = NUM_TYPE,  .value = {.num = i}}
+// inv means isInvalid
+#define OP_UNIT_(i, inv) \
+  (NodeUnit){.type = OP_TYPE,   .value = {.op = i}, .exceptionCount = (uint64_t)inv}
+#define CTRL_UNIT_(i, inv) \
+  (NodeUnit){.type = CTRL_TYPE, .value = {.ctrl = i}, .exceptionCount = (uint64_t)inv}
+#define NUM_UNIT_(i, inv) \
+  (NodeUnit){.type = NUM_TYPE,  .value = {.num = i}, .exceptionCount = (uint64_t)inv}
 #define IDENT_UNIT_(name, len)  (NodeUnit){.type = IDENT_TYPE, .value = {.id = (StringView){name, len}}}
 #define VAR_TYPE_UNIT_(i)  (NodeUnit){.type = VAR_TYPE_TYPE, .value = {.varType = i}}
 
-#define NUM_(i) nodeAlloc(NUM_UNIT_(i))
+#define NUM_(i, inv) nodeAlloc(NUM_UNIT_(i, inv))
 #define IDENT_(name, len) nodeAlloc(IDENT_UNIT_(name, len))
 
 #define PRIM_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_PRIM))
@@ -151,86 +156,86 @@ const char* getVarTypeStr(VarType type);
 #define LOC_()  nodeAlloc(VAR_TYPE_UNIT_(TYPE_LOC))
 #define VOID_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_VOID))
 
-#define nodeAllocCtrl(ctrl, l, r) \
-  nodeAlloc(.data = CTRL_UNIT_(ctrl), .left = l, .right = r)
+#define nodeAllocCtrl(ctrl, inv, l, r) \
+  nodeAlloc(.data = CTRL_UNIT_(ctrl, inv), .left = l, .right = r)
 
 #define SEMIC_(l) \
-        nodeAllocCtrl(CTRL_SEMIC, l, NULL)
-#define ASG_(l, r) \
-        nodeAllocCtrl(CTRL_ASG, l, r)
-#define IF_(l, r) \
-        nodeAllocCtrl(CTRL_IF, l, r)
-#define ELSE_(r) \
-        nodeAllocCtrl(CTRL_ELSE, NULL, r)
+        nodeAllocCtrl(CTRL_SEMIC, false, l, NULL)
+#define ASG_(l, r, inv) \
+        nodeAllocCtrl(CTRL_ASG, inv, l, r)
+#define IF_(l, r, inv) \
+        nodeAllocCtrl(CTRL_IF, inv, l, r)
+#define ELSE_(r, inv) \
+        nodeAllocCtrl(CTRL_ELSE, inv, NULL, r)
 #define DECL_(l, r) \
-        nodeAllocCtrl(CTRL_DECL, l, r)
+        nodeAllocCtrl(CTRL_DECL, false, l, r)
 #define PARAM_(l, r) \
-        nodeAllocCtrl(CTRL_PARAM, l, r)
+        nodeAllocCtrl(CTRL_PARAM, false, l, r)
 #define FUNC_DECL_(l, r) \
-        nodeAllocCtrl(CTRL_FUNC_DECL, l, r)
+        nodeAllocCtrl(CTRL_FUNC_DECL, false, l, r)
 #define SIGNATURE_(l, r) \
-        nodeAllocCtrl(CTRL_SIGNATURE, l, r)
+        nodeAllocCtrl(CTRL_SIGNATURE, false, l, r)
 #define FUNC_CALL_(l, r) \
-        nodeAllocCtrl(CTRL_FUNC_CALL, l, r)
+        nodeAllocCtrl(CTRL_FUNC_CALL, false, l, r)
 #define RETURN_(l) \
-        nodeAllocCtrl(CTRL_RETURN, l, NULL)
+        nodeAllocCtrl(CTRL_RETURN, false, l, NULL)
 #define BREAK_() \
-        nodeAllocCtrl(CTRL_BREAK, NULL, NULL)
+        nodeAllocCtrl(CTRL_BREAK, false, NULL, NULL)
 #define CONTINUE_() \
-        nodeAllocCtrl(CTRL_CONTINUE, NULL, NULL)
+        nodeAllocCtrl(CTRL_CONTINUE, false, NULL, NULL)
 
-#define nodeAllocBinop(op, l, r) \
-  nodeAlloc(.data = OP_UNIT_(op), .left = l, .right = r)
-#define nodeAllocUnop(op, r) \
-  nodeAllocBinop(op, NULL, r)
+#define nodeAllocBinop(op, l, r, inv) \
+  nodeAlloc(.data = OP_UNIT_(op, inv), .left = l, .right = r)
+#define nodeAllocUnop(op, r, inv) \
+  nodeAllocBinop(op, NULL, r, inv)
 
-#define ADD_(l, r) \
-        nodeAllocBinop(OP_ADD, l, r)
-#define SUB_(l, r) \
-        nodeAllocBinop(OP_SUB, l, r)
-#define MUL_(l, r) \
-        nodeAllocBinop(OP_MUL, l, r)
-#define DIV_(l, r) \
-        nodeAllocBinop(OP_DIV, l, r)
-#define POW_(l, r) \
-        nodeAllocBinop(OP_POW, l, r)
-#define SQ_(l) \
-        POW_(l, NUM_(2))
-#define NOT_(r) \
-        nodeAllocUnop(OP_NOT, r)
-#define AND_(l, r) \
-        nodeAllocBinop(OP_AND, l, r)
-#define OR_(l, r) \
-        nodeAllocBinop(OP_OR, l, r)
-#define GRT_(l, r) \
-        nodeAllocBinop(OP_GRT, l, r)
-#define LSR_(l, r) \
-        nodeAllocBinop(OP_LSR, l, r)
-#define EQ_(l, r) \
-        nodeAllocBinop(OP_EQ, l, r)
-#define NEQ_(l, r) \
-        nodeAllocBinop(OP_NEQ, l, r)
-#define SHR_(l, r) \
-        nodeAllocBinop(OP_SHR, l, r)
-#define SHL_(l, r) \
-        nodeAllocBinop(OP_SHL, l, r)
-#define NEG_(r) \
-        nodeAllocBinop(OP_MUL, NUM_(-1), r)
-#define INV_(r) \
-        nodeAllocBinop(OP_DIV, NUM_(1), r)
-#define NEG_INV_(r) \
-        nodeAllocBinop(OP_DIV, NUM_(-1), r)
-#define SIN_(r) \
-        nodeAllocUnop(OP_SIN, r)
-#define COS_(r) \
-        nodeAllocUnop(OP_COS, r)
-#define LN_(r) \
-        nodeAllocUnop(OP_LN, r)
-#define SINH_(r) \
-        nodeAllocUnop(OP_SINH, r)
-#define COSH_(r) \
-        nodeAllocUnop(OP_COSH, r)
-#define SQRT_(l) \
-        nodeAllocBinop(OP_POW, l, INV_(NUM_(2)))
+#define ADD_(l, r, inv) \
+        nodeAllocBinop(OP_ADD, l, r, inv)
+#define SUB_(l, r, inv) \
+        nodeAllocBinop(OP_SUB, l, r, inv)
+#define MUL_(l, r, inv) \
+        nodeAllocBinop(OP_MUL, l, r, inv)
+#define DIV_(l, r, inv) \
+        nodeAllocBinop(OP_DIV, l, r, inv)
+#define POW_(l, r, inv) \
+        nodeAllocBinop(OP_POW, l, r, inv)
+#define SQ_(l, inv) \
+        POW_(l, NUM_(2, false), inv)
+#define NOT_(r, inv) \
+        nodeAllocUnop(OP_NOT, r, inv)
+#define AND_(l, r, inv) \
+        nodeAllocBinop(OP_AND, l, r, inv)
+#define OR_(l, r, inv) \
+        nodeAllocBinop(OP_OR, l, r, inv)
+#define GRT_(l, r, inv) \
+        nodeAllocBinop(OP_GRT, l, r, inv)
+#define LSR_(l, r, inv) \
+        nodeAllocBinop(OP_LSR, l, r, inv)
+#define EQ_(l, r, inv) \
+        nodeAllocBinop(OP_EQ, l, r, inv)
+#define NEQ_(l, r, inv) \
+        nodeAllocBinop(OP_NEQ, l, r, inv)
+#define SHR_(l, r, inv) \
+        nodeAllocBinop(OP_SHR, l, r, inv)
+#define SHL_(l, r, inv) \
+        nodeAllocBinop(OP_SHL, l, r, inv)
+#define NEG_(r, inv) \
+        nodeAllocBinop(OP_MUL, NUM_(-1, false), r, inv)
+#define INV_(r, inv) \
+        nodeAllocBinop(OP_DIV, NUM_(1, false), r, inv)
+#define NEG_INV_(r, inv) \
+        nodeAllocBinop(OP_DIV, NUM_(-1, false), r, inv)
+#define SIN_(r, inv) \
+        nodeAllocUnop(OP_SIN, r, inv)
+#define COS_(r, inv) \
+        nodeAllocUnop(OP_COS, r, inv)
+#define LN_(r, inv) \
+        nodeAllocUnop(OP_LN, r, inv)
+#define SINH_(r, inv) \
+        nodeAllocUnop(OP_SINH, r, inv)
+#define COSH_(r, inv) \
+        nodeAllocUnop(OP_COSH, r, inv)
+#define SQRT_(l, inv) \
+        nodeAllocBinop(OP_POW, l, INV_(NUM_(2, false)), inv)
 
 #endif

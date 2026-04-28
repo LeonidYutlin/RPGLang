@@ -1,3 +1,7 @@
-prim main(prim foo; prim baz) {
-  foo(bar; baz);
+#priest
+prim #mage main(prim foo; prim baz) {
+  #warrior foo(bar; #warlock #priest baz);
+  prim :] #mage mirror #warlock 0VVV;
+  #warlock if (a duel!> b)
+  if (a #warrior duel!> b);
 }

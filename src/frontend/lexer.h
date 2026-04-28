@@ -86,6 +86,7 @@ const char* getTokenTypeStr(TokenType type);
 // TODO: add const qualifiers to char* here
 typedef struct Token {
   TokenType type;
+  bool isInvalidClass;
   uint64_t value;
   char* line;
   char* lineStart;

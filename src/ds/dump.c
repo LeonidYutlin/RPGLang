@@ -35,6 +35,7 @@ _unused static const char* RIGHT_FILL    = "#10151034";
 _unused static const char* PARENT_FILL   = "#10151034";
 _unused static const char* VALUE_FILL    = "#10151034";
 _unused static const char* TYPE_FILL     = "#10151034";
+_unused static const char* EXC_FILL      = "#10151034";
 _unused static const char* OK_EDGE       = "#2222E0";
 _unused static const char* BAD_EDGE      = "#E02222";
 _unused static const char* ROOT_OUTLINE  = "#666666";
@@ -631,12 +632,17 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           "[shape=box, style=\"rounded, filled\", color=\"%s\", fillcolor=\"%s\", penwidth=2.1, fontsize=14, label="
           "<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\" cellpadding=\"4\" color=\"%s\">"
           "<tr>"
-              "<td colspan=\"6\" bgcolor=\"%s\"><b>type:</b> %s</td>"
+              "<td colspan=\"6\" bgcolor=\"%s\"><b>exceptionCount: </b>%lu</td>"
+          "</tr>"
+          "<tr>"
+              "<td colspan=\"6\" bgcolor=\"%s\"><b>type:</b>%s</td>"
           "</tr>",
           node,
           TABLE_OUTLINE,
           nodeColor,
           TABLE_OUTLINE,
+          node->data.exceptionCount ? BAD_FILL : EXC_FILL,
+          node->data.exceptionCount,
           nodeInfo ? TYPE_FILL     : BAD_FILL,  
           nodeInfo ? nodeInfo->str : "ERROR: no info for such NodeType");
 #else
@@ -648,6 +654,9 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
               "<td colspan=\"6\" bgcolor=\"%s\"><b>parent:</b> %p</td>"
           "</tr>"
           "<tr>"
+              "<td colspan=\"6\" bgcolor=\"%s\"><b>exceptionCount: </b>%lu</td>"
+          "</tr>"
+          "<tr>"
               "<td colspan=\"6\" bgcolor=\"%s\"><b>type:</b> %s</td>"
           "</tr>",
           node,
@@ -655,6 +664,8 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           nodeColor,
           TABLE_OUTLINE,
           PARENT_FILL,  node->parent,
+          node->data.exceptionCount ? BAD_FILL : EXC_FILL,
+          node->data.exceptionCount,
           nodeInfo ? TYPE_FILL     : BAD_FILL,  
           nodeInfo ? nodeInfo->str : "ERROR: no info for such NodeType");
 #endif
