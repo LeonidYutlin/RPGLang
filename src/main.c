@@ -43,18 +43,8 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
-  /*
-```
-prim 1var;
-prim 2var mirror 1var;
-```  
-  */
-  //lexerPrintTokens(stdout, &lexer);
-  TreeNode* ast = SEMIC_(DECL_(PRIM_(), IDENT_("1var", 4)));
-  TreeNode* ast2 = SEMIC_(DECL_(PRIM_(), ASG_(IDENT_("2var", 4), IDENT_("1var", 4))));
-  ast->right = ast2;
-  nodeFixParents(ast);
-  //parse(&lexer.tokens);
+  lexerPrintTokens(stdout, &lexer);
+  TreeNode* ast = parse(&lexer.tokens);
   if (!ast) {
     fprintf(stderr, "Failed to parse token stream\n");
     exitValue = Fail;

@@ -4,6 +4,7 @@
 **Non-Terminal:**
 1. Operand (`OP_TYPE`) - stores `OpType`
 2. Control Flow (`CTRL_TYPE`) - stores `CtrlType`
+
 **Terminal:**
 1. Identifier (`IDENT_TYPE`) - stores `StringView` (sized string)
 2. Number (`NUM_TYPE`) - stores `double`
