@@ -1,4 +1,5 @@
 #include "ds/dump.h"
+#include "ds/tree/node/type.h"
 #include "lexer/lexer.h"
 #include "logger/logger.h"
 #include "error/error.h"
@@ -43,7 +44,13 @@ int main(int argc, char* argv[]) {
   }
 
   //lexerPrintTokens(stdout, &lexer);
-  TreeNode* ast = NOT_(NUM_(1));
+  TreeNode* ast = IF_(AND_(IDENT_("apple", 5), IDENT_("dog", 3)), NULL);
+  TreeNode* ast2 = SEMIC_(IDENT_("foo", 3));
+  TreeNode* ast3 = ELSE_(SEMIC_(IDENT_("bar", 5)));
+  TreeNode* ast4 = SEMIC_(IDENT_("baz", 3));
+  ast->right = ast2;
+  ast2->right = ast3;
+  ast3->right->right = ast4;
   nodeFixParents(ast);
   //parse(&lexer.tokens);
   if (!ast) {
