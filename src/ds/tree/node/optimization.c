@@ -35,9 +35,6 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
     RETURN_WITH_STATUS(BadArgs, NAN);
   if (!IS_OP(node))
     RETURN_WITH_STATUS(OK, NAN);
-  bool suppressOptimization = (OF_OP(node->parent, OP_POW) &&
-                               OF_OP(node, OP_DIV) &&
-                               OF_NUM(node->left, 1));
 
   OpType opType = node->data.value.op;
   const OpTypeInfo* i = parseOpType(opType);
@@ -47,8 +44,7 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
       double rightVal = IS_NUM(node->right)
                         ? node->right->data.value.num
                         : nodeOptimizeConstants(node->right, nodeCount, status);
-      if (!suppressOptimization &&
-          !node->left &&
+      if (!node->left &&
           !isnan(rightVal)) {
         double result = applyOperation(opType, rightVal, NAN);
         nodeDeleteC(node->right, nodeCount);
@@ -65,8 +61,7 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
       double rightVal = IS_NUM(node->right)
                         ? node->right->data.value.num
                         : nodeOptimizeConstants(node->right, nodeCount, status);
-      if (!suppressOptimization &&
-          !isnan(leftVal) &&
+      if (!isnan(leftVal) &&
           !isnan(rightVal)) {
         double result = applyOperation(opType, leftVal, rightVal);
         nodeDeleteC(node->left,  nodeCount);
@@ -142,17 +137,6 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
     case OP_SUB: {
       if (OF_NUM((*node)->right, 0))
         REPLACE_WITH((*node)->left);
-      break;
-    }
-    case OP_POW: {
-      if (OF_NUM((*node)->right, 0) ||
-          OF_NUM((*node)->left, 1)) {
-        REDUCE_TO_NUM(1);
-      } else if (OF_NUM((*node)->left, 0)) {
-        REDUCE_TO_NUM(0);
-      } else if (OF_NUM((*node)->right, 1)) {
-        REPLACE_WITH((*node)->left);
-      }
       break;
     }
     default:

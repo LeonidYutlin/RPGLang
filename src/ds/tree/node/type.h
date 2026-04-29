@@ -69,22 +69,7 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(OP_EQ,   "==",     1, 5) \
   X(OP_NEQ,  "!=",     1, 5) \
   X(OP_AND,  "and",     1, 5) \
-  X(OP_OR,   "or",     1, 5) \
-  X(OP_POW,  "^",      2, 3) \
-  X(OP_SIN,  "sin",    1, 3) \
-  X(OP_COS,  "cos",    1, 3) \
-  X(OP_TAN,  "tan",    1, 3) \
-  X(OP_COT,  "cot",    1, 3) \
-  X(OP_LOG,  "log",    2, 3) \
-  X(OP_LN,   "ln",     1, 3) \
-  X(OP_ASIN, "arcsin", 1, 3) \
-  X(OP_ACOS, "arccos", 1, 3) \
-  X(OP_ATAN, "arctan", 1, 3) \
-  X(OP_ACOT, "arccot", 1, 3) \
-  X(OP_SINH, "sinh",   1, 3) \
-  X(OP_COSH, "cosh",   1, 3) \
-  X(OP_TANH, "tanh",   1, 3) \
-  X(OP_COTH, "coth",   1, 3)
+  X(OP_OR,   "or",     1, 5)
 
 typedef enum OpType {
   #define X(enm, ...) enm,
@@ -197,10 +182,6 @@ const char* getVarTypeStr(VarType type);
         nodeAllocBinop(OP_MUL, l, r, inv)
 #define DIV_(l, r, inv) \
         nodeAllocBinop(OP_DIV, l, r, inv)
-#define POW_(l, r, inv) \
-        nodeAllocBinop(OP_POW, l, r, inv)
-#define SQ_(l, inv) \
-        POW_(l, NUM_(2, false), inv)
 #define NOT_(r, inv) \
         nodeAllocUnop(OP_NOT, r, inv)
 #define AND_(l, r, inv) \
@@ -225,17 +206,5 @@ const char* getVarTypeStr(VarType type);
         nodeAllocBinop(OP_DIV, NUM_(1, false), r, inv)
 #define NEG_INV_(r, inv) \
         nodeAllocBinop(OP_DIV, NUM_(-1, false), r, inv)
-#define SIN_(r, inv) \
-        nodeAllocUnop(OP_SIN, r, inv)
-#define COS_(r, inv) \
-        nodeAllocUnop(OP_COS, r, inv)
-#define LN_(r, inv) \
-        nodeAllocUnop(OP_LN, r, inv)
-#define SINH_(r, inv) \
-        nodeAllocUnop(OP_SINH, r, inv)
-#define COSH_(r, inv) \
-        nodeAllocUnop(OP_COSH, r, inv)
-#define SQRT_(l, inv) \
-        nodeAllocBinop(OP_POW, l, INV_(NUM_(2, false)), inv)
 
 #endif

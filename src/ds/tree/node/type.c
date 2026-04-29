@@ -60,21 +60,6 @@ double applyOperation(OpType type, double a, double b) {
     case OP_SUB:  return a - b;
     case OP_MUL:  return a * b;
     case OP_DIV:  return a / b;
-    case OP_POW:  return pow(a, b);
-    case OP_SIN:  return sin(a);
-    case OP_COS:  return cos(a);
-    case OP_TAN:  return tan(a);
-    case OP_COT:  return 1 / tan(a);
-    case OP_ASIN: return asin(a);
-    case OP_ACOS: return acos(a);
-    case OP_ATAN: return atan(a);
-    case OP_ACOT: return M_PI_2 - atan(a);
-    case OP_SINH: return sinh(a);
-    case OP_COSH: return cosh(a);
-    case OP_TANH: return tanh(a);
-    case OP_COTH: return 1 / tanh(a);
-    case OP_LOG:  return log(b) / log(a);
-    case OP_LN :  return log(a);
     default:      return NAN;
   }
 }
