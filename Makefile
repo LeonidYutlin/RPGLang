@@ -15,6 +15,7 @@ TEMP_PATH     := .temp
 
 FRONTEND      := $(BINARY_PATH)/rpgc-frontend
 MIDDLEEND     := $(BINARY_PATH)/rpgc-middleend
+BACKEND       := $(BINARY_PATH)/rpgc-backend
 TODO_FILE     := TODO.txt
 
 define to_object
@@ -24,12 +25,14 @@ endef
 SOURCES_CORE      := $(shell find src/core/ -type f -name '*.c')
 SOURCES_FRONTEND  := $(shell find src/frontend/ -type f -name '*.c' )
 SOURCES_MIDDLEEND := $(shell find src/middleend/ -type f -name '*.c')
-SOURCES           := $(SOURCES_CORE) $(SOURCES_FRONTEND) $(SOURCES_MIDDLEEND)
+SOURCES_BACKEND   := $(shell find src/backend/ -type f -name '*.c')
+SOURCES           := $(SOURCES_CORE) $(SOURCES_FRONTEND) $(SOURCES_MIDDLEEND) $(SOURCES_BACKEND)
 
 OBJECTS_CORE      := $(call to_object,$(SOURCES_CORE))
 OBJECTS_FRONTEND  := $(call to_object,$(SOURCES_FRONTEND))
 OBJECTS_MIDDLEEND := $(call to_object,$(SOURCES_MIDDLEEND))
-OBJECTS           := $(OBJECTS_CORE) $(OBJECTS_FRONTEND) $(OBJECTS_MIDDLEEND)
+OBJECTS_BACKEND   := $(call to_object,$(SOURCES_BACKEND))
+OBJECTS           := $(OBJECTS_CORE) $(OBJECTS_FRONTEND) $(OBJECTS_MIDDLEEND) $(OBJECTS_BACKEND)
 
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
@@ -61,8 +64,7 @@ C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
 				   shift,signed-integer-overflow,undefined,$\
 				   unreachable,vla-bound,vptr
 
-
-build: ensure_directories_exist $(FRONTEND) $(MIDDLEEND) update_todo
+build: ensure_directories_exist $(FRONTEND) $(MIDDLEEND) $(BACKEND) update_todo
 
 $(FRONTEND): $(OBJECTS_CORE) $(OBJECTS_FRONTEND)
 	@echo -e "•Linking Frontend together"
@@ -70,6 +72,10 @@ $(FRONTEND): $(OBJECTS_CORE) $(OBJECTS_FRONTEND)
 
 $(MIDDLEEND): $(OBJECTS_CORE) $(OBJECTS_MIDDLEEND)
 	@echo -e "•Linking Middleend together"
+	@$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $^ -o $@ $(LIBS)
+
+$(BACKEND): $(OBJECTS_CORE) $(OBJECTS_BACKEND)
+	@echo -e "•Linking Backend together"
 	@$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $^ -o $@ $(LIBS)
 
 -include $(DEPENDENCIES)
@@ -87,9 +93,6 @@ $(foreach src,$(SOURCES),$(eval $(strip $(call declare_recipe,$(src)))))
 %.d:
 
 .PHONY: ensure_directories_exist clean run build clean_logs update_todo
-
-run: build
-	./$(PROGRAM_NAME)
 
 ensure_directories_exist:
 	mkdir -p $(BINARY_PATH) $(ARTIFACT_PATH) $(LOG_PATH) $(TEMP_PATH)
