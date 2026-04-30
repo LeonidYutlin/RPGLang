@@ -4,44 +4,18 @@
 #include "frontend/lexer.h"
 #include "frontend/preparser.h"
 #include "frontend/parser.h"
+#include <stdlib.h>
 #include <string.h>
 
 //TODO: do a tree traverse moving the exceptionCount upstream (up to statements)
 static const char* DEFAULT_OUTPUT_FILEPATH = "ast.txt";
+static void parseArgs(int* argc, char*** argv, 
+               const char** input, const char** output);
 
 int main(int argc, char* argv[]) {
-  // TODO: better usage desc
-  // TODO: better flag parsing?
-  if (argc < 2) {
-    fprintf(stderr, "Usage: %s <inputFilepath> -o <outputFilepath>\n", argv[0]);
-    return 1;
-  }
-  popArg(&argc, &argv); // pop progs name, we wont need it from here
-  const char* arg    = NULL;
   const char* input  = NULL;
   const char* output = NULL;
-  while ((arg = popArg(&argc, &argv))) {
-    if (*arg == '-') {
-      arg++;
-      if (strcmp(arg, "o") == 0) {
-        output = popArg(&argc, &argv);
-        continue;
-      }
-      fprintf(stderr, "ERROR: Unknown flag\n");
-    } else {
-      if (input) {
-        fprintf(stderr, "ERROR: More than one input file is provided\n");
-        return 1;
-      }
-      input = arg;
-    }
-  }
-  if (!output) {
-    output = DEFAULT_OUTPUT_FILEPATH;
-    fprintf(stdout, 
-            "WARN: no output filepath is provided. Proceeding with \"%s\"\n",
-            output);
-  }
+  parseArgs(&argc, &argv, &input, &output);
 
   int  exitValue = 0;
   bool loggerInited  = false;
@@ -105,4 +79,39 @@ exit:
   if (astInited)
     nodeDestroy(ast);
   return exitValue;
+}
+
+// TODO: better usage desc
+// TODO: better flag parsing?
+static void parseArgs(int* argc, char*** argv, 
+                      const char** input, const char** output) {
+  if (*argc < 2) {
+    fprintf(stderr, "Usage: %s <inputFilepath> -o <outputFilepath>\n", *argv[0]);
+    exit(1);
+  }
+  popArg(argc, argv); // pop progs name, we wont need it from here
+  const char* arg = NULL;
+  while ((arg = popArg(argc, argv))) {
+    if (*arg == '-') {
+      arg++;
+      if (strcmp(arg, "o") == 0) {
+        *output = popArg(argc, argv);
+        continue;
+      }
+      fprintf(stderr, "ERROR: Unknown flag\n");
+    } else {
+      if (*input) {
+        fprintf(stderr, "ERROR: More than one input file is provided\n");
+        exit(1);
+      }
+      *input = arg;
+    }
+  }
+  if (!*output) {
+    *output = DEFAULT_OUTPUT_FILEPATH;
+    fprintf(stdout, 
+            "WARN: no output filepath is provided. Proceeding with \"%s\"\n",
+            *output);
+  }
+  return;
 }
