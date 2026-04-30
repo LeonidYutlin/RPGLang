@@ -129,14 +129,14 @@ Error lexerAnalyze(Lexer* lexer) {
 
     // numeric literals
     if (c == ROMAN_NUMERAL_PREFIX) {
-      uint64_t num = 0;
+      int64_t num = 0;
       size_t oldPos = lexer->pos;
       lexer->pos++;
       if (lexer->pos < bufSize &&
           isIn(c = buf[lexer->pos], ROMAN_NUMERAL_CHARS)) {
-        uint64_t degree = 0;
-        uint64_t newDegree = 0;
-        uint64_t numBuf = 0;
+        int64_t degree = 0;
+        int64_t newDegree = 0;
+        int64_t numBuf = 0;
         bool cont = true;
         while (cont && lexer->pos < bufSize) {
           c = buf[lexer->pos];
@@ -237,7 +237,7 @@ Error lexerPrintTokens(FILE* sink, Lexer* lexer) {
     switch (t->type) {
       case TOK_NUM_LIT:
         fprintf(sink, 
-                "%s(%lu)(%.*s)\n", 
+                "%s(%ld)(%.*s)\n", 
                 tStr, t->value, 
                 (int)t->len, t->pos);
         break;

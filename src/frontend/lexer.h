@@ -70,7 +70,7 @@ const char* getTokenTypeStr(TokenType type);
 typedef struct Token {
   TokenType type;
   bool isInvalidClass;
-  uint64_t value;
+  int64_t value;
   char* line;
   char* lineStart;
   char* pos;

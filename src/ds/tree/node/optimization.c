@@ -1,4 +1,4 @@
-#include "ds/tree/node/optimization.h"
+/* #include "ds/tree/node/optimization.h"
 #include "ds/tree/root.h"
 #include <assert.h>
 #include <math.h>
@@ -41,7 +41,7 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
   assert(i);
   switch (i->argCount) {
     case 1: {
-      double rightVal = IS_NUM(node->right)
+      int64_t rightVal = IS_NUM(node->right)
                         ? node->right->data.value.num
                         : nodeOptimizeConstants(node->right, nodeCount, status);
       if (!node->left &&
@@ -147,4 +147,4 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
 }
 
 #undef REPLACE_WITH
-#undef REDUCE_TO_NUM
+#undef REDUCE_TO_NUM */

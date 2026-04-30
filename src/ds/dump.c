@@ -704,7 +704,7 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
     case NUM_TYPE:
       fprintf(dot,
               "<tr>"
-                "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %lf</td>"
+                "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %ld</td>"
               "</tr>",
               VALUE_FILL, node->data.value.num);
       break;

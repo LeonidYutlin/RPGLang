@@ -14,8 +14,7 @@ typedef union NodeValue {
   OpType op;
   CtrlType ctrl;
   StringView id;
-  double num; 
-  // TODO: change this to uint64_t and add a new union field for float-point nums
+  int64_t num;
 } NodeValue;
 
 typedef struct NodeUnit {

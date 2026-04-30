@@ -53,7 +53,6 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(CTRL_BREAK,     "break")
 
 //TODO: priorities here are messed up; fix them
-//TODO: purge unneeded ops
 //NOTE:
 //X(enum, "str", argc, prior)
 #define OP_TYPE_LIST()       \
