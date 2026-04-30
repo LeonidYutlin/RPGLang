@@ -1,66 +1,57 @@
-//этот файл нуждается в полной переработке
-
 #include <assert.h>
+#include <ctype.h>
+#include <string.h>
 #include "io/io.h"
 #include "ds/tree/node.h"
 
-//static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* p,
-//                                   Error* status, size_t* nodeCount);
-
+static TreeNode* nodeReadRecursion(MappedFile* mf, size_t* p,
+                                   Error* status, size_t* nodeCount);
 static Error nodePrint(FILE* f, TreeNode* node);
-
 
 #define NULL_STR "NULL"
 static const char* NULL_STRING = NULL_STR;
 static size_t NULL_STRING_LEN  = sizeof(NULL_STR) - 1;
 #undef  NULL_STR_REP
 
-/*
-TreeNode* nodeReadC(FILE* f, Error* status, size_t* nodeCount) {
-  if (!f)
+TreeNode* nodeReadC(MappedFile* mf, Error* status, size_t* nodeCount) {
+  if (!mf || !mf->data)
     RETURN_WITH_STATUS(BadArgs, NULL);
   Error err = OK;
 
-  MappedFile mf = {};
-  if ((err = mappedFileInit(fileno(f), &mf)))
-    RETURN_WITH_STATUS(err, NULL);
-
   size_t p = 0;
-  TreeNode* node = nodeReadRecursion(vars, mf.data, mf.size, &p, &err, nodeCount);
-  mappedFileDestroy(&mf);
+  TreeNode* node = nodeReadRecursion(mf, &p, &err, nodeCount);
   if (err)
     RETURN_WITH_STATUS(err, NULL);
+  nodeFixParents(node);
   return node;
 }
 
-#define DUMP_ERROR_RETURN(commentary)                      \
-  {                                                        \
-  fprintf(stderr,                                          \
-          "[ERROR]: Failed to read node at pition %lu\n" \
-          "Comment: %s\n"                                  \
-          "\tLine snippet:\n"                              \
-          "\t->%.10s...\n",                                \
-          *p,                                            \
-          commentary,                                      \
-          buf + *p);                                     \
-  RETURN_WITH_STATUS(FailReadNode, NULL);                  \
+#define DUMP_ERROR_RETURN(commentary)            \
+  {                                              \
+  logln(ERROR,                                   \
+        "Failed to read node at position %lu\n"  \
+        "Comment: %s\n"                          \
+        "\tLine snippet:\n"                      \
+        "\t->%.*s...",                           \
+        *p,                                      \
+        commentary,                              \
+        mf->size - *p > 10 ? 10 : mf->size - *p, \
+        mf->data + *p);                          \
+  RETURN_WITH_STATUS(Fail, NULL);                \
   }
 
-#define SKIP_WHITESPACE      \
-  while (isspace(buf[*p])) { \
-      (*p)++;                \
-  }
+#define SKIP_WHITESPACE           \
+  while (isspace(mf->data[*p]))   \
+      (*p)++;                     \
 
-static TreeNode* nodeReadRecursion(Variables* vars,
-                                   char* buf, size_t bufSize, size_t* p,
+#define CUR (mf->data + *p)
+
+//NOTE: not sure abt sscanf here
+static TreeNode* nodeReadRecursion(MappedFile* mf, size_t* p,
                                    Error* status, size_t* nodeCount) {
-  if (!buf || 
-      *p >= bufSize || 
-      !vars)
-    RETURN_WITH_STATUS(BadArgs, NULL);
-  Error err = OK;
-  if ((err = varsVerify(vars)))
-    RETURN_WITH_STATUS(err, NULL);
+  assert(mf);
+  assert(mf->data);
+  assert(*p < mf->size);
 
   // fprintf(stderr,
   //             "[INFO]: at position %lu\n"             
@@ -69,115 +60,126 @@ static TreeNode* nodeReadRecursion(Variables* vars,
   //             *p,
   //             buf + *p);
   SKIP_WHITESPACE;
-  if (buf[*p] == '(') {
+  if (*CUR == '(')
     (*p)++;
+  else 
+    DUMP_ERROR_RETURN("No opening parenthethis");
+
+  SKIP_WHITESPACE;
+  NodeUnit data = {.type = UNKNOWN_TYPE};
+  if (strncmp(CUR,
+              NULL_STRING, NULL_STRING_LEN) == 0) {
+    *p += NULL_STRING_LEN;
     SKIP_WHITESPACE;
-    NodeUnit data = {};
-    int charReadN = 0;
-    if (isdigit(buf[*p]) ||
-        (buf[*p] == '-' && isdigit(buf[*p + 1]))) {
-      if (sscanf(buf + *p,
-                 "%lg%n",
-                 &data.value.num, &charReadN) != 1)
-        DUMP_ERROR_RETURN("No valid value in node");
-      data.type = NUM_TYPE;
-      *p += (size_t)charReadN;
-    } else {
-      char valStr[MAX_VALUE_STRING_LENGTH] = {0};
-      //char* valBuf = (char*)calloc(BASE_VALUE_BUF_LEN, sizeof(char));
-      //if (!valBuf)
-      //  DUMP_ERROR_RETURN("Memory allocation failed");
-      //while (...)
-      //
-      //OVERFLOW, bad sscanf - use smth else 
-      if (sscanf(buf + *p, "%s%n", 
-                 valStr, &charReadN) != 1)
-        DUMP_ERROR_RETURN("No valid var/op value in node");
-      if (valStr[MAX_VALUE_STRING_LENGTH - 1] != '\0')
-        DUMP_ERROR_RETURN("Name of a variable or operator is too long")
-      int opType = getOpType(valStr);
-      //fprintf(stderr, "returned opType %d\n", opType);
-      if (opType >= 0) {
-        data.value.op = (OpType)opType;
-        data.type = OP_TYPE;
-        *p += (size_t)charReadN;
-      } else {
-        size_t index = regVar(vars, valStr, &err);
-        if (err != OK &&
-            err != AttemptedReregistration)
-          RETURN_WITH_STATUS(err, NULL);
-        data.value.var = index;
-        data.type = VAR_TYPE;
-        *p += (size_t)charReadN;
-      }
-    }
-    if (data.type == UNKNOWN_TYPE)
-      DUMP_ERROR_RETURN("No value in node");
-
-    uint expectedChildN = data.type == OP_TYPE
-                          ? parseOpType(data.value.op)->argCount
-                          : 0;
-
-    TreeNode* left  = nodeReadRecursion(vars, buf, bufSize, p, status, nodeCount);
-    if (*status) {
-      nodeDestroy(left);
-      return NULL;
-    }
-    TreeNode* right = nodeReadRecursion(vars, buf, bufSize, p, status, nodeCount);
-    if (*status) {
-      //Я знаю что тут всегда ноды и так нулевой указатель
-      //однако на будущие случаи лучше иметь деструктор чем не иметь
-      nodeDestroy(left);
-      nodeDestroy(right);
-      return NULL;
-    }
-
-    uint childN = (uint)(left != NULL) + (uint)(right != NULL);
-    if (expectedChildN != childN) {
-      nodeDestroy(left); 
-      nodeDestroy(right);
-      DUMP_ERROR_RETURN("Node has too few or too many null children!");
-    }
-
-    //fprintf(stderr, "Pos is %lu BufSize is %lu\n", *p, bufSize);
-    SKIP_WHITESPACE;
-    if (buf[*p] == ')') {
+    if (*CUR == ')')
       (*p)++;
-    } else {
-      nodeDestroy(left);
-      nodeDestroy(right);
-      DUMP_ERROR_RETURN("No closing parenthesis");
-    }
-
-    TreeNode* node = nodeAlloc(data, NULL, left, right, status);
-    if (*status) {
-      nodeDelete(left);
-      nodeDelete(right);
-      nodeDestroy(node);
-      return NULL;
-    }
-
-    if (node->left)
-      node->left->parent  = node;
-    if (node->right)
-      node->right->parent = node;
-
-    if (nodeCount)
-      (*nodeCount)++;
-    return node;
-  } else if (strncmp(buf + *p,
-                     NULL_STRING_REPRESENTATION,
-                     NULL_STRING_REPRESENTATION_LENGTH) == 0) {
-    *p += NULL_STRING_REPRESENTATION_LENGTH;
+    else
+      DUMP_ERROR_RETURN("No closing parenthethis");
     return NULL;
   }
 
-  DUMP_ERROR_RETURN("Illegal character at the start of a node declaration");
+  long readN = 0;
+  if (sscanf(CUR,
+             ".exc = %lu "
+             ".type = %ln",
+             &data.exceptionCount, &readN) != 1) {
+    DUMP_ERROR_RETURN(".exc or .type scanf failed");
+    RETURN_WITH_STATUS(Fail, NULL);
+  }
+  *p += (size_t)readN;
+
+  size_t len = (size_t)(strchr(CUR, ' ') - CUR);
+  int type = getNodeType(CUR, len);
+  if (type < 0)
+    DUMP_ERROR_RETURN("Unknown node type");
+  *p += len;
+  data.type = (NodeType)type;
+  SKIP_WHITESPACE;
+  sscanf(CUR, ".value = %ln", &readN);
+  if (!readN)
+    DUMP_ERROR_RETURN("Value field error");
+  *p += (size_t)readN;
+  SKIP_WHITESPACE;
+  switch (data.type) {
+    case NUM_TYPE:
+      if (sscanf(CUR, "%ld%ln", 
+                 &data.value.num, &readN) != 1)
+        DUMP_ERROR_RETURN("Num node value error");
+      *p += (size_t)readN;
+      break;
+    case IDENT_TYPE:
+      len = (size_t)(strchr(CUR, ' ') - CUR);
+      data.value.id = (StringView){.data = CUR, .size = len};
+      *p += len;
+      break;
+    case OP_TYPE:
+      len = (size_t)(strchr(CUR, ' ') - CUR);
+      type = getOpType(CUR, len);
+      if (type < 0)
+        DUMP_ERROR_RETURN("Unknown op type");
+      *p += len;
+      data.value.op = (OpType)type;     
+      break;
+    case CTRL_TYPE:
+      len = (size_t)(strchr(CUR, ' ') - CUR);
+      type = getCtrlType(CUR, len);
+      if (type < 0)
+        DUMP_ERROR_RETURN("Unknown ctrl type");
+      *p += len;
+      data.value.ctrl = (CtrlType)type;     
+      break;
+    case VAR_TYPE_TYPE:
+      len = (size_t)(strchr(CUR, ' ') - CUR);
+      type = getVarTypeType(CUR, len);
+      if (type < 0)
+        DUMP_ERROR_RETURN("Unknown var type type");
+      *p += len;
+      data.value.varType = (VarType)type;     
+      break;
+    default:
+      DUMP_ERROR_RETURN("unreacheable");
+      break;
+  }
+  SKIP_WHITESPACE;
+
+  TreeNode* left  = nodeReadRecursion(mf, p, status, nodeCount);
+  if (*status) {
+    nodeDestroy(left);
+    return NULL;
+  }
+  TreeNode* right = nodeReadRecursion(mf, p, status, nodeCount);
+  if (*status) {
+    nodeDestroy(left);
+    nodeDestroy(right);
+    return NULL;
+  }
+
+  //fprintf(stderr, "Pos is %lu BufSize is %lu\n", *p, bufSize);
+  SKIP_WHITESPACE;
+  if (mf->data[*p] == ')') {
+    (*p)++;
+  } else {
+    nodeDestroy(left);
+    nodeDestroy(right);
+    DUMP_ERROR_RETURN("No closing parenthesis");
+  }
+
+  TreeNode* node = nodeAlloc(data, .left = left, .right = right, status);
+  if (*status) {
+    nodeDelete(left);
+    nodeDelete(right);
+    nodeDestroy(node);
+    return NULL;
+  }
+
+  if (nodeCount)
+    (*nodeCount)++;
+  return node; 
 }
 
 #undef DUMP_ERROR_RETURN
 #undef SKIP_WHITESPACE
-*/
+#undef CUR
 
 Error nodePrintPrefix(FILE* sink, TreeNode* node) {
   if (!sink || !node)

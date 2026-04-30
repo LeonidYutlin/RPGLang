@@ -1,12 +1,11 @@
-//этот файл нуждается в полной переработке
 #ifndef IO_H
 #define IO_H
 
 #include <stdio.h>
 #include "ds/tree/root.h"
 
-//TreeNode* nodeReadC(FILE* src, Error* status, size_t* nodeCount);
-//#define nodeRead(src, status) nodeReadC(src, status, NULL);
+TreeNode* nodeReadC(MappedFile* src, Error* status, size_t* nodeCount);
+#define nodeRead(src, status) nodeReadC(src, status, NULL);
 
 Error nodePrintPrefix(FILE* sink, TreeNode* node);
 

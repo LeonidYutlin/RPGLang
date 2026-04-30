@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <float.h>
 
+static const char* DEFAULT_OUTPUT_FILEPATH = "ast.txt";
 static const double DOUBLE_COMPARISON_PRECISION = DBL_EPSILON;
 
 bool doubleEqual(double a, double b) {
@@ -54,7 +55,7 @@ Error snTimestamp(char* dest, size_t n) {
          : LongFormat;
 }
 
-Error mappedFileInit(const char* filename, MappedFile* mappedFile) {
+Error mappedFileInit(MappedFile* mappedFile, const char* filename) {
   if (!filename || 
       !mappedFile)
     return BadArgs;
@@ -101,4 +102,40 @@ char* popArg(int* argc, char*** argv) {
   (*argc)--;
   (*argv)++;
   return arg;
+}
+
+// TODO: better usage desc
+// TODO: better flag parsing?
+/// this function is meant to be used by main functions
+void parseArgs(int* argc, char*** argv, 
+               const char** input, const char** output) {
+  if (*argc < 2) {
+    fprintf(stderr, "Usage: %s <inputFilepath> -o <outputFilepath>\n", *argv[0]);
+    exit(1);
+  }
+  popArg(argc, argv); // pop progs name, we wont need it from here
+  const char* arg = NULL;
+  while ((arg = popArg(argc, argv))) {
+    if (*arg == '-') {
+      arg++;
+      if (strcmp(arg, "o") == 0) {
+        *output = popArg(argc, argv);
+        continue;
+      }
+      fprintf(stderr, "ERROR: Unknown flag\n");
+    } else {
+      if (*input) {
+        fprintf(stderr, "ERROR: More than one input file is provided\n");
+        exit(1);
+      }
+      *input = arg;
+    }
+  }
+  if (!*output) {
+    *output = DEFAULT_OUTPUT_FILEPATH;
+    fprintf(stdout, 
+            "WARN: no output filepath is provided. Proceeding with \"%s\"\n",
+            *output);
+  }
+  return;
 }

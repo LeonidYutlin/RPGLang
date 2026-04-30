@@ -34,7 +34,7 @@ Error lexerInit(Lexer* lexer, const char* filename, size_t initCap) {
   if ((err = dynArrInit(&lexer->tokens, initCap, sizeof(Token), NULL)))
     return err;
 
-  if ((err = mappedFileInit(filename, &lexer->mf))) {
+  if ((err = mappedFileInit(&lexer->mf, filename))) {
     dynArrDestroy(&lexer->tokens, false);
     return err;
   }

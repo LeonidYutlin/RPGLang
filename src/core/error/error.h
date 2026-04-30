@@ -7,21 +7,18 @@
 #include "error/modules/generic.h"
 #include "error/modules/hashtable.h"
 #include "error/modules/list.h"
-#include "error/modules/tree.h"
 
 typedef int Error;
 
 //INFO: Use this one when you want to iterate through every single one, since it keeps the same order
 #define UNITED_ERROR_LIST()  \
   GENERIC_ERROR_LIST()       \
-  TREE_ERROR_LIST()          \
   DYNAMIC_ARRAY_ERROR_LIST() \
   LINKED_LIST_ERROR_LIST()   \
   HASH_TABLE_ERROR_LIST()
 
 #define ERROR_MODULE_LIST()    \
   GENERIC_ERROR_MODULE()       \
-  TREE_ERROR_MODULE()          \
   DYNAMIC_ARRAY_ERROR_MODULE() \
   LINKED_LIST_ERROR_MODULE()   \
   HASH_TABLE_ERROR_MODULE()

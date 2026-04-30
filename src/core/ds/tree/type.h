@@ -20,6 +20,7 @@ typedef enum NodeType {
 } NodeType;
 
 const char* getNodeTypeStr(NodeType type);
+int getNodeType(const char* str, size_t n);
 
 //NOTE:
 //X(enum, "str")
@@ -62,7 +63,7 @@ const char* getNodeTypeStr(NodeType type);
   X(OP_LSR,  "lsr",    1, 4) \
   X(OP_EQ,   "==",     1, 5) \
   X(OP_NEQ,  "!=",     1, 5) \
-  X(OP_AND,  "and",     1, 5) \
+  X(OP_AND,  "and",    1, 5) \
   X(OP_OR,   "or",     1, 5)
 
 typedef enum OpType {
@@ -79,7 +80,7 @@ typedef struct OpTypeInfo {
 } OpTypeInfo;
 
 const OpTypeInfo* parseOpType(OpType type);
-int getOpType(const char* string);
+int getOpType(const char* str, size_t n);
 ///Applies appropriate operation regarding a and b and returns the result.
 ///If the operation doesn't require a second parameter (e.g. cos(x)) then leave b as NAN
 double applyOperation(OpType type, double a, double b);
@@ -91,6 +92,7 @@ typedef enum CtrlType {
 } CtrlType;
 
 const char* getCtrlTypeStr(CtrlType type);
+int getCtrlType(const char* str, size_t n);
 
 typedef enum VarType {
   #define X(enm, ...) enm,
@@ -99,6 +101,7 @@ typedef enum VarType {
 } VarType;
 
 const char* getVarTypeStr(VarType type);
+int getVarTypeType(const char* str, size_t n);
 
 // Node utility macros
 #define IS_TYPE(node, t) ((node) && (node)->data.type == t) 

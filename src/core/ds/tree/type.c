@@ -20,6 +20,16 @@ const char* getNodeTypeStr(NodeType t) {
          : NODE_TYPES[t];
 }
 
+int getNodeType(const char* str, size_t n) {
+  for (int i = 0; (size_t)i < NODE_TYPES_SIZE; i++) {
+    const char* t = getNodeTypeStr((NodeType)i);
+    if (!t) continue;
+    if (strncmp(str, t, n) == 0)
+      return i;
+  }
+  return -1;
+}
+
 static const OpTypeInfo OP_TYPES[] = {
   #define X(enm, s, aC, pr)                 \
     [enm] = {.type = enm,                   \
@@ -42,11 +52,11 @@ const OpTypeInfo* parseOpType(OpType t) {
 
 //PERF: I know this is linear. I dont care. 
 //Better than manual written cmps and easier than a new dt struct
-int getOpType(const char* str) {
+int getOpType(const char* str, size_t n) {
   for (int i = 0; (size_t)i < OP_TYPES_SIZE; i++) {
     const OpTypeInfo* t = parseOpType((OpType)i);
     if (!t) continue;
-    if ((t->str && strcmp(str, t->str) == 0)) 
+    if ((t->str && strncmp(str, t->str, n) == 0)) 
       return (OpType)i;
   }
   return -1;
@@ -76,6 +86,16 @@ const char* getCtrlTypeStr(CtrlType t) {
          : CTRL_TYPES[t];
 }
 
+int getCtrlType(const char* str, size_t n) {
+  for (int i = 0; (size_t)i < CTRL_TYPES_SIZE; i++) {
+    const char* t = getCtrlTypeStr((CtrlType)i);
+    if (!t) continue;
+    if (strncmp(str, t, n) == 0)
+      return i;
+  }
+  return -1;
+}
+
 static const char* VAR_TYPES[] = {
   #define X(enm, str) [enm] = str,
   VAR_TYPE_LIST()
@@ -88,4 +108,14 @@ const char* getVarTypeStr(VarType t) {
   return (t < 0 || (size_t)t >= VAR_TYPES_SIZE)
          ? NULL
          : VAR_TYPES[t];
+}
+
+int getVarTypeType(const char* str, size_t n) {
+  for (int i = 0; (size_t)i < VAR_TYPES_SIZE; i++) {
+    const char* t = getVarTypeStr((VarType)i);
+    if (!t) continue;
+    if (strncmp(str, t, n) == 0)
+      return i;
+  }
+  return -1;
 }
