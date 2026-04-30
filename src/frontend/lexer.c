@@ -30,18 +30,14 @@ Error lexerInit(Lexer* lexer, const char* filename, size_t initCap) {
       !initCap)
     return BadArgs;
 
-  int fd = open(filename, O_RDONLY);
-  if (fd < 0)
-    return FailFileOpen;
-
   Error err = OK;
   if ((err = dynArrInit(&lexer->tokens, initCap, sizeof(Token), NULL)))
     return err;
 
-  if ((err = mappedFileInit(fd, &lexer->mf)))
+  if ((err = mappedFileInit(filename, &lexer->mf))) {
+    dynArrDestroy(&lexer->tokens, false);
     return err;
-
-  close(fd);
+  }
 
   lexer->pos        = 0;
   lexer->line       = lexer->mf.data + 1;

@@ -1,15 +1,46 @@
+#include "io/io.h"
 #include "logger/logger.h"
 #include "error/error.h"
 #include "frontend/lexer.h"
 #include "frontend/preparser.h"
 #include "frontend/parser.h"
+#include <string.h>
 
 //TODO: do a tree traverse moving the exceptionCount upstream (up to statements)
+static const char* DEFAULT_OUTPUT_FILEPATH = "ast.txt";
 
 int main(int argc, char* argv[]) {
+  // TODO: better usage desc
+  // TODO: better flag parsing?
   if (argc < 2) {
-    fprintf(stderr, "Usage: %s <filepath>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <inputFilepath> -o <outputFilepath>\n", argv[0]);
     return 1;
+  }
+  popArg(&argc, &argv); // pop progs name, we wont need it from here
+  const char* arg    = NULL;
+  const char* input  = NULL;
+  const char* output = NULL;
+  while ((arg = popArg(&argc, &argv))) {
+    if (*arg == '-') {
+      arg++;
+      if (strcmp(arg, "o") == 0) {
+        output = popArg(&argc, &argv);
+        continue;
+      }
+      fprintf(stderr, "ERROR: Unknown flag\n");
+    } else {
+      if (input) {
+        fprintf(stderr, "ERROR: More than one input file is provided\n");
+        return 1;
+      }
+      input = arg;
+    }
+  }
+  if (!output) {
+    output = DEFAULT_OUTPUT_FILEPATH;
+    fprintf(stdout, 
+            "WARN: no output filepath is provided. Proceeding with \"%s\"\n",
+            output);
   }
 
   int  exitValue = 0;
@@ -22,7 +53,7 @@ int main(int argc, char* argv[]) {
 
   Error err = OK;
   Lexer lexer = (Lexer){};
-  if ((err = lexerInit(&lexer, argv[1], 16))) {
+  if ((err = lexerInit(&lexer, input, 16))) {
     logln(FATAL, "lexerInit returned %s", parseError(err)->str);
     exitValue = err;
     goto exit;
@@ -54,7 +85,15 @@ int main(int argc, char* argv[]) {
   }
   astInited = true;
   //nodeDump(logFile, ast, "Parsed Tree");
- 
+
+  FILE* outFile = fopen(output, "w");
+  if (!outFile) {
+    fprintf(stderr, "Failed to open \"%s\" for write\n", output);
+    exitValue = FailFileOpen;
+    goto exit;
+  }
+
+  nodePrintPrefix(outFile, ast);
 
 exit:
   if (loggerInited)

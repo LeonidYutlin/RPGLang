@@ -43,7 +43,9 @@ typedef struct MappedFile {
   size_t size;
 } MappedFile; 
 
-Error mappedFileInit(int fileDescriptor, MappedFile* mappedFile); 
+Error mappedFileInit(const char* filename, MappedFile* mappedFile); 
 Error mappedFileDestroy(MappedFile* mappedFile); 
+
+char* popArg(int* argc, char*** argv);
 
 #endif

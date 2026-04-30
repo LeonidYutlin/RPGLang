@@ -1,25 +1,23 @@
-#include "ds/tree/node/type.h"
+#include "ds/tree/type.h"
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "utils/utils.h"
 
-static const NodeTypeInfo NODE_TYPES[] = {
-  #define X(enm, s)       \
-    [enm] = {.type = enm, \
-             .str = s},                                                   
-  
+static const char* NODE_TYPES[] = {
+  #define X(enm, s) [enm] = s,
   NODE_TYPE_LIST()
   #undef X
 };
 
 const size_t NODE_TYPES_SIZE = sizer(NODE_TYPES);
 
-const NodeTypeInfo* parseNodeType(NodeType t) {
+//TODO: maybe use _Generic for all get...Str and parse... enum things
+const char* getNodeTypeStr(NodeType t) {
   return (t < 0 || (size_t)t >= NODE_TYPES_SIZE)
          ? NULL
-         : &NODE_TYPES[t];
+         : NODE_TYPES[t];
 }
 
 static const OpTypeInfo OP_TYPES[] = {

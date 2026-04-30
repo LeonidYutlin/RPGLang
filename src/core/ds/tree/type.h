@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 #define NODE_TYPE_LIST()           \
-  X(UNKNOWN_TYPE,  "UNKNOWN TYPE") \
+  X(UNKNOWN_TYPE,  "UNKNOWN_TYPE") \
   X(OP_TYPE,       "OP")           \
   X(CTRL_TYPE,     "CTRL")         \
   X(NUM_TYPE,      "NUM")          \
@@ -19,12 +19,7 @@ typedef enum NodeType {
   #undef X
 } NodeType;
 
-typedef struct NodeTypeInfo {
-  NodeType type;
-  const char* str;
-} NodeTypeInfo;
-
-const NodeTypeInfo* parseNodeType(NodeType type);
+const char* getNodeTypeStr(NodeType type);
 
 //NOTE:
 //X(enum, "str")
@@ -45,8 +40,8 @@ const NodeTypeInfo* parseNodeType(NodeType type);
   X(CTRL_UNTIL,     "until")     \
   X(CTRL_DECL,      "decl")      \
   X(CTRL_PARAM,     "parameter") \
-  X(CTRL_FUNC_DECL, "func decl") \
-  X(CTRL_FUNC_CALL, "func call") \
+  X(CTRL_FUNC_DECL, "func_decl") \
+  X(CTRL_FUNC_CALL, "func_call") \
   X(CTRL_SIGNATURE, "signature") \
   X(CTRL_RETURN,    "return")    \
   X(CTRL_CONTINUE,  "continue")  \

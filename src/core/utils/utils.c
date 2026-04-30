@@ -1,5 +1,6 @@
 #include "error/error.h"
 #include "utils/utils.h"
+#include <fcntl.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,12 +54,16 @@ Error snTimestamp(char* dest, size_t n) {
          : LongFormat;
 }
 
-Error mappedFileInit(int fd, MappedFile* mappedFile) {
-  if (fd < 0 ||
+Error mappedFileInit(const char* filename, MappedFile* mappedFile) {
+  if (!filename || 
       !mappedFile)
     return BadArgs;
   if (mappedFile->data)
     return DenyReinit;
+
+  int fd = open(filename, O_RDONLY);
+  if (fd < 0)
+    return FailFileOpen;
 
   struct stat fileStats = {};
   fstat(fd, &fileStats);
@@ -66,6 +71,7 @@ Error mappedFileInit(int fd, MappedFile* mappedFile) {
   char *buffer = mmap(NULL, fileSize,
                       PROT_READ, MAP_PRIVATE,
                       fd, 0);
+  close(fd);
   if (buffer == MAP_FAILED)
     return FailMemoryMapping;
 
@@ -86,4 +92,13 @@ Error mappedFileDestroy(MappedFile* mappedFile) {
   mappedFile->data = NULL;
   mappedFile->size = 0;
   return OK;
+}
+
+char* popArg(int* argc, char*** argv) {
+  if (!(*argc))
+    return NULL;
+  char* arg = (*argv)[0];
+  (*argc)--;
+  (*argv)++;
+  return arg;
 }

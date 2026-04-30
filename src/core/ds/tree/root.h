@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "ds/tree/node/node.h"
+#include "ds/tree/node.h"
 
 typedef struct TreeRoot {
   size_t nodeCount;

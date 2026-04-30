@@ -615,7 +615,7 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
   if (!node)
     return;
   
-  const NodeTypeInfo* nodeInfo = parseNodeType(node->data.type);
+  const char* nodeStr = getNodeTypeStr(node->data.type);
   const char* nodeColor = DEFAULT_CELL;
   switch (node->data.type) {
     case NUM_TYPE:      nodeColor = NUM_CELL;  break;
@@ -643,8 +643,8 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           TABLE_OUTLINE,
           node->data.exceptionCount ? BAD_FILL : EXC_FILL,
           node->data.exceptionCount,
-          nodeInfo ? TYPE_FILL     : BAD_FILL,  
-          nodeInfo ? nodeInfo->str : "ERROR: no info for such NodeType");
+          nodeStr ? TYPE_FILL     : BAD_FILL,  
+          nodeStr ? nodeStr : "ERROR: no info for such NodeType");
 #else
   fprintf(dot,
           "node%p"
@@ -666,8 +666,8 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           PARENT_FILL,  node->parent,
           node->data.exceptionCount ? BAD_FILL : EXC_FILL,
           node->data.exceptionCount,
-          nodeInfo ? TYPE_FILL     : BAD_FILL,  
-          nodeInfo ? nodeInfo->str : "ERROR: no info for such NodeType");
+          nodeStr ? TYPE_FILL     : BAD_FILL,  
+          nodeStr ? nodeStr : "ERROR: no info for such NodeType");
 #endif
   
   switch (node->data.type) {

@@ -1,4 +1,4 @@
-#include "ds/tree/node/node.h"
+#include "ds/tree/node.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -16,15 +16,13 @@ TreeNode* nodeAlloc_(NodeAllocOpt opt) {
 }
 
 Error nodeTraverse_(TreeNode* node, NodeTraverseOpt opt) {
-	if (!node)
-    return OK;
-
+  uint oldLevel = opt.level;
   opt.level++;
-  return (opt.prefix  && opt.prefix(node,  opt.prefixData, opt.level - 1)) ||
-         nodeTraverse_(node->left,  opt) ||
-         (opt.infix   && opt.infix(node,   opt.infixData, opt.level - 1)) ||
-         nodeTraverse_(node->right, opt) ||
-         (opt.postfix && opt.postfix(node, opt.postfixData, opt.level - 1));
+  return (opt.prefix  && opt.prefix(node,  oldLevel, opt.prefixData)) ||
+         (node        && nodeTraverse_(node->left,  opt))             ||
+         (opt.infix   && opt.infix(node,   oldLevel, opt.infixData))  ||
+         (node        && nodeTraverse_(node->right, opt))             ||
+         (opt.postfix && opt.postfix(node, oldLevel, opt.postfixData));
 }
 
 TreeNode* nodeCopy(TreeNode* src, TreeNode* newParent, Error* status) {

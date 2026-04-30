@@ -1,6 +1,7 @@
 COMPILER := gcc
 
-INCLUDE_FLAGS := -I src/
+INCLUDE_FLAGS := -I src/ \
+								 -I src/core/
 DEFINE_FLAGS  := -D _DEBUG \
 							   -D LOG_STATUSES
 								# -D SIMPLIFIED_NODES
@@ -10,16 +11,26 @@ LIBS          := -lm -lc
 ARTIFACT_PATH := build
 BINARY_PATH   := bin
 LOG_PATH      := .log
+TEMP_PATH     := .temp
 
-PROGRAM_NAME  := $(BINARY_PATH)/rpgc
+FRONTEND      := $(BINARY_PATH)/rpgc-frontend
+MIDDLEEND     := $(BINARY_PATH)/rpgc-middleend
 TODO_FILE     := TODO.txt
 
 define to_object
 	$(patsubst %.c, $(ARTIFACT_PATH)/%.o, $(notdir $(1)))
 endef
 
-SOURCES      := $(shell find src/ -type f -name '*.c')
-OBJECTS      := $(call to_object,$(SOURCES))
+SOURCES_CORE      := $(shell find src/core/ -type f -name '*.c')
+SOURCES_FRONTEND  := $(shell find src/frontend/ -type f -name '*.c' )
+SOURCES_MIDDLEEND := $(shell find src/middleend/ -type f -name '*.c')
+SOURCES           := $(SOURCES_CORE) $(SOURCES_FRONTEND) $(SOURCES_MIDDLEEND)
+
+OBJECTS_CORE      := $(call to_object,$(SOURCES_CORE))
+OBJECTS_FRONTEND  := $(call to_object,$(SOURCES_FRONTEND))
+OBJECTS_MIDDLEEND := $(call to_object,$(SOURCES_MIDDLEEND))
+OBJECTS           := $(OBJECTS_CORE) $(OBJECTS_FRONTEND) $(OBJECTS_MIDDLEEND)
+
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
 C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
@@ -51,10 +62,14 @@ C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
 				   unreachable,vla-bound,vptr
 
 
-build: ensure_directories_exist $(PROGRAM_NAME) update_todo
+build: ensure_directories_exist $(FRONTEND) $(MIDDLEEND) update_todo
 
-$(PROGRAM_NAME): $(OBJECTS)
-	@echo -e "•Linking the project together"
+$(FRONTEND): $(OBJECTS_CORE) $(OBJECTS_FRONTEND)
+	@echo -e "•Linking Frontend together"
+	@$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $^ -o $@ $(LIBS)
+
+$(MIDDLEEND): $(OBJECTS_CORE) $(OBJECTS_MIDDLEEND)
+	@echo -e "•Linking Middleend together"
 	@$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $^ -o $@ $(LIBS)
 
 -include $(DEPENDENCIES)
@@ -77,7 +92,7 @@ run: build
 	./$(PROGRAM_NAME)
 
 ensure_directories_exist:
-	mkdir -p $(BINARY_PATH) $(ARTIFACT_PATH) $(LOG_PATH)
+	mkdir -p $(BINARY_PATH) $(ARTIFACT_PATH) $(LOG_PATH) $(TEMP_PATH)
 
 clean:
 	rm -f $(PROGRAM_NAME)

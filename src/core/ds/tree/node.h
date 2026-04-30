@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include "ds/tree/node/type.h"
+#include "ds/tree/type.h"
 #include "error/error.h"
 #include "utils/utils.h"
 
@@ -52,7 +52,7 @@ Error nodeDestroyC(TreeNode* node, size_t* nodeCount);
 #define nodeDelete(node) nodeDeleteC(node, NULL);
 #define nodeDestroy(node) nodeDestroyC(node, NULL);
 
-typedef Error (*callback_f)(TreeNode* node, void* data, uint level);
+typedef Error (*callback_f)(TreeNode* node, uint level, void* data);
 
 typedef struct NodeTraverseOpt {
   callback_f prefix;
