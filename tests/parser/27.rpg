@@ -1,0 +1,12 @@
+prim main() {
+  0I unite 0II;
+  0I <push 0III;
+  0 and 0I;
+  not 0XX;
+  0 empower (apple unite apple);
+  0I empower (apple unite apple);
+  apple unite 0;
+  apple shatter 0I;
+  0 shatter apple;
+  apple hit 0;
+}

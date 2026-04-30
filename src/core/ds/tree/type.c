@@ -62,13 +62,24 @@ int getOpType(const char* str, size_t n) {
   return -1;
 }
 
-double applyOperation(OpType type, double a, double b) {
+int64_t applyOperation(OpType type, int64_t a, int64_t b, Error* status) {
   switch (type) {
     case OP_ADD:  return a + b;
     case OP_SUB:  return a - b;
     case OP_MUL:  return a * b;
     case OP_DIV:  return a / b;
-    default:      return NAN;
+    case OP_SHL:  return a << b;
+    case OP_SHR:  return a >> b;
+    case OP_GRT:  return a > b;
+    case OP_LSR:  return a < b;
+    case OP_EQ :  return a == b;
+    case OP_NEQ:  return a != b;
+    case OP_AND:  return a && b;
+    case OP_OR :  return a || b;
+    case OP_NOT:  return !a;
+    default:  
+      assert(0 && "unreachable applyOperation");
+      RETURN_WITH_STATUS(Fail, 0);
   }
 }
 

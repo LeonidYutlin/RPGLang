@@ -263,7 +263,7 @@ static Error nodePrint(FILE* f, TreeNode* node) {
       fprintf(f, "%ld ", node->data.value.num); 
       break;
     case IDENT_TYPE:
-      fprintf(f, "\"%.*s\" ", 
+      fprintf(f, "%.*s ", 
               (int)node->data.value.id.size, 
               node->data.value.id.data); 
       break;

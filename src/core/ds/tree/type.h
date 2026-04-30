@@ -1,6 +1,7 @@
 #ifndef NODE_TYPE_H
 #define NODE_TYPE_H
 
+#include "error/error.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -57,14 +58,14 @@ int getNodeType(const char* str, size_t n);
   X(OP_SUB,  "-",      2, 1) \
   X(OP_MUL,  "*",      2, 2) \
   X(OP_DIV,  "/",      2, 2) \
-  X(OP_SHL,  "shl",    1, 3) \
-  X(OP_SHR,  "shr",    1, 3) \
-  X(OP_GRT,  "grt",    1, 4) \
-  X(OP_LSR,  "lsr",    1, 4) \
-  X(OP_EQ,   "==",     1, 5) \
-  X(OP_NEQ,  "!=",     1, 5) \
-  X(OP_AND,  "and",    1, 5) \
-  X(OP_OR,   "or",     1, 5)
+  X(OP_SHL,  "shl",    2, 3) \
+  X(OP_SHR,  "shr",    2, 3) \
+  X(OP_GRT,  "grt",    2, 4) \
+  X(OP_LSR,  "lsr",    2, 4) \
+  X(OP_EQ,   "==",     2, 5) \
+  X(OP_NEQ,  "!=",     2, 5) \
+  X(OP_AND,  "and",    2, 5) \
+  X(OP_OR,   "or",     2, 5)
 
 typedef enum OpType {
   #define X(enm, ...) enm,
@@ -82,8 +83,8 @@ typedef struct OpTypeInfo {
 const OpTypeInfo* parseOpType(OpType type);
 int getOpType(const char* str, size_t n);
 ///Applies appropriate operation regarding a and b and returns the result.
-///If the operation doesn't require a second parameter (e.g. cos(x)) then leave b as NAN
-double applyOperation(OpType type, double a, double b);
+///If the operation doesn't require a second parameter then leave b as whatever
+int64_t applyOperation(OpType type, int64_t a, int64_t b, Error* status);
 
 typedef enum CtrlType {
   #define X(enm, ...) enm,
@@ -117,7 +118,7 @@ int getVarTypeType(const char* str, size_t n);
 #define OF_OP(node, opType) \
   (IS_OP((node)) && (node)->data.value.op == (opType))
 #define OF_NUM(node, i) \
-  (IS_NUM((node)) && doubleEqual((node)->data.value.num, (i)))
+  (IS_NUM((node)) && ((node)->data.value.num == (i)))
 
 // Quick TreeNode and NodeUnit initializers
 // inv means isInvalid
