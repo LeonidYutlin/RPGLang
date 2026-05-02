@@ -40,7 +40,7 @@ static void gen_(FILE* sink, const char* commentary,
 #endif
 
 // TODO: backend for: 
-// CTRL: CTRL_ASG, CTRL_ELSE
+// CTRL: CTRL_ASG,
 //   CTRL_WHILE, CTRL_UNTIL, CTRL_DECL, CTRL_PARAM, CTRL_FUNC_DECL,
 //   CTRL_SIGNATURE, CTRL_RETURN, CTRL_CONTINUE, CTRL_BREAK
 // IDENT: yeah
@@ -95,8 +95,6 @@ static void codegenRec(Context* ctx, TreeNode* ast,
     codegenRec(ctx, ast->right, true, endLabel);
     return;
   }
-
-  
 
   codegenRec(ctx, ast->left, false, 0);
   uint64_t rightEndLabel = 0;

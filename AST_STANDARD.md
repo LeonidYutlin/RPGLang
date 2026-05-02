@@ -92,7 +92,7 @@ _Figure 10. If statement_
 
 ### Else statements
 
-After `if`'s body, an `else` node may follow, whose `right` field points at a statement which will be done if the condition of the `if` above wasn't met. Particularly `right` field could be an `if` itself, since `if` is also a statement
+After `if`'s body, an `else` node may follow, whose `left` field points at a statement which will be done if the condition of the `if` above wasn't met. Particularly `left` field could be an `if` itself, since `if` is also a statement. `else`'s `right` field points to the rest of statement chain.
 
 ```
 if (apple and dog)
