@@ -152,7 +152,7 @@ int getVarTypeType(const char* str, size_t n);
 #define IF_(l, r, inv) \
         nodeAllocCtrl(CTRL_IF, inv, l, r)
 #define ELSE_(r, inv) \
-        nodeAllocCtrl(CTRL_ELSE, inv, NULL, r)
+        nodeAllocCtrl(CTRL_ELSE, inv, r, NULL)
 #define DECL_(l, r) \
         nodeAllocCtrl(CTRL_DECL, false, l, r)
 #define PARAM_(l, r) \

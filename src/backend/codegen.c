@@ -40,9 +40,9 @@ static void gen_(FILE* sink, const char* commentary,
 #endif
 
 // TODO: backend for: 
-// CTRL: CTRL_SEMIC, CTRL_ARG, CTRL_ASG, CTRL_IF, CTRL_ELSE
+// CTRL: CTRL_ASG, CTRL_ELSE
 //   CTRL_WHILE, CTRL_UNTIL, CTRL_DECL, CTRL_PARAM, CTRL_FUNC_DECL,
-//   CTRL_FUNC_CALL, CTRL_SIGNATURE, CTRL_RETURN, CTRL_CONTINUE, CTRL_BREAK
+//   CTRL_SIGNATURE, CTRL_RETURN, CTRL_CONTINUE, CTRL_BREAK
 // IDENT: yeah
 // TYPE: frac and loc
 
@@ -96,10 +96,20 @@ static void codegenRec(Context* ctx, TreeNode* ast,
     return;
   }
 
+  
+
   codegenRec(ctx, ast->left, false, 0);
-  if (isIfBody)
+  uint64_t rightEndLabel = 0;
+  if (isIfBody) {
+    if (OF_CTRL(ast->right, CTRL_ELSE)) {
+      rightEndLabel = ctx->labelCount++;
+      genn("\t\tjmp .else_end%zu\n", rightEndLabel);
+    }
     genn(".if_end%zu:\n", endLabel);
-  codegenRec(ctx, ast->right, false, 0);
+  } else if (OF_CTRL(ast, CTRL_ELSE))
+    genn(".else_end%zu:\n", endLabel);
+  codegenRec(ctx, ast->right, false, rightEndLabel);
+
 
   if (IS_NUM(ast)) {
     push(ctx, ast);    

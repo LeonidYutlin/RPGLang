@@ -1,0 +1,26 @@
+prim main() {
+  if (0I) {
+    rout(0CCC; 0X);
+  } else if (0) {
+    rout(0X; 0X);
+  } else {
+    rout(0C; 0II);
+  }
+
+  if (0) {
+    rout(0CCC; 0X);
+  } else if (0I) {
+    rout(0X; 0X);
+  } else {
+    rout(0C; 0II);
+  }
+
+  if (0) {
+    rout(0CCC; 0X);
+  } else if (0) {
+    rout(0X; 0X);
+  } else {
+    rout(0C; 0II);
+  }
+  exit(0);
+}

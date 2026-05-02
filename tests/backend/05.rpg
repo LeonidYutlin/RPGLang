@@ -8,8 +8,5 @@ prim main() {
     rout(0X; 0IV);
     rout(0X; 0V);
   }
-  if (0I and 0X) {
-    rout(0CCC; 0X);
-  }
   exit(0);
 }
