@@ -4,6 +4,7 @@
 
 typedef struct {
   FILE* sink;
+  uint64_t labelCount;
   uint64_t depth;
   size_t regIndex;
 } Context;
@@ -27,6 +28,8 @@ static void gen_(FILE* sink, const char* commentary,
 #define sinkFile sink
 #define gen(commentary, fmt, ...) \
   gen_(sinkFile, "; -- " commentary " --\n", fmt __VA_OPT__(,) __VA_ARGS__)
+#define genn(fmt, ...) \
+  gen_(sinkFile, "", fmt __VA_OPT__(,) __VA_ARGS__)
 #ifdef BACKEND_DEBUG_INFO
 #define com(commentary) fputs("; -- " commentary " --\n", sink)
 #else
@@ -47,6 +50,7 @@ void codegen(FILE* sink, TreeNode* ast) {
 
   Context ctx = (Context){
     .sink = sink,
+    .labelCount = 0,
     .depth = 0,
     .regIndex = 0,
   };
@@ -111,21 +115,42 @@ static void push(Context* ctx, TreeNode* ast) {
 
 static void op(Context* ctx, TreeNode* ast) {
   PRELUDE();
+  if (ast->left)
+    genn("\t\tpop rbx\n");
+  if (ast->right)
+    genn("\t\tpop rax\n");
   switch (ast->data.value.op) {
     case OP_ADD:
       gen("ADD",
-          "\t\tpop rbx\n"
-          "\t\tpop rax\n"
           "\t\tadd rax, rbx\n"
           "\t\tpush rax\n");
       ctx->depth--;
       break;
     case OP_SUB:
       gen("SUB",
-          "\t\tpop rbx\n"
-          "\t\tpop rax\n"
           "\t\tsub rax, rbx\n"
           "\t\tpush rax\n");
+      ctx->depth--;
+      break;
+    case OP_MUL:
+      gen("MUL",
+          "\t\timul rax, rbx\n"
+          "\t\tpush rax\n");
+      ctx->depth--;
+      break;
+    case OP_DIV:
+      // NOTE: i'm not pleased with this implementation
+      // alternative could be cmovz rdx, 0xFFFFFFFF
+      gen("DIV",
+          "\t\txor edx, edx\n"
+          "\t\ttest rax, 0x80000000\n"
+          "\t\tjz .no_sign_extension%zu\n"
+          "\t\tdec rdx\n"
+          "\t\t.no_sign_extension%zu:\n"
+          "\t\tidiv rbx\n"
+          "\t\tpush rax\n",
+          ctx->labelCount, ctx->labelCount);
+      ctx->labelCount++;
       ctx->depth--;
       break;
     default: break;
@@ -165,6 +190,7 @@ static void arg(Context* ctx, TreeNode* ast) {
 
 #undef sinkFile
 #undef gen
+#undef genn
 #undef com
 #undef PRELUDE
 
