@@ -20,6 +20,7 @@ static void codegenRec(Context* ctx, TreeNode* ast,
                        bool isIfBody, uint64_t endLabel);
 static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
+static inline void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static inline void arg(Context* ctx, TreeNode* ast);
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr);
@@ -110,18 +111,8 @@ static void codegenRec(Context* ctx, TreeNode* ast,
     return;
   }
 
-  if (OF_CTRL(ast, CTRL_SEMIC)) {
-    clearStack(ctx, ast, oldDepth); 
-    return;
-  } 
-
-  if (OF_CTRL(ast, CTRL_ARG)) {
-    arg(ctx, ast); 
-    return;
-  }
-
-  if (OF_CTRL(ast, CTRL_FUNC_CALL)) {
-    call(ctx, ast, oldDepth);
+  if (IS_CTRL(ast)) {
+    ctrl(ctx, ast, oldDepth);
     return;
   }
 }
@@ -299,6 +290,22 @@ static void op(Context* ctx, TreeNode* ast) {
         ctx->depth++;
     }
     break;
+    default: break;
+  }
+}
+
+static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
+  PRELUDE();
+  switch (ast->data.value.ctrl) {
+    case CTRL_SEMIC: 
+      clearStack(ctx, ast, oldDepth);
+      break;
+    case CTRL_ARG:
+      arg(ctx, ast); 
+      break;
+    case CTRL_FUNC_CALL:
+      call(ctx, ast, oldDepth);
+      break;
     default: break;
   }
 }
