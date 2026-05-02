@@ -1,0 +1,23 @@
+prim main() {
+  note | ==
+  out(0X worthy 0I);
+  out(0X worthy 0XX);
+  out(0X worthy 0X);
+
+  note | !=
+  out(0X duel!<> 0I);
+  out(0X duel!<> 0XX);
+  out(0X duel!<> 0X);
+  
+  note | >
+  out(0X duel!< 0I);
+  out(0X duel!< 0XX);
+  out(0X duel!< 0X);
+
+  note | <
+  out(0X duel!> 0I);
+  out(0X duel!> 0XX);
+  out(0X duel!> 0X);
+
+  exit(0);
+}

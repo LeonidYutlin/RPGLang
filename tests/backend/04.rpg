@@ -1,0 +1,20 @@
+prim main() {
+  note | logical or
+  out(0 or 0);
+  out(0X or 0);
+  out(0 or 0I);
+  out(0I or 0X);
+
+  note | logical and
+  out(0 and 0);
+  out(0X and 0);
+  out(0 and 0I);
+  out(0I and 0X);
+
+  note | logical not
+  out(not 0);
+  out(not 0I);
+  out(not 0X);
+
+  exit(0);
+}

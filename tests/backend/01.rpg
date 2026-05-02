@@ -1,0 +1,8 @@
+prim main() {
+  note note is comment until the end of line
+  note numbers are in roman notation, prefixed with 0
+  note | out: prints signed 64-bit number, and a newline
+  out(0V);
+  note | exit: exits the program with a given exit code
+  exit(0I);
+}

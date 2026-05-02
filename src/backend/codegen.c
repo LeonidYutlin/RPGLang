@@ -16,7 +16,8 @@ static const char* const ARG_REGS[] = {
 };
 static const size_t ARG_REGS_SIZE = sizer(ARG_REGS);
 
-static void codegenRec(Context* ctx, TreeNode* ast);
+static void codegenRec(Context* ctx, TreeNode* ast, 
+                       bool isIfBody, uint64_t endLabel);
 static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
@@ -62,7 +63,7 @@ void codegen(FILE* sink, TreeNode* ast) {
     .depth = 0,
     .regIndex = 0,
   };
-  codegenRec(&ctx, ast);
+  codegenRec(&ctx, ast, false, 0);
   gen("EXIT",
       "\t\tmov rax, 0x3c ; syscall exit\n"
       "\t\tmov rdi, 123\n"
@@ -72,15 +73,32 @@ void codegen(FILE* sink, TreeNode* ast) {
 #undef sinkFile
 #define sinkFile ctx->sink
 
-static void codegenRec(Context* ctx, TreeNode* ast) {
+static void codegenRec(Context* ctx, TreeNode* ast, 
+                       bool isIfBody, uint64_t endLabel) {
   if (!ctx || 
       !ctx->sink ||
       !ast)
     return;
 
   uint64_t oldDepth = ctx->depth;
-  codegenRec(ctx, ast->left);
-  codegenRec(ctx, ast->right);
+
+  if (OF_CTRL(ast, CTRL_IF)) {
+    endLabel = ctx->labelCount++;
+    codegenRec(ctx, ast->left, false, 0);
+    gen("IF",
+        "\t\tpop rax\n"
+        "\t\ttest rax, rax\n"
+        "\t\tjz .if_end%zu\n",
+        endLabel);
+    ctx->depth--;
+    codegenRec(ctx, ast->right, true, endLabel);
+    return;
+  }
+
+  codegenRec(ctx, ast->left, false, 0);
+  if (isIfBody)
+    genn(".if_end%zu:\n", endLabel);
+  codegenRec(ctx, ast->right, false, 0);
 
   if (IS_NUM(ast)) {
     push(ctx, ast);    

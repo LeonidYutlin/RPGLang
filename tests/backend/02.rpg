@@ -1,0 +1,26 @@
+prim main() {
+  note | hit is -
+  note | unite is +
+  note | empower is *
+  out(0 hit 0CC);
+  out(0X empower 0V hit 0V);
+  out(0X unite 0C);
+
+  note | shatter is division
+  out(0XX shatter 0II);
+  note | shadow is unary -
+  out(shadow 0XX shatter 0X);
+  note | <push is logical shift left
+  out(0I <push 0III);
+  note | push> is logical shift right
+  out(0X push> 0II);
+
+  note | this is just 15
+  out(shadow shadow 0VVV);
+
+  note | rout (Radixed Out): print first argument as an unsigned number 
+  note | in base-n, where n is second argument(must be 1-36)
+  note | also prints a newline, like out()
+  rout(0IXX; 0XX);
+  exit(0I);
+}
