@@ -37,8 +37,7 @@ static void gen_(FILE* sink, const char* commentary,
 #define com(commentary)
 #endif
 
-// TODO: backend for:
-// OP:   OP_AND, OP_OR, 
+// TODO: backend for: 
 // CTRL: CTRL_SEMIC, CTRL_ARG, CTRL_ASG, CTRL_IF, CTRL_ELSE
 //   CTRL_WHILE, CTRL_UNTIL, CTRL_DECL, CTRL_PARAM, CTRL_FUNC_DECL,
 //   CTRL_FUNC_CALL, CTRL_SIGNATURE, CTRL_RETURN, CTRL_CONTINUE, CTRL_BREAK
