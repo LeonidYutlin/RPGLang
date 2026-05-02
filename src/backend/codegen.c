@@ -21,6 +21,7 @@ static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static inline void arg(Context* ctx, TreeNode* ast);
+static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr);
 static void clearStack(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static void gen_(FILE* sink, const char* commentary, 
                  const char* fmt, ...) _format(printf, 3, 4);
@@ -31,7 +32,7 @@ static void gen_(FILE* sink, const char* commentary,
 #define genn(fmt, ...) \
   gen_(sinkFile, "", fmt __VA_OPT__(,) __VA_ARGS__)
 #ifdef BACKEND_DEBUG_INFO
-#define com(commentary) fputs("; -- " commentary " --\n", sink)
+#define com(commentary) fputs("; -- " commentary " --\n", sinkFile)
 #else
 #define com(commentary)
 #endif
@@ -115,28 +116,32 @@ static void push(Context* ctx, TreeNode* ast) {
 
 static void op(Context* ctx, TreeNode* ast) {
   PRELUDE();
-  if (ast->left)
+  if (ast->left) {
     genn("\t\tpop rbx\n");
-  if (ast->right)
+    ctx->depth--;
+  }
+  if (ast->right) {
     genn("\t\tpop rax\n");
+    ctx->depth--;
+  }
   switch (ast->data.value.op) {
     case OP_ADD:
       gen("ADD",
           "\t\tadd rax, rbx\n"
           "\t\tpush rax\n");
-      ctx->depth--;
+      ctx->depth++;
       break;
     case OP_SUB:
       gen("SUB",
           "\t\tsub rax, rbx\n"
           "\t\tpush rax\n");
-      ctx->depth--;
+      ctx->depth++;
       break;
     case OP_MUL:
       gen("MUL",
           "\t\timul rax, rbx\n"
           "\t\tpush rax\n");
-      ctx->depth--;
+      ctx->depth++;
       break;
     case OP_DIV:
       // NOTE: i'm not pleased with this implementation
@@ -146,16 +151,94 @@ static void op(Context* ctx, TreeNode* ast) {
           "\t\ttest rax, 0x80000000\n"
           "\t\tjz .no_sign_extension%zu\n"
           "\t\tdec rdx\n"
-          "\t\t.no_sign_extension%zu:\n"
+          ".no_sign_extension%zu:\n"
           "\t\tidiv rbx\n"
           "\t\tpush rax\n",
           ctx->labelCount, ctx->labelCount);
       ctx->labelCount++;
-      ctx->depth--;
+      ctx->depth++;
       break;
+    case OP_SHL:
+      gen("SHL",
+          "\t\tmov cl, bl\n"
+          "\t\tshl rax, cl\n"
+          "\t\tpush rax\n");
+      ctx->depth++;
+      break;
+    case OP_SHR:
+      gen("SHR",
+          "\t\tmov cl, bl\n"
+          "\t\tshr rax, cl\n"
+          "\t\tpush rax\n");
+      ctx->depth++;
+      break;
+#ifdef CONDITIONAL_MOVES
+    case OP_GRT:
+      com("GRT");
+      cmp(ctx, ast, "cmovg");
+      break;
+    case OP_LSR:
+      com("LSR");
+      cmp(ctx, ast, "cmovl");
+      break;    
+    case OP_EQ:
+      com("EQ");
+      cmp(ctx, ast, "cmove");
+      break;    
+    case OP_NEQ:
+      com("NEQ");
+      cmp(ctx, ast, "cmovne");
+      break;
+    case OP_NOT:
+      gen("NOT",
+          "\t\tmov rcx, rax\n"
+          "\t\txor eax, eax\n"
+          "\t\ttest rcx, rcx\n"
+          "\t\tmov rcx, 1\n"
+          "\t\tcmovz rax, rcx\n"
+          "\t\tpush rax\n");
+      ctx->depth++;
+      break;
+#else
+    case OP_GRT:
+      com("GRT");
+      cmp(ctx, ast, "jg");
+      break;
+    case OP_LSR:
+      com("LSR");
+      cmp(ctx, ast, "jl");
+      break;
+    case OP_EQ:
+      com("EQ");
+      cmp(ctx, ast, "je");
+      break;
+    case OP_NEQ:
+      com("NEQ");
+      cmp(ctx, ast, "jne");
+      break;
+    case OP_NOT:
+      {
+        uint64_t pushZeroLabel     = ctx->labelCount++;
+        uint64_t skipPushZeroLabel = ctx->labelCount++;
+        genn("\t\ttest rax, rax\n"
+             "\t\tjz .push_one%zu\n"
+             //"\t\t.push_zero%zu:\n"
+             "\t\tpush 0\n"
+             "\t\tjmp .skip_push_one%zu\n"
+             ".push_one%zu:\n"
+             "\t\tpush 1\n"
+             ".skip_push_one%zu:\n",
+             pushZeroLabel, skipPushZeroLabel,
+             pushZeroLabel, skipPushZeroLabel);    
+        ctx->depth++;
+      }
+      break;
+#endif
     default: break;
   }
 }
+
+// TODO: add "and" and "or"
 
 static void clearStack(Context* ctx, _unused TreeNode* ast, uint64_t oldDepth) {
   PRELUDE();
@@ -186,6 +269,35 @@ static void arg(Context* ctx, TreeNode* ast) {
     ctx->depth--;
     ctx->regIndex++;
   }
+}
+
+static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr) {
+  PRELUDE();
+  assert(cmpStr);
+#ifdef CONDITIONAL_MOVES
+  genn("\t\tmov rcx, rax\n"
+       "\t\txor eax, eax\n"
+       "\t\tcmp rcx, rbx\n"
+       "\t\tmov rcx, 1\n"
+       "\t\t%s rax, rcx\n"
+       "\t\tpush rax\n",
+       cmpStr);
+#else
+  uint64_t pushZeroLabel     = ctx->labelCount++;
+  uint64_t skipPushZeroLabel = ctx->labelCount++;
+  genn("\t\tcmp rax, rbx\n"
+       "\t\t%s .push_one%zu\n"
+       //"\t\t.push_zero%zu:\n"
+       "\t\tpush 0\n"
+       "\t\tjmp .skip_push_one%zu\n"
+       ".push_one%zu:\n"
+       "\t\tpush 1\n"
+       ".skip_push_one%zu:\n",
+       cmpStr,
+       pushZeroLabel, skipPushZeroLabel,
+       pushZeroLabel, skipPushZeroLabel);
+#endif
+  ctx->depth++;
 }
 
 #undef sinkFile

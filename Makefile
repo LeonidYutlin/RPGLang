@@ -4,7 +4,8 @@ INCLUDE_FLAGS := -I src/ \
 								 -I src/core/
 DEFINE_FLAGS  := -D _DEBUG \
 							   -D LOG_STATUSES \
-								 -D BACKEND_DEBUG_INFO
+								 -D BACKEND_DEBUG_INFO \
+								 -D CONDITIONAL_MOVES
 								# -D SIMPLIFIED_NODES
 								# -D LOG_FORCE_TRACE
 LIBS          := -lm -lc
