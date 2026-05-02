@@ -40,6 +40,7 @@ void codegen(FILE* sink, TreeNode* ast) {
   gen("HEADER",
       "global _start\n"
       "extern out\n"
+      "extern exit\n"
       "section .text\n"
       "_start:\n");
 
