@@ -154,10 +154,10 @@ and `right` is an argument list, which are expressions chained together with `ar
 Note: the arguments are chained in a reverse order, e.g. the last argument is always first in the chain.
 
 ```
-foo(bar; baz);
+foo(first; second);
 ```
 
-![Function Call Example](assets/ast_standard/func_call.svg);
+![Function Call Example](assets/ast_standard/func_call.svg)
 
 _Figure 13. Function call_
 
