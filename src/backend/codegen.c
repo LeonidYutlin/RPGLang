@@ -37,6 +37,14 @@ static void gen_(FILE* sink, const char* commentary,
 #define com(commentary)
 #endif
 
+// TODO: backend for:
+// OP:   OP_AND, OP_OR, 
+// CTRL: CTRL_SEMIC, CTRL_ARG, CTRL_ASG, CTRL_IF, CTRL_ELSE
+//   CTRL_WHILE, CTRL_UNTIL, CTRL_DECL, CTRL_PARAM, CTRL_FUNC_DECL,
+//   CTRL_FUNC_CALL, CTRL_SIGNATURE, CTRL_RETURN, CTRL_CONTINUE, CTRL_BREAK
+// IDENT: yeah
+// TYPE: frac and loc
+
 void codegen(FILE* sink, TreeNode* ast) {
   if (!sink || !ast)
     return;
@@ -220,25 +228,63 @@ static void op(Context* ctx, TreeNode* ast) {
       {
         uint64_t pushZeroLabel     = ctx->labelCount++;
         uint64_t skipPushZeroLabel = ctx->labelCount++;
-        genn("\t\ttest rax, rax\n"
-             "\t\tjz .push_one%zu\n"
-             //"\t\t.push_zero%zu:\n"
-             "\t\tpush 0\n"
-             "\t\tjmp .skip_push_one%zu\n"
-             ".push_one%zu:\n"
-             "\t\tpush 1\n"
-             ".skip_push_one%zu:\n",
-             pushZeroLabel, skipPushZeroLabel,
-             pushZeroLabel, skipPushZeroLabel);    
+        gen("LOGICAL NOT",
+            "\t\ttest rax, rax\n"
+            "\t\tjz .push_one%zu\n"
+            "\t\tpush 0\n"
+            "\t\tjmp .skip_push_one%zu\n"
+            ".push_one%zu:\n"
+            "\t\tpush 1\n"
+            ".skip_push_one%zu:\n",
+            pushZeroLabel, skipPushZeroLabel,
+            pushZeroLabel, skipPushZeroLabel);    
         ctx->depth++;
       }
       break;
 #endif
+    case OP_AND:
+    {
+        uint64_t falseLabel     = ctx->labelCount++;
+        uint64_t skipFalseLabel = ctx->labelCount++;
+        gen("LOGICAL AND",
+            "\t\ttest rax, rax\n"
+            "\t\tjz .false%zu\n"
+            "\t\ttest rbx, rbx\n"
+            "\t\tjz .false%zu\n"
+            "\t\tpush 1\n"
+            "\t\tjmp .skip_false%zu\n"
+            ".false%zu:\n"
+            "\t\tpush 0\n"
+            ".skip_false%zu:\n",
+            falseLabel,     falseLabel,
+            skipFalseLabel, falseLabel,
+            skipFalseLabel);    
+        ctx->depth++;
+    }
+    break;
+    case OP_OR:
+    {
+        uint64_t trueLabel     = ctx->labelCount++;
+        uint64_t skipTrueLabel = ctx->labelCount++;
+        gen("LOGICAL OR",
+            "\t\ttest rax, rax\n"
+            "\t\tjnz .true%zu\n"
+            "\t\ttest rbx, rbx\n"
+            "\t\tjnz .true%zu\n"
+            "\t\tpush 0\n"
+            "\t\tjmp .skip_true%zu\n"
+            ".true%zu:\n"
+            "\t\tpush 1\n"
+            ".skip_true%zu:\n",
+            trueLabel,     trueLabel,
+            skipTrueLabel, trueLabel,
+            skipTrueLabel);    
+        ctx->depth++;
+    }
+    break;
     default: break;
   }
 }
-
-// TODO: add "and" and "or"
 
 static void clearStack(Context* ctx, _unused TreeNode* ast, uint64_t oldDepth) {
   PRELUDE();
