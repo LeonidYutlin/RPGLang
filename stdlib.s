@@ -5,6 +5,7 @@ default rel
 ; -------------- GLOBAL HEADER ---------------
 
 global out
+global rout
 global exit
 
 ; -------------- ------ ------ ---------------
@@ -53,6 +54,29 @@ exit:
     ret
 
 ;--------------
+; rout - prints unsigned 64-bit number to stdout, 
+;        with a newline at the end, in a given radix
+; Input:  rdi = number to print
+;         rsi = radix
+; Destr:  rdi, rdx, rcx, r10, rsi
+;--------------
+rout:
+    push rax
+    push rbx
+    test rsi, rsi
+    jz .exit
+    cmp rsi, alpha_len
+    jg .exit
+    mov rax, rdi
+    mov rbx, rsi
+    lea rdi, [buf]
+    jmp num_common
+.exit:
+    pop rbx
+    pop rax
+    ret
+
+;--------------
 ; out - prints signed 64-bit number to stdout, with a newline at the end
 ; Input:  rdi = number to print
 ; Destr:  rdi, rdx, rcx, r10, rsi
@@ -64,7 +88,8 @@ out:
     mov rax, rdi
     lea rdi, [buf]
     test rax, SIGN_BIT_MASK
-    jz .decimal_common
+    mov rbx, DECIMAL_RADIX
+    jz num_common
 
     push rax
     mov al, '-'
@@ -73,8 +98,7 @@ out:
     not rax
     inc rax
 
-.decimal_common:
-    mov rbx, DECIMAL_RADIX
+num_common:
     lea r10, [alpha]
     call num2str
     mov al, NEWLINE
