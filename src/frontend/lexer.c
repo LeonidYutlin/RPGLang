@@ -186,6 +186,11 @@ Error lexerAnalyze(Lexer* lexer) {
     TokenType kwType = hashTableGet(&KEYWORD_HT, strView, &err);
     if (err == NotFound) {
       EMIT(TOK_IDENTIFIER, oldPos, len);
+    } else if (kwType == TOK_NOTE){
+      while (c != '\n') {
+        lexer->pos++;
+        c = buf[lexer->pos];
+      }
     } else {
       EMIT(kwType, oldPos, len);
     }

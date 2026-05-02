@@ -9,6 +9,7 @@
 //"encrypt" "freeze" "scry" "delayed" "prepare" "equip" "conjure" "slice" "slam" "purify" "train" "leech" "sacrifice" "roots" "natage" "natgrowth" "symbiosis" "blighten" "penance" "enlighten"
 
 #define KEYWORD_LIST()           \
+  X(TOK_NOTE, "note")            \
   X(TOK_MAGE, "#mage")           \
   X(TOK_WARRIOR, "#warrior")     \
   X(TOK_PRIEST, "#priest")       \
