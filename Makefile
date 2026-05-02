@@ -3,7 +3,8 @@ COMPILER := gcc
 INCLUDE_FLAGS := -I src/ \
 								 -I src/core/
 DEFINE_FLAGS  := -D _DEBUG \
-							   -D LOG_STATUSES
+							   -D LOG_STATUSES \
+								 -D BACKEND_DEBUG_INFO
 								# -D SIMPLIFIED_NODES
 								# -D LOG_FORCE_TRACE
 LIBS          := -lm -lc

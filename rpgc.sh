@@ -1,8 +1,17 @@
 #!/bin/bash
 
-set -xe
+set -e
 AST=".temp/ast.txt"
+AST_OPT=".temp/ast_opt.txt"
+ASM=".temp/asm.s"
+OBJ=".temp/obj.o"
+STDLIB_ASM="stdlib.s"
+STDLIB_OBJ="stdlib.o"
 
 ./bin/rpgc-frontend $1 -o $AST
-sleep 1
-./bin/rpgc-middleend $AST -o ".temp/ast_opt.txt"
+./bin/rpgc-middleend $AST -o $AST_OPT
+./bin/rpgc-backend $AST -o $ASM # we ignore AST_OPT for now, to test things out
+nasm -f elf64 $ASM -o $OBJ
+nasm -f elf64 $STDLIB_ASM -o $STDLIB_OBJ
+ld $OBJ $STDLIB_OBJ -o $2
+./$2

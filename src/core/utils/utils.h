@@ -11,8 +11,10 @@
 
 #if defined(__GNUC__) || defined(__clang__)
 #define _unused __attribute__ ((unused))
+#define _format(type, fmt_id, args_id) __attribute__ ((format (type, fmt_id, args_id)))
 #else 
 #define _unused 
+#define _format
 #endif
 
 typedef struct {

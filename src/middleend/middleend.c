@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
 
   int  exitValue = 0;
   bool loggerInited  = false;
-  bool htmlLogInited = false;
+  //bool htmlLogInited = false;
   bool mapFileInited = false;
   bool astInited     = false;
   loggerInit(NULL, ERROR);
@@ -31,16 +31,16 @@ int main(int argc, char* argv[]) {
   }
   astInited = true;
 
-  FILE* logFile = openHtmlLogFile("./.log/");
-  if (!logFile) {
-    exitValue = FailFileOpen; 
-    goto exit;
-  }
-  htmlLogInited = true;
+  // FILE* logFile = openHtmlLogFile("./.log/");
+  // if (!logFile) {
+  //   exitValue = FailFileOpen; 
+  //   goto exit;
+  // }
+  // htmlLogInited = true;
 
-  nodeDump(logFile, ast, "<b2>hello</b2>");
+  // nodeDump(logFile, ast, "<b2>hello</b2>");
   nodeOptimize(&ast);
-  nodeDump(logFile, ast, "<b2>hello again</b2>");
+  // nodeDump(logFile, ast, "<b2>hello again</b2>");
 
   FILE* outFile = fopen(output, "w");
   if (!outFile) {
@@ -54,8 +54,8 @@ int main(int argc, char* argv[]) {
 exit:
   if (loggerInited)
     loggerCloseFile();
-  if (htmlLogInited)
-    closeHtmlLogFile(logFile);
+  // if (htmlLogInited)
+  //   closeHtmlLogFile(logFile);
   if (astInited)
     nodeDestroy(ast);
   if (mapFileInited)
