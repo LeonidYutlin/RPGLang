@@ -168,18 +168,10 @@ static void op(Context* ctx, TreeNode* ast) {
       ctx->depth++;
       break;
     case OP_DIV:
-      // NOTE: i'm not pleased with this implementation
-      // alternative could be cmovz rdx, 0xFFFFFFFF
       gen("DIV",
-          "\t\txor edx, edx\n"
-          "\t\ttest rax, 0x80000000\n"
-          "\t\tjz .no_sign_extension%zu\n"
-          "\t\tdec rdx\n"
-          ".no_sign_extension%zu:\n"
+          "\t\tcqo\n"
           "\t\tidiv rbx\n"
-          "\t\tpush rax\n",
-          ctx->labelCount, ctx->labelCount);
-      ctx->labelCount++;
+          "\t\tpush rax\n");
       ctx->depth++;
       break;
     case OP_SHL:
