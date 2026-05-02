@@ -380,19 +380,18 @@ static bool getArgumentList(Parser* p, TreeNode** result) {
   if (!getExpression(p, &first))
     return false;
 
-  first = SEMIC_(first);
-  for (TreeNode* last = first; 
-       consumeToken(p, TOK_SEMIC);) {
+  TreeNode* last = ARG_(first);
+  while (consumeToken(p, TOK_SEMIC)) {
     TreeNode* next = NULL;
     if (!getExpression(p, &next)) {
-      nodeDestroy(first);
+      nodeDestroy(last);
       return false;
     }
-    next = SEMIC_(next);
-    last->right = next;
+    next = ARG_(next);
+    next->right = last;
     last = next;
   }
-  *result = first;
+  *result = last;
   return true;
 }
 

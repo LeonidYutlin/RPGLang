@@ -121,6 +121,8 @@ _Figure 11. Variable declarations (with and without an initialization)_
 
 ### Function Declaration
 
+TODO: Declaration has reverse order of params related to a function call node
+
 Consists of `func decl` node, `left` field is a `signature`, and `right` is functions body.
 
 `signature`: `left` is a `decl`, right is a parameter list
@@ -147,7 +149,9 @@ _Figure 12. Function declaration_
 ### Function Call
 
 Consists of `func call` node, `left` field is a function's name (identifier),
-and `right` is an argument list, which are expressions chained together with `;` nodes (same way the statements are chained). If the function call has no arguments, `right` is `NULL`
+and `right` is an argument list, which are expressions chained together with `arg` nodes (same way the statements are chained). If the function call has no arguments, `right` is `NULL`
+
+Note: the arguments are chained in a reverse order, e.g. the last argument is always first in the chain.
 
 ```
 foo(bar; baz);

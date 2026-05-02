@@ -35,6 +35,7 @@ int getNodeType(const char* str, size_t n);
 //X(enum, "str")
 #define CTRL_TYPE_LIST()         \
   X(CTRL_SEMIC,     ";")         \
+  X(CTRL_ARG,       "arg")       \
   X(CTRL_ASG,       "=")         \
   X(CTRL_IF,        "if")        \
   X(CTRL_ELSE,      "else")      \
@@ -144,6 +145,8 @@ int getVarTypeType(const char* str, size_t n);
 
 #define SEMIC_(l) \
         nodeAllocCtrl(CTRL_SEMIC, false, l, NULL)
+#define ARG_(l) \
+        nodeAllocCtrl(CTRL_ARG, false, l, NULL)
 #define ASG_(l, r, inv) \
         nodeAllocCtrl(CTRL_ASG, inv, l, r)
 #define IF_(l, r, inv) \

@@ -2,6 +2,12 @@
 #include <assert.h>
 #include <stdarg.h>
 
+typedef struct {
+  FILE* sink;
+  uint64_t depth;
+  size_t regIndex;
+} Context;
+
 // each register is 8 bytes
 static const size_t REG_SIZE = 8;
 static const char* const ARG_REGS[] = {
@@ -9,12 +15,18 @@ static const char* const ARG_REGS[] = {
 };
 static const size_t ARG_REGS_SIZE = sizer(ARG_REGS);
 
-static void codegenRec(FILE* sink, TreeNode* ast, uint64_t* depth, int regNum);
+static void codegenRec(Context* ctx, TreeNode* ast);
+static inline void push(Context* ctx, TreeNode* ast);
+static inline void op(Context* ctx, TreeNode* ast);
+static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
+static inline void arg(Context* ctx, TreeNode* ast);
+static void clearStack(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static void gen_(FILE* sink, const char* commentary, 
                  const char* fmt, ...) _format(printf, 3, 4);
 
+#define sinkFile sink
 #define gen(commentary, fmt, ...) \
-  gen_(sink, "; -- " commentary " --\n", fmt __VA_OPT__(,) __VA_ARGS__)
+  gen_(sinkFile, "; -- " commentary " --\n", fmt __VA_OPT__(,) __VA_ARGS__)
 #ifdef BACKEND_DEBUG_INFO
 #define com(commentary) fputs("; -- " commentary " --\n", sink)
 #else
@@ -31,79 +43,128 @@ void codegen(FILE* sink, TreeNode* ast) {
       "section .text\n"
       "_start:\n");
 
-  //TreeNode* mainBody = ast->left->right->left;
-  codegenRec(sink, ast, NULL, -1);
+  Context ctx = (Context){
+    .sink = sink,
+    .depth = 0,
+    .regIndex = 0,
+  };
+  codegenRec(&ctx, ast);
   gen("EXIT",
       "\t\tmov rax, 0x3c ; syscall exit\n"
       "\t\tmov rdi, 123\n"
       "\t\tsyscall\n");
 }
 
-static void codegenRec(FILE* sink, TreeNode* ast, uint64_t* depth, int regNum) {
-  if (!sink || !ast)
+#undef sinkFile
+#define sinkFile ctx->sink
+
+static void codegenRec(Context* ctx, TreeNode* ast) {
+  if (!ctx || 
+      !ctx->sink ||
+      !ast)
     return;
 
-  uint64_t stmtDepth = 0;
-  int regNumRight = regNum;
-  if (OF_CTRL(ast, CTRL_SEMIC)) {
-    depth = &stmtDepth;
-    if (regNum >= 0)
-      regNumRight++;
-  } else if (OF_CTRL(ast, CTRL_FUNC_CALL)) {
-    regNum = regNumRight = 0;
-  }
-  codegenRec(sink, ast->left, depth, regNum);
-  codegenRec(sink, ast->right, depth, regNumRight);
+  uint64_t oldDepth = ctx->depth;
+  codegenRec(ctx, ast->left);
+  codegenRec(ctx, ast->right);
+
   if (IS_NUM(ast)) {
-    gen("PUSH",
-        "\t\tpush %ld\n", 
-        ast->data.value.num);
-    if (depth)
-      (*depth)++;
-  } else if (IS_OP(ast)) {
-    switch (ast->data.value.op) {
-      case OP_ADD:
-        gen("ADD",
-            "\t\tpop rbx\n"
-            "\t\tpop rax\n"
-            "\t\tadd rax, rbx\n"
-            "\t\tpush rax\n");
-        if (depth)
-         (*depth)--;
-        break;
-      case OP_SUB:
-        gen("SUB",
-            "\t\tpop rbx\n"
-            "\t\tpop rax\n"
-            "\t\tsub rax, rbx\n"
-            "\t\tpush rax\n");
-        if (depth)
-         (*depth)--;
-        break;
-      default: break;
-    }
-  } else if (OF_CTRL(ast, CTRL_SEMIC)) {
-    //printf("Hello i am a semicolone and my depth is %lu\n", stmtDepth);
-    if (regNum >= 0 && regNum < (int)ARG_REGS_SIZE) {
-      gen("POP ARG INTO REG",
-          "\t\tpop %s\n",
-          ARG_REGS[regNum]);
-      stmtDepth--;
-    }
-    while (stmtDepth--)
-      gen("POP UNUSED",
-          "\t\tadd rsp, %zu\n",
-          REG_SIZE);
-  } else if (OF_CTRL(ast, CTRL_FUNC_CALL)) {
-    StringView funcName = ast->left->data.value.id;
-    gen("CALL",
-        "\t\tcall %.*s\n",
-        (int)funcName.size, funcName.data);
+    push(ctx, ast);    
+    return;
+  }
+  
+  if (IS_OP(ast)) {
+    op(ctx, ast); 
+    return;
+  }
+
+  if (OF_CTRL(ast, CTRL_SEMIC)) {
+    clearStack(ctx, ast, oldDepth); 
+    return;
+  } 
+
+  if (OF_CTRL(ast, CTRL_ARG)) {
+    arg(ctx, ast); 
+    return;
+  }
+
+  if (OF_CTRL(ast, CTRL_FUNC_CALL)) {
+    call(ctx, ast, oldDepth);
+    return;
   }
 }
 
+#define PRELUDE()    \
+  assert(ctx);       \
+  assert(ctx->sink); \
+  assert(ast);
+
+static void push(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+  gen("PUSH",
+      "\t\tpush %ld\n", 
+      ast->data.value.num);
+  ctx->depth++;
+}
+
+static void op(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+  switch (ast->data.value.op) {
+    case OP_ADD:
+      gen("ADD",
+          "\t\tpop rbx\n"
+          "\t\tpop rax\n"
+          "\t\tadd rax, rbx\n"
+          "\t\tpush rax\n");
+      ctx->depth--;
+      break;
+    case OP_SUB:
+      gen("SUB",
+          "\t\tpop rbx\n"
+          "\t\tpop rax\n"
+          "\t\tsub rax, rbx\n"
+          "\t\tpush rax\n");
+      ctx->depth--;
+      break;
+    default: break;
+  }
+}
+
+static void clearStack(Context* ctx, _unused TreeNode* ast, uint64_t oldDepth) {
+  PRELUDE();
+  if (ctx->depth != oldDepth) {
+      gen("CLEAR STACK",
+          "\t\tadd rsp, %zu\n",
+          (ctx->depth - oldDepth) * REG_SIZE);
+      ctx->depth = oldDepth;
+  }
+}
+
+static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
+  PRELUDE();
+  StringView funcName = ast->left->data.value.id;
+  gen("CALL",
+      "\t\tcall %.*s\n",
+      (int)funcName.size, funcName.data);
+  clearStack(ctx, ast, oldDepth); 
+  ctx->regIndex = 0;
+}
+
+static void arg(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+  if (ctx->regIndex < ARG_REGS_SIZE) {
+    gen("POP ARG INTO REG",
+        "\t\tpop %s\n",
+        ARG_REGS[ctx->regIndex]);
+    ctx->depth--;
+    ctx->regIndex++;
+  }
+}
+
+#undef sinkFile
 #undef gen
 #undef com
+#undef PRELUDE
 
 static void gen_(FILE* sink, const char* commentary, 
                  const char* fmt, ...) {
