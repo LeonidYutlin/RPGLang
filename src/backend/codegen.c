@@ -52,11 +52,13 @@ static void gen_(FILE* sink, const char* commentary,
 #endif
 
 // TODO: backend for: 
-// CTRL: CTRL_ASG,
-//   CTRL_DECL, CTRL_PARAM, CTRL_FUNC_DECL,
-//   CTRL_SIGNATURE, CTRL_RETURN, CTRL_CONTINUE, CTRL_BREAK
-// IDENT: yeah
+// CTRL: CTRL_ASG, CTRL_DECL, CTRL_PARAM, CTRL_CONTINUE, CTRL_BREAK
+// IDENT: in context of a + b
 // TYPE: frac and loc
+// TODO: add typed return
+// TODO: add return value from function being handled
+// TODO: add parameters
+// TODO: add name mangling for func names
 
 void codegen(FILE* sink, TreeNode* ast) {
   if (!sink || !ast)
@@ -69,19 +71,18 @@ void codegen(FILE* sink, TreeNode* ast) {
       "extern exit\n"
       "section .text\n"
       "_start:\n"
-      //"call main\n"
-      );
+      "\t\tcall main\n");
+  gen("EXIT",
+      "\t\tmov rax, 0x3c ; syscall exit\n"
+      "\t\tmov rdi, 123\n"
+      "\t\tsyscall\n");
+
   Context ctx = (Context){
     .sink = sink,
     .labelCount = 0,
     .depth = 0,
   };
   codegenRec(&ctx, ast, 0, 0);
-
-  gen("EXIT",
-      "\t\tmov rax, 0x3c ; syscall exit\n"
-      "\t\tmov rdi, 123\n"
-      "\t\tsyscall\n");
 }
 
 #undef sinkFile
@@ -240,6 +241,19 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
       break;
     case CTRL_FUNC_CALL:
       call(ctx, ast, oldDepth);
+      break;
+    case CTRL_FUNC_DECL:
+    case CTRL_RETURN:
+      gen("RETURN",
+          "\t\tret\n");
+      break;
+    case CTRL_SIGNATURE:
+      {
+        StringView funcName = ast->left->right->data.value.id;
+        gen("FUNC DECL",
+            "%.*s:\n",
+            (int)funcName.size, funcName.data);
+      }
       break;
     default: break;
   }

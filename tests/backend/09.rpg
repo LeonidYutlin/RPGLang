@@ -1,0 +1,20 @@
+prim main() {
+  evenMoreNumbers();
+  out(0);
+  someNumbers();
+  someNumbers();
+  someNumbers();
+}
+
+void someNumbers() {
+  out(0I);
+  out(0II);
+  out(0III);
+  complete;
+  out(0VV);
+}
+
+void evenMoreNumbers() {
+  out(shadow 0I);
+  someNumbers();
+}
