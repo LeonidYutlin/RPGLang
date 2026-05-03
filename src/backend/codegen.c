@@ -18,6 +18,7 @@ static const size_t ARG_REGS_SIZE = sizer(ARG_REGS);
 static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel);
 static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
+static inline void not(Context* ctx, TreeNode* ast);
 static inline void or(Context* ctx, TreeNode* ast);
 static inline void and(Context* ctx, TreeNode* ast);
 static inline void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth);
@@ -169,6 +170,15 @@ static void op(Context* ctx, TreeNode* ast) {
           "\t\tpush rax\n");
       ctx->depth++;
       break;
+    case OP_NOT:
+      not(ctx, ast);
+      break;
+    case OP_AND:
+      and(ctx, ast);
+      break;
+    case OP_OR:
+      or(ctx, ast); 
+      break;
 #ifdef CONDITIONAL_MOVES
     case OP_GRT:
       com("GRT");
@@ -185,16 +195,6 @@ static void op(Context* ctx, TreeNode* ast) {
     case OP_NEQ:
       com("NEQ");
       cmp(ctx, ast, "cmovne");
-      break;
-    case OP_NOT:
-      gen("NOT",
-          "\t\tmov rcx, rax\n"
-          "\t\txor eax, eax\n"
-          "\t\ttest rcx, rcx\n"
-          "\t\tmov rcx, 1\n"
-          "\t\tcmovz rax, rcx\n"
-          "\t\tpush rax\n");
-      ctx->depth++;
       break;
 #else
     case OP_GRT:
@@ -213,72 +213,9 @@ static void op(Context* ctx, TreeNode* ast) {
       com("NEQ");
       cmp(ctx, ast, "jne");
       break;
-    case OP_NOT:
-      {
-        uint64_t pushZeroLabel     = ctx->labelCount++;
-        uint64_t skipPushZeroLabel = ctx->labelCount++;
-        gen("LOGICAL NOT",
-            "\t\ttest rax, rax\n"
-            "\t\tjz .push_one%zu\n"
-            "\t\tpush 0\n"
-            "\t\tjmp .skip_push_one%zu\n"
-            ".push_one%zu:\n"
-            "\t\tpush 1\n"
-            ".skip_push_one%zu:\n",
-            pushZeroLabel, skipPushZeroLabel,
-            pushZeroLabel, skipPushZeroLabel);    
-        ctx->depth++;
-      }
-      break;
 #endif
-    case OP_AND:
-      and(ctx, ast);
-      break;
-    case OP_OR:
-      or(ctx, ast); 
-      break;
     default: break;
   }
-}
-
-static void and(Context* ctx, TreeNode* ast) {
-  PRELUDE();
-  uint64_t falseLabel     = ctx->labelCount++;
-  uint64_t skipFalseLabel = ctx->labelCount++;
-  gen("LOGICAL AND",
-      "\t\ttest rax, rax\n"
-      "\t\tjz .false%zu\n"
-      "\t\ttest rbx, rbx\n"
-      "\t\tjz .false%zu\n"
-      "\t\tpush 1\n"
-      "\t\tjmp .skip_false%zu\n"
-      ".false%zu:\n"
-      "\t\tpush 0\n"
-      ".skip_false%zu:\n",
-      falseLabel,     falseLabel,
-      skipFalseLabel, falseLabel,
-      skipFalseLabel);    
-  ctx->depth++;
-}
-
-static void or(Context* ctx, TreeNode* ast) {
-  PRELUDE();
-  uint64_t trueLabel     = ctx->labelCount++;
-  uint64_t skipTrueLabel = ctx->labelCount++;
-  gen("LOGICAL OR",
-      "\t\ttest rax, rax\n"
-      "\t\tjnz .true%zu\n"
-      "\t\ttest rbx, rbx\n"
-      "\t\tjnz .true%zu\n"
-      "\t\tpush 0\n"
-      "\t\tjmp .skip_true%zu\n"
-      ".true%zu:\n"
-      "\t\tpush 1\n"
-      ".skip_true%zu:\n",
-      trueLabel,     trueLabel,
-      skipTrueLabel, trueLabel,
-      skipTrueLabel);    
-  ctx->depth++;
 }
 
 static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
@@ -373,6 +310,73 @@ static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr) {
        pushZeroLabel, skipPushZeroLabel,
        pushZeroLabel, skipPushZeroLabel);
 #endif
+  ctx->depth++;
+}
+
+static void not(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+#ifdef CONDITIONAL_MOVES
+  gen("LOGICAL NOT",
+      "\t\tmov rcx, rax\n"
+      "\t\txor eax, eax\n"
+      "\t\ttest rcx, rcx\n"
+      "\t\tmov rcx, 1\n"
+      "\t\tcmovz rax, rcx\n"
+      "\t\tpush rax\n");
+#else
+  uint64_t pushZeroLabel     = ctx->labelCount++;
+  uint64_t skipPushZeroLabel = ctx->labelCount++;
+  gen("LOGICAL NOT",
+      "\t\ttest rax, rax\n"
+      "\t\tjz .push_one%zu\n"
+      "\t\tpush 0\n"
+      "\t\tjmp .skip_push_one%zu\n"
+      ".push_one%zu:\n"
+      "\t\tpush 1\n"
+      ".skip_push_one%zu:\n",
+      pushZeroLabel, skipPushZeroLabel,
+      pushZeroLabel, skipPushZeroLabel);    
+#endif
+  ctx->depth++;
+}
+
+static void and(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+  uint64_t falseLabel     = ctx->labelCount++;
+  uint64_t skipFalseLabel = ctx->labelCount++;
+  gen("LOGICAL AND",
+      "\t\ttest rax, rax\n"
+      "\t\tjz .false%zu\n"
+      "\t\ttest rbx, rbx\n"
+      "\t\tjz .false%zu\n"
+      "\t\tpush 1\n"
+      "\t\tjmp .skip_false%zu\n"
+      ".false%zu:\n"
+      "\t\tpush 0\n"
+      ".skip_false%zu:\n",
+      falseLabel,     falseLabel,
+      skipFalseLabel, falseLabel,
+      skipFalseLabel);    
+  ctx->depth++;
+}
+
+static void or(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+  uint64_t trueLabel     = ctx->labelCount++;
+  uint64_t skipTrueLabel = ctx->labelCount++;
+  gen("LOGICAL OR",
+      "\t\ttest rax, rax\n"
+      "\t\tjnz .true%zu\n"
+      "\t\ttest rbx, rbx\n"
+      "\t\tjnz .true%zu\n"
+      "\t\tpush 0\n"
+      "\t\tjmp .skip_true%zu\n"
+      ".true%zu:\n"
+      "\t\tpush 1\n"
+      ".skip_true%zu:\n",
+      trueLabel,     trueLabel,
+      skipTrueLabel, trueLabel,
+      skipTrueLabel);    
   ctx->depth++;
 }
 
