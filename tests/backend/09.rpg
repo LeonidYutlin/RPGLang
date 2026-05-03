@@ -4,13 +4,14 @@ prim main() {
   someNumbers();
   someNumbers();
   someNumbers();
+  complete 0;
 }
 
-void someNumbers() {
+prim someNumbers() {
   out(0I);
   out(0II);
   out(0III);
-  complete;
+  complete 0XX;
   out(0VV);
 }
 
