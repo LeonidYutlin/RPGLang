@@ -20,8 +20,9 @@ static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel);
 static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
 static inline void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth);
+static inline void handleIfBranches(Context* ctx, TreeNode* ast, 
+                                    uint64_t label, uint64_t* newLabel);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
-static inline void arg(Context* ctx, TreeNode* ast);
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr);
 static void clearStack(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static void gen_(FILE* sink, const char* commentary, 
@@ -84,24 +85,7 @@ static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel) {
   codegenRec(ctx, ast->left, 0);
 
   uint64_t rightEndLabel = 0;
-  if (OF_CTRL(ast, CTRL_IF)) {
-    rightEndLabel = ctx->labelCount++;
-    gen("IF",
-        "\t\tpop rax\n"
-        "\t\ttest rax, rax\n"
-        "\t\tjz .if_end%zu\n",
-        rightEndLabel);
-    ctx->depth--;
-  } else if (OF_CTRL(ast, CTRL_ELSE)) {
-    genn(".else_end%zu:\n", endLabel);
-  } else if (OF_CTRL(ast->parent, CTRL_IF) &&
-             ast->parent->right == ast) {
-    if (OF_CTRL(ast->right, CTRL_ELSE)) {
-      rightEndLabel = ctx->labelCount++;
-      genn("\t\tjmp .else_end%zu\n", rightEndLabel);
-    }
-    genn(".if_end%zu:\n", endLabel);
-  }
+  handleIfBranches(ctx, ast, endLabel, &rightEndLabel); 
 
   codegenRec(ctx, ast->right, rightEndLabel);
 
@@ -297,13 +281,34 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
     case CTRL_SEMIC: 
       clearStack(ctx, ast, oldDepth);
       break;
-    case CTRL_ARG:
-      arg(ctx, ast); 
-      break;
     case CTRL_FUNC_CALL:
       call(ctx, ast, oldDepth);
       break;
     default: break;
+  }
+}
+
+static void handleIfBranches(Context* ctx, TreeNode* ast, 
+                             uint64_t label, uint64_t* newLabel) {
+  PRELUDE();
+  assert(newLabel);
+  if (OF_CTRL(ast, CTRL_IF)) {
+    *newLabel = ctx->labelCount++;
+    gen("IF",
+        "\t\tpop rax\n"
+        "\t\ttest rax, rax\n"
+        "\t\tjz .if_end%zu\n",
+        *newLabel);
+    ctx->depth--;
+  } else if (OF_CTRL(ast, CTRL_ELSE)) {
+    genn(".else_end%zu:\n", label);
+  } else if (OF_CTRL(ast->parent, CTRL_IF) &&
+             ast->parent->right == ast) {
+    if (OF_CTRL(ast->right, CTRL_ELSE)) {
+      *newLabel = ctx->labelCount++;
+      genn("\t\tjmp .else_end%zu\n", *newLabel);
+    }
+    genn(".if_end%zu:\n", label);
   }
 }
 
@@ -319,23 +324,21 @@ static void clearStack(Context* ctx, _unused TreeNode* ast, uint64_t oldDepth) {
 
 static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
   PRELUDE();
-  StringView funcName = ast->left->data.value.id;
-  gen("CALL",
-      "\t\tcall %.*s\n",
-      (int)funcName.size, funcName.data);
-  clearStack(ctx, ast, oldDepth); 
-  ctx->regIndex = 0;
-}
 
-static void arg(Context* ctx, TreeNode* ast) {
-  PRELUDE();
-  if (ctx->regIndex < ARG_REGS_SIZE) {
-    gen("POP ARG INTO REG",
-        "\t\tpop %s\n",
-        ARG_REGS[ctx->regIndex]);
+  com("CALL");
+  size_t i = 0;
+  for (TreeNode* arg = ast->right; 
+       arg && i < ARG_REGS_SIZE; arg = arg->right) {
+    genn("\t\tpop %s\n",
+         ARG_REGS[i]);
     ctx->depth--;
-    ctx->regIndex++;
+    i++;
   }
+
+  StringView funcName = ast->left->data.value.id;
+  genn("\t\tcall %.*s\n",
+       (int)funcName.size, funcName.data);
+  clearStack(ctx, ast, oldDepth); 
 }
 
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr) {
