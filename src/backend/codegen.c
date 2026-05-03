@@ -15,15 +15,23 @@ static const char* const ARG_REGS[] = {
 };
 static const size_t ARG_REGS_SIZE = sizer(ARG_REGS);
 
-static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel);
+static void codegenRec(Context* ctx, TreeNode* ast, 
+                       uint64_t conditionLabel, uint64_t endLabel);
 static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
 static inline void not(Context* ctx, TreeNode* ast);
 static inline void or(Context* ctx, TreeNode* ast);
 static inline void and(Context* ctx, TreeNode* ast);
 static inline void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth);
+static inline void handleBranches(Context* ctx, TreeNode* ast,
+                                  uint64_t conditionLabel, uint64_t endLabel,
+                                  uint64_t* newLabel);
 static inline void handleIfBranches(Context* ctx, TreeNode* ast, 
                                     uint64_t label, uint64_t* newLabel);
+static inline void handleLoopBranches(Context* ctx, TreeNode* ast,
+                                      uint64_t conditionLabel, uint64_t endLabel,
+                                      uint64_t* newLabel, CtrlType type,
+                                      const char* cmpStr, const char* prefix);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr);
 static void clearStack(Context* ctx, TreeNode* ast, uint64_t oldDepth);
@@ -65,7 +73,7 @@ void codegen(FILE* sink, TreeNode* ast) {
     .labelCount = 0,
     .depth = 0,
   };
-  codegenRec(&ctx, ast, 0);
+  codegenRec(&ctx, ast, 0, 0);
   gen("EXIT",
       "\t\tmov rax, 0x3c ; syscall exit\n"
       "\t\tmov rdi, 123\n"
@@ -75,7 +83,8 @@ void codegen(FILE* sink, TreeNode* ast) {
 #undef sinkFile
 #define sinkFile ctx->sink
 
-static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel) {
+static void codegenRec(Context* ctx, TreeNode* ast, 
+                       uint64_t conditionLabel, uint64_t endLabel) {
   if (!ctx || 
       !ctx->sink ||
       !ast)
@@ -83,12 +92,24 @@ static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel) {
 
   uint64_t oldDepth = ctx->depth;
 
-  codegenRec(ctx, ast->left, 0);
+  if (OF_CTRL(ast, CTRL_WHILE)) {
+    conditionLabel = ctx->labelCount++;
+    gen("WHILE",
+        ".while_condition%zu:\n",
+        conditionLabel);
+  } else if (OF_CTRL(ast, CTRL_UNTIL)) {
+    conditionLabel = ctx->labelCount++;
+    gen("UNTIL",
+        ".until_condition%zu:\n",
+        conditionLabel);
+  } 
+
+  codegenRec(ctx, ast->left, 0, 0);
 
   uint64_t rightEndLabel = 0;
-  handleIfBranches(ctx, ast, endLabel, &rightEndLabel); 
+  handleBranches(ctx, ast, conditionLabel, endLabel, &rightEndLabel);
 
-  codegenRec(ctx, ast->right, rightEndLabel);
+  codegenRec(ctx, ast->right, conditionLabel, rightEndLabel);
 
 
   if (IS_NUM(ast)) {
@@ -231,10 +252,53 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
   }
 }
 
+static void handleBranches(Context* ctx, TreeNode* ast,
+                           uint64_t conditionLabel, uint64_t endLabel,
+                           uint64_t* newLabel) {
+  handleIfBranches(ctx, ast, endLabel, newLabel); 
+  handleLoopBranches(ctx, ast, 
+                     conditionLabel, 
+                     endLabel, newLabel,
+                     CTRL_WHILE,
+                     "jz", "while");
+  handleLoopBranches(ctx, ast, 
+                     conditionLabel, 
+                     endLabel, newLabel,
+                     CTRL_UNTIL,
+                     "jnz", "until");
+}
+
+static void handleLoopBranches(Context* ctx, TreeNode* ast,
+                               uint64_t conditionLabel, uint64_t endLabel,
+                               uint64_t* newLabel, CtrlType type,
+                               const char* cmpStr, const char* prefix) {
+  PRELUDE();
+  assert(newLabel);
+  if (OF_CTRL(ast, type)) {
+    *newLabel = ctx->labelCount++;
+    genn("\t\tpop rax\n"
+        "\t\ttest rax, rax\n"
+        "\t\t%s .%s_end%zu\n",
+        cmpStr, prefix, *newLabel);
+    ctx->depth--;
+    return;
+  }
+
+  if (OF_CTRL(ast->parent, type) &&
+      ast->parent->right == ast) {
+    genn("\t\tjmp .%s_condition%zu\n", 
+         prefix, conditionLabel);
+    genn(".%s_end%zu:\n", 
+         prefix, endLabel);
+    return;
+  }
+}
+
 static void handleIfBranches(Context* ctx, TreeNode* ast, 
                              uint64_t label, uint64_t* newLabel) {
   PRELUDE();
   assert(newLabel);
+
   if (OF_CTRL(ast, CTRL_IF)) {
     *newLabel = ctx->labelCount++;
     gen("IF",
@@ -243,15 +307,22 @@ static void handleIfBranches(Context* ctx, TreeNode* ast,
         "\t\tjz .if_end%zu\n",
         *newLabel);
     ctx->depth--;
-  } else if (OF_CTRL(ast, CTRL_ELSE)) {
+    return;
+  }
+
+  if (OF_CTRL(ast, CTRL_ELSE)) {
     genn(".else_end%zu:\n", label);
-  } else if (OF_CTRL(ast->parent, CTRL_IF) &&
-             ast->parent->right == ast) {
+    return;
+  }
+
+  if (OF_CTRL(ast->parent, CTRL_IF) &&
+      ast->parent->right == ast) {
     if (OF_CTRL(ast->right, CTRL_ELSE)) {
       *newLabel = ctx->labelCount++;
       genn("\t\tjmp .else_end%zu\n", *newLabel);
     }
     genn(".if_end%zu:\n", label);
+    return;
   }
 }
 

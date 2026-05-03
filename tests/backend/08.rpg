@@ -1,0 +1,12 @@
+prim main() {
+  until (0) {
+    out(0);
+    until (0) {
+      out(0C);
+    }
+    if (0I)
+      out(0V);
+    out(0IIII);
+  }
+  exit(0);
+}
