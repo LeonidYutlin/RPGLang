@@ -17,6 +17,8 @@ static const size_t ARG_REGS_SIZE = sizer(ARG_REGS);
 
 static void codegenRec(Context* ctx, TreeNode* ast, 
                        uint64_t conditionLabel, uint64_t endLabel);
+static inline void handleConditionLabels(Context* ctx, TreeNode* ast, 
+                                         uint64_t* conditionLabel);
 static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
 static inline void not(Context* ctx, TreeNode* ast);
@@ -51,7 +53,7 @@ static void gen_(FILE* sink, const char* commentary,
 
 // TODO: backend for: 
 // CTRL: CTRL_ASG,
-//   CTRL_WHILE, CTRL_UNTIL, CTRL_DECL, CTRL_PARAM, CTRL_FUNC_DECL,
+//   CTRL_DECL, CTRL_PARAM, CTRL_FUNC_DECL,
 //   CTRL_SIGNATURE, CTRL_RETURN, CTRL_CONTINUE, CTRL_BREAK
 // IDENT: yeah
 // TYPE: frac and loc
@@ -66,14 +68,16 @@ void codegen(FILE* sink, TreeNode* ast) {
       "extern out\n"
       "extern exit\n"
       "section .text\n"
-      "_start:\n");
-
+      "_start:\n"
+      //"call main\n"
+      );
   Context ctx = (Context){
     .sink = sink,
     .labelCount = 0,
     .depth = 0,
   };
   codegenRec(&ctx, ast, 0, 0);
+
   gen("EXIT",
       "\t\tmov rax, 0x3c ; syscall exit\n"
       "\t\tmov rdi, 123\n"
@@ -91,18 +95,7 @@ static void codegenRec(Context* ctx, TreeNode* ast,
     return;
 
   uint64_t oldDepth = ctx->depth;
-
-  if (OF_CTRL(ast, CTRL_WHILE)) {
-    conditionLabel = ctx->labelCount++;
-    gen("WHILE",
-        ".while_condition%zu:\n",
-        conditionLabel);
-  } else if (OF_CTRL(ast, CTRL_UNTIL)) {
-    conditionLabel = ctx->labelCount++;
-    gen("UNTIL",
-        ".until_condition%zu:\n",
-        conditionLabel);
-  } 
+  handleConditionLabels(ctx, ast, &conditionLabel);   
 
   codegenRec(ctx, ast->left, 0, 0);
 
@@ -249,6 +242,26 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
       call(ctx, ast, oldDepth);
       break;
     default: break;
+  }
+}
+
+static void handleConditionLabels(Context* ctx, TreeNode* ast, uint64_t* conditionLabel) {
+  PRELUDE();
+  assert(conditionLabel);
+
+  if (OF_CTRL(ast, CTRL_WHILE)) {
+    *conditionLabel = ctx->labelCount++;
+    gen("WHILE",
+        ".while_condition%zu:\n",
+        *conditionLabel);
+    return;
+  }
+
+  if (OF_CTRL(ast, CTRL_UNTIL)) {
+    *conditionLabel = ctx->labelCount++;
+    gen("UNTIL",
+        ".until_condition%zu:\n",
+        *conditionLabel);
   }
 }
 
