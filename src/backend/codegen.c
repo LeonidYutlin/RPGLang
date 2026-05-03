@@ -242,9 +242,17 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
     case CTRL_FUNC_CALL:
       call(ctx, ast, oldDepth);
       break;
-    case CTRL_FUNC_DECL:
     case CTRL_RETURN:
-      gen("RETURN",
+      if (ast->left)
+        gen("TYPED RETURN",
+            "\t\tpop rax\n"
+            "\t\tret\n");
+      else
+        gen("VOID RETURN",
+            "\t\tret\n");         
+      break;
+    case CTRL_FUNC_DECL:
+      gen("EXTRA RETURN",
           "\t\tret\n");
       break;
     case CTRL_SIGNATURE:
