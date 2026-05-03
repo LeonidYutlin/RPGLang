@@ -6,7 +6,6 @@ typedef struct {
   FILE* sink;
   uint64_t labelCount;
   uint64_t depth;
-  size_t regIndex;
 } Context;
 
 // each register is 8 bytes
@@ -19,6 +18,8 @@ static const size_t ARG_REGS_SIZE = sizer(ARG_REGS);
 static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel);
 static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
+static inline void or(Context* ctx, TreeNode* ast);
+static inline void and(Context* ctx, TreeNode* ast);
 static inline void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static inline void handleIfBranches(Context* ctx, TreeNode* ast, 
                                     uint64_t label, uint64_t* newLabel);
@@ -62,7 +63,6 @@ void codegen(FILE* sink, TreeNode* ast) {
     .sink = sink,
     .labelCount = 0,
     .depth = 0,
-    .regIndex = 0,
   };
   codegenRec(&ctx, ast, 0);
   gen("EXIT",
@@ -232,47 +232,53 @@ static void op(Context* ctx, TreeNode* ast) {
       break;
 #endif
     case OP_AND:
-    {
-        uint64_t falseLabel     = ctx->labelCount++;
-        uint64_t skipFalseLabel = ctx->labelCount++;
-        gen("LOGICAL AND",
-            "\t\ttest rax, rax\n"
-            "\t\tjz .false%zu\n"
-            "\t\ttest rbx, rbx\n"
-            "\t\tjz .false%zu\n"
-            "\t\tpush 1\n"
-            "\t\tjmp .skip_false%zu\n"
-            ".false%zu:\n"
-            "\t\tpush 0\n"
-            ".skip_false%zu:\n",
-            falseLabel,     falseLabel,
-            skipFalseLabel, falseLabel,
-            skipFalseLabel);    
-        ctx->depth++;
-    }
-    break;
+      and(ctx, ast);
+      break;
     case OP_OR:
-    {
-        uint64_t trueLabel     = ctx->labelCount++;
-        uint64_t skipTrueLabel = ctx->labelCount++;
-        gen("LOGICAL OR",
-            "\t\ttest rax, rax\n"
-            "\t\tjnz .true%zu\n"
-            "\t\ttest rbx, rbx\n"
-            "\t\tjnz .true%zu\n"
-            "\t\tpush 0\n"
-            "\t\tjmp .skip_true%zu\n"
-            ".true%zu:\n"
-            "\t\tpush 1\n"
-            ".skip_true%zu:\n",
-            trueLabel,     trueLabel,
-            skipTrueLabel, trueLabel,
-            skipTrueLabel);    
-        ctx->depth++;
-    }
-    break;
+      or(ctx, ast); 
+      break;
     default: break;
   }
+}
+
+static void and(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+  uint64_t falseLabel     = ctx->labelCount++;
+  uint64_t skipFalseLabel = ctx->labelCount++;
+  gen("LOGICAL AND",
+      "\t\ttest rax, rax\n"
+      "\t\tjz .false%zu\n"
+      "\t\ttest rbx, rbx\n"
+      "\t\tjz .false%zu\n"
+      "\t\tpush 1\n"
+      "\t\tjmp .skip_false%zu\n"
+      ".false%zu:\n"
+      "\t\tpush 0\n"
+      ".skip_false%zu:\n",
+      falseLabel,     falseLabel,
+      skipFalseLabel, falseLabel,
+      skipFalseLabel);    
+  ctx->depth++;
+}
+
+static void or(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+  uint64_t trueLabel     = ctx->labelCount++;
+  uint64_t skipTrueLabel = ctx->labelCount++;
+  gen("LOGICAL OR",
+      "\t\ttest rax, rax\n"
+      "\t\tjnz .true%zu\n"
+      "\t\ttest rbx, rbx\n"
+      "\t\tjnz .true%zu\n"
+      "\t\tpush 0\n"
+      "\t\tjmp .skip_true%zu\n"
+      ".true%zu:\n"
+      "\t\tpush 1\n"
+      ".skip_true%zu:\n",
+      trueLabel,     trueLabel,
+      skipTrueLabel, trueLabel,
+      skipTrueLabel);    
+  ctx->depth++;
 }
 
 static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
