@@ -16,8 +16,7 @@ static const char* const ARG_REGS[] = {
 };
 static const size_t ARG_REGS_SIZE = sizer(ARG_REGS);
 
-static void codegenRec(Context* ctx, TreeNode* ast, 
-                       bool isIfBody, uint64_t endLabel);
+static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel);
 static inline void push(Context* ctx, TreeNode* ast);
 static inline void op(Context* ctx, TreeNode* ast);
 static inline void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth);
@@ -64,7 +63,7 @@ void codegen(FILE* sink, TreeNode* ast) {
     .depth = 0,
     .regIndex = 0,
   };
-  codegenRec(&ctx, ast, false, 0);
+  codegenRec(&ctx, ast, 0);
   gen("EXIT",
       "\t\tmov rax, 0x3c ; syscall exit\n"
       "\t\tmov rdi, 123\n"
@@ -74,8 +73,7 @@ void codegen(FILE* sink, TreeNode* ast) {
 #undef sinkFile
 #define sinkFile ctx->sink
 
-static void codegenRec(Context* ctx, TreeNode* ast, 
-                       bool isIfBody, uint64_t endLabel) {
+static void codegenRec(Context* ctx, TreeNode* ast, uint64_t endLabel) {
   if (!ctx || 
       !ctx->sink ||
       !ast)
@@ -83,30 +81,29 @@ static void codegenRec(Context* ctx, TreeNode* ast,
 
   uint64_t oldDepth = ctx->depth;
 
+  codegenRec(ctx, ast->left, 0);
+
+  uint64_t rightEndLabel = 0;
   if (OF_CTRL(ast, CTRL_IF)) {
-    endLabel = ctx->labelCount++;
-    codegenRec(ctx, ast->left, false, 0);
+    rightEndLabel = ctx->labelCount++;
     gen("IF",
         "\t\tpop rax\n"
         "\t\ttest rax, rax\n"
         "\t\tjz .if_end%zu\n",
-        endLabel);
+        rightEndLabel);
     ctx->depth--;
-    codegenRec(ctx, ast->right, true, endLabel);
-    return;
-  }
-
-  codegenRec(ctx, ast->left, false, 0);
-  uint64_t rightEndLabel = 0;
-  if (isIfBody) {
+  } else if (OF_CTRL(ast, CTRL_ELSE)) {
+    genn(".else_end%zu:\n", endLabel);
+  } else if (OF_CTRL(ast->parent, CTRL_IF) &&
+             ast->parent->right == ast) {
     if (OF_CTRL(ast->right, CTRL_ELSE)) {
       rightEndLabel = ctx->labelCount++;
       genn("\t\tjmp .else_end%zu\n", rightEndLabel);
     }
     genn(".if_end%zu:\n", endLabel);
-  } else if (OF_CTRL(ast, CTRL_ELSE))
-    genn(".else_end%zu:\n", endLabel);
-  codegenRec(ctx, ast->right, false, rightEndLabel);
+  }
+
+  codegenRec(ctx, ast->right, rightEndLabel);
 
 
   if (IS_NUM(ast)) {
