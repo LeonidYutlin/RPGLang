@@ -180,7 +180,7 @@ static Error countExceptionsCallback(TreeNode* node,
     return BadArgs;
   if (!node)
     return OK;
-  uint64_t* exc = (size_t*)data;
+  uint64_t* exc = (uint64_t*)data;
   *exc += node->data.exceptionCount;
   return OK;
 }

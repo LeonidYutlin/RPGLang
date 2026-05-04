@@ -5,6 +5,8 @@
 #include "io/io.h"
 #include "utils/utils.h"
 
+static Error mergeExceptionsCallback(TreeNode* node, uint level, void* data);
+
 int main(int argc, char* argv[]) {
   const char* input  = NULL;
   const char* output = NULL;
@@ -40,6 +42,12 @@ int main(int argc, char* argv[]) {
   htmlLogInited = true;
 
   nodeDump(logFile, ast, "<b2>hello</b2>");
+  // TODO: factor this out
+  uint64_t* excPtr = NULL;
+  nodeTraverse(ast, 
+               .prefix = mergeExceptionsCallback, 
+               .prefixData = &excPtr);
+  nodeDump(logFile, ast, "<b2>merged</b2>");
 
   FILE* outFile = fopen(output, "w");
   if (!outFile) {
@@ -61,4 +69,26 @@ exit:
   if (mapFileInited)
     mappedFileDestroy(&mf);
   return exitValue;
+}
+
+static Error mergeExceptionsCallback(TreeNode* node, 
+                                     _unused uint level, void* data) {
+  if (!data)
+    return BadArgs;
+  if (!node)
+    return OK;
+
+  uint64_t** exc = (uint64_t**)data;
+  if (OF_CTRL(node, CTRL_SEMIC) ||
+      OF_CTRL(node, CTRL_IF)) {
+    *exc = &node->data.exceptionCount;
+    return OK;
+  }
+
+  if (!*exc)
+    return OK;
+
+  **exc += node->data.exceptionCount;
+  node->data.exceptionCount = 0;
+  return OK;
 }

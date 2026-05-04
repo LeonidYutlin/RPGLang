@@ -6,6 +6,7 @@ default rel
 
 global out
 global rout
+global random
 global exit
 
 ; -------------- ------ ------ ---------------
@@ -117,6 +118,70 @@ num_common:
     pop rax
     ret
 
+CLOSE_SYSCALL equ 0x3
+OPEN_SYSCALL  equ 0x2
+READ_SYSCALL  equ 0x0
+READ_ONLY equ 0
+
+RAND_INT_SIZE equ 1
+RAND_MODULO equ 20
+
+; TODO: documentation for this function
+; TODO: make it so it doesnt open and close the file every single time
+; TODO: this violates the calling conventions. Yep.
+random:
+    push rbp
+    mov rbp, rsp
+    sub rsp, REG_SIZE * 2
+
+    mov rax, OPEN_SYSCALL
+    lea rdi, [DEV_RANDOM]
+    mov rsi, READ_ONLY
+    syscall 
+
+    mov qword [rbp - REG_SIZE], rax
+    
+    mov rdi, rax
+    lea rax, [rbp - REG_SIZE * 2]
+    mov rsi, rax
+    mov rax, READ_SYSCALL
+    mov rdx, RAND_INT_SIZE
+    syscall
+
+
+    mov rax, CLOSE_SYSCALL
+    mov rdi, [rbp - REG_SIZE]
+    syscall 
+
+    xor ax, ax
+    mov al, byte [rbp - REG_SIZE * 2]
+    mov bl, RAND_MODULO
+    div bl
+    mov byte [rbp - REG_SIZE * 2], ah
+
+    ;xor edi, edi
+    ;mov dil, byte [rbp - REG_SIZE * 2]
+    ;call out
+
+    mov al, byte [rbp - REG_SIZE * 2]
+    test al, al
+    jnz .success
+.failure:
+    lea rsi, [failure]
+    mov rdx, failure_len
+    mov rax, WRITE_SYSCALL
+    mov rdi, STDOUT_FD
+    syscall
+
+    xor edi, edi
+    call exit
+    ret
+.success:
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
 ; ------------ INTERNAL FUNCTIONS ------------
 
 ;--------------
@@ -177,5 +242,8 @@ alpha equ alpha_lower
 alpha_lower: db "0123456789abcdefghijklmnopqrstuvwxyz"
 alpha_upper: db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 alpha_len equ $ - alpha_upper
+failure: db "Critical Failure! GAME OVER", NEWLINE, 0
+failure_len equ $ - failure
+DEV_RANDOM: db "/dev/random", 0
 
 ; ------------------ ------ -------------------

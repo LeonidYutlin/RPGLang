@@ -35,6 +35,7 @@ static inline void handleLoopBranches(Context* ctx, TreeNode* ast,
                                       uint64_t* newLabel, CtrlType type,
                                       const char* cmpStr, const char* prefix);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
+static inline void raiseExceptions(Context* ctx, TreeNode* ast);
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr);
 static void clearStack(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static void gen_(FILE* sink, const char* commentary, 
@@ -69,6 +70,7 @@ void codegen(FILE* sink, TreeNode* ast) {
       "extern rout\n"
       "extern out\n"
       "extern exit\n"
+      "extern random\n"
       "section .text\n"
       "_start:\n"
       "\t\tcall main\n");
@@ -102,6 +104,12 @@ static void codegenRec(Context* ctx, TreeNode* ast,
 
   uint64_t rightEndLabel = 0;
   handleBranches(ctx, ast, conditionLabel, endLabel, &rightEndLabel);
+
+  // TODO: factor this out
+  if (OF_CTRL(ast, CTRL_SEMIC)) {
+    clearStack(ctx, ast, oldDepth);
+    raiseExceptions(ctx, ast);
+  }
 
   codegenRec(ctx, ast->right, conditionLabel, rightEndLabel);
 
@@ -236,9 +244,6 @@ static void op(Context* ctx, TreeNode* ast) {
 static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
   PRELUDE();
   switch (ast->data.value.ctrl) {
-    case CTRL_SEMIC: 
-      clearStack(ctx, ast, oldDepth);
-      break;
     case CTRL_FUNC_CALL:
       call(ctx, ast, oldDepth);
       break;
@@ -369,6 +374,16 @@ static void clearStack(Context* ctx, _unused TreeNode* ast, uint64_t oldDepth) {
           (ctx->depth - oldDepth) * REG_SIZE);
       ctx->depth = oldDepth;
   }
+}
+
+static void raiseExceptions(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+  if (!ast->data.exceptionCount)
+    return;
+  com("EXCEPTION");
+  for (size_t i = 0; i < ast->data.exceptionCount; i++)
+    gen("Roll the dice!", 
+        "call random\n");
 }
 
 static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
