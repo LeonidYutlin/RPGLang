@@ -17,12 +17,12 @@ extern const ListUnit LIST_UNIT_CANARY;
 extern const ListUnit LIST_UNIT_ZERO;
 #define LIST_UNIT_COMPARISON(a, b) memcmp(&(a), &(b), sizeof(ListUnit))
 #define LIST_UNIT_FMT \
-  "data = %.*s "  \
+  /*"data = \"%.*s\" "*/  \
   "size = %zu "       \
   "hash = %lu "       \
   "value = %u"
 #define LIST_UNIT_FMT_ARGS(a)        \
-  (int)(a)->key.size, (a)->key.data, \
+  /*(int)(a)->key.size, (a)->key.data,*/ \
   (a)->key.size,                     \
   (a)->hash,                         \
   (a)->value

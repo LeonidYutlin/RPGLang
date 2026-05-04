@@ -1,4 +1,5 @@
 #include "frontend/lexer.h"
+#include "ds/dump.h"
 #include "ds/hashtable/hashtable.h"
 #include "logger/logger.h"
 #include "utils/utils.h"
@@ -302,10 +303,14 @@ static Error keywordInit() {
 #undef X
 #undef SV
 
+  //FILE* logFile = openHtmlLogFile("./.log/");
+  //hashTableDump(logFile, &KEYWORD_HT, "TESTING HASHES");
+  //closeHtmlLogFile(logFile);
+
   return OK;
 }
 
-//NOTE: Mainly taken from: http://www.cse.yorku.ca/~oz/hash.html
+// NOTE: Mainly taken from: http://www.cse.yorku.ca/~oz/hash.html
 static _unused uint64_t hashdjb2(StringView strView) {
   uint64_t hash = 5381;
 
@@ -315,12 +320,14 @@ static _unused uint64_t hashdjb2(StringView strView) {
   return hash;
 }
 
+static const size_t SHIFT = 23;
+
 static _unused uint64_t hashRotate(StringView strView) {
   uint64_t hash = 0;
  
-  //NOTE: Source for left rotation: https://stackoverflow.com/a/13289498
+  // NOTE: Source for left rotation: https://stackoverflow.com/a/13289498
   for (size_t i = 0; i < strView.size; i++) {
-    hash = (hash << 1) | (hash >> ((sizeof(hash) - 1) % sizeof(hash)));
+    hash = (hash << SHIFT) | (hash >> ((sizeof(hash) - SHIFT) % sizeof(hash)));
     hash ^= (uint64_t)strView.data[i];
   }
 
