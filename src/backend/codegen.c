@@ -43,11 +43,11 @@ static void gen_(FILE* sink, const char* commentary,
 
 #define sinkFile sink
 #define gen(commentary, fmt, ...) \
-  gen_(sinkFile, "; -- " commentary " --\n", fmt __VA_OPT__(,) __VA_ARGS__)
+  gen_(sinkFile, "\n; -- " commentary " --\n", fmt __VA_OPT__(,) __VA_ARGS__)
 #define genn(fmt, ...) \
   gen_(sinkFile, "", fmt __VA_OPT__(,) __VA_ARGS__)
 #ifdef BACKEND_DEBUG_INFO
-#define com(commentary) fputs("; -- " commentary " --\n", sinkFile)
+#define com(commentary) fputs("\n; -- " commentary " --\n", sinkFile)
 #else
 #define com(commentary)
 #endif
@@ -106,8 +106,12 @@ static void codegenRec(Context* ctx, TreeNode* ast,
   handleBranches(ctx, ast, conditionLabel, endLabel, &rightEndLabel);
 
   // TODO: factor this out
-  if (OF_CTRL(ast, CTRL_SEMIC)) {
-    clearStack(ctx, ast, oldDepth);
+  if (OF_CTRL(ast, CTRL_SEMIC) ||
+      OF_CTRL(ast, CTRL_UNTIL) ||
+      OF_CTRL(ast, CTRL_WHILE) ||
+      OF_CTRL(ast, CTRL_IF)) {
+    if (OF_CTRL(ast, CTRL_SEMIC))
+      clearStack(ctx, ast, oldDepth);
     raiseExceptions(ctx, ast);
   }
 
@@ -382,8 +386,7 @@ static void raiseExceptions(Context* ctx, TreeNode* ast) {
     return;
   com("EXCEPTION");
   for (size_t i = 0; i < ast->data.exceptionCount; i++)
-    gen("Roll the dice!", 
-        "call random\n");
+    genn("\t\tcall random\n");
 }
 
 static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {

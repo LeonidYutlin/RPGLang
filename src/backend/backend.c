@@ -80,6 +80,8 @@ static Error mergeExceptionsCallback(TreeNode* node,
 
   uint64_t** exc = (uint64_t**)data;
   if (OF_CTRL(node, CTRL_SEMIC) ||
+      OF_CTRL(node, CTRL_UNTIL) ||
+      OF_CTRL(node, CTRL_WHILE) ||
       OF_CTRL(node, CTRL_IF)) {
     *exc = &node->data.exceptionCount;
     return OK;

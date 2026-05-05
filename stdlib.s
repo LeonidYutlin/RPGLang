@@ -38,6 +38,7 @@ SIGN_BIT_MASK equ 0x80000000
 NEWLINE equ 0xA
 DECIMAL_RADIX equ 10
 STDOUT_FD equ 1
+STDERR_FD equ 2
 
 EXIT_SYSCALL  equ 0x3c
 WRITE_SYSCALL equ 0x1
@@ -170,7 +171,7 @@ random:
     lea rsi, [failure]
     mov rdx, failure_len
     mov rax, WRITE_SYSCALL
-    mov rdi, STDOUT_FD
+    mov rdi, STDERR_FD
     syscall
 
     xor edi, edi

@@ -7,8 +7,6 @@
 #include "frontend/parser.h"
 #include <string.h>
 
-//TODO: do a tree traverse moving the exceptionCount upstream (up to statements)
-
 int main(int argc, char* argv[]) {
   const char* input  = NULL;
   const char* output = NULL;

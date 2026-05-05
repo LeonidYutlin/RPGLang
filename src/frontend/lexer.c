@@ -91,7 +91,7 @@ Lexer* lexerAlloc(const char* filename, size_t initCap, Error* status) {
  }
 
 static const char* const RESERVED_SPECIAL_CHARACTERS = ";(){}";
-static const char* const ROMAN_NUMERAL_CHARS = "IVXLC";
+static const char* const ROMAN_NUMERAL_CHARS = "IVXLCDM";
 static const char ROMAN_NUMERAL_PREFIX = '0';
 
 Error lexerAnalyze(Lexer* lexer) {
@@ -143,6 +143,8 @@ Error lexerAnalyze(Lexer* lexer) {
             case 'X': newDegree = 10; break;
             case 'L': newDegree = 50; break;
             case 'C': newDegree = 100; break;
+            case 'D': newDegree = 500; break;
+            case 'M': newDegree = 1000; break;
             default:  cont = false; num += numBuf; continue;
           }
 

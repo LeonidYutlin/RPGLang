@@ -166,3 +166,5 @@ _Figure 13. Function call_
 1. return statement stores the return expression in `left` field
 2. assignment, while being a control node, follows the logic of binary operations
 3. function declarations are chained with `;` nodes in the same way statements are. So, from a topdown view, the tree is just a chain of function declarations chained with `;`
+
+TODO: update images to have clear distinction of whether the fields are left, or right, or parent

@@ -15,7 +15,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-syn match   rpgLangNumber       "0[IVXCL]*"
+syn match   rpgLangNumber       "0[IVXCLDM]*"
 
 syn match rpgLangClass        "#warlock" 
 syn match rpgLangClass        "#warrior"
