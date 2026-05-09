@@ -188,8 +188,8 @@ Error lexerAnalyze(Lexer* lexer) {
       .data = lexer->mf.data + oldPos, 
       .size = len 
     };
-    TokenType* kwType = hashTableGet(&KEYWORD_HT, strView, &err);
-    if (err == NotFound) {
+    TokenType* kwType = NULL;
+    if (!hashTableGet(&KEYWORD_HT, strView, (void**)&kwType, &err)) {
       EMIT(TOK_IDENTIFIER, oldPos, len);
     } else if (*kwType == TOK_NOTE){
       while (c != '\n') {

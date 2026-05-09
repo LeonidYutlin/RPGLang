@@ -116,20 +116,24 @@ Error hashTablePut(HashTable* table, StringView key, void* value) {
   return OK;
 }
 
-void* hashTableGet(HashTable* table, StringView key, Error* status) {
+bool hashTableGet(HashTable* table, StringView key, void** result, Error* status) {
   Error err = OK;
   if ((err = hashTableVerify(table)))
-    RETURN_WITH_STATUS(err, 0);
-  if (!key.data || !key.size)
-    RETURN_WITH_STATUS(BadArgs, 0);
+    RETURN_WITH_STATUS(err, false);
+  if (!key.data || 
+      !key.size ||
+      !result)
+    RETURN_WITH_STATUS(BadArgs, false);
   
   uint64_t hash = table->hashFunc(key);
   List* bucket = table->buckets + (hash % table->bucketCount);
   ListIndex index = listFindByKey(bucket, key);
   if (!index)
-    RETURN_WITH_STATUS(NotFound, 0);
+    return false;
   Entry* entry = (Entry*)listGetValue(bucket, index, &err);
-  return listGetValue(&table->values, entry->value, &err);
+
+  *result = listGetValue(&table->values, entry->value, &err);
+  return true;
 }
 
 Error hashTableDelete(HashTable* table, StringView key) {

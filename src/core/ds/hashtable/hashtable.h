@@ -26,7 +26,7 @@ HashTable* hashTableAlloc(size_t bucketCount, size_t initialListCapacity,
                           printf_f printfFunc, cmp_f cmpFunc,
                           hash_f hashFunc, Error* status);
 Error hashTablePut(HashTable* table, StringView key, void* value);
-void* hashTableGet(HashTable* table, StringView key, Error* status);
+bool hashTableGet(HashTable* table, StringView key, void** result, Error* status);
 Error hashTableDelete(HashTable* table, StringView key);
 Error hashTableVerify(HashTable* table);
 Error hashTableDestroy(HashTable* table, bool isAlloced);
