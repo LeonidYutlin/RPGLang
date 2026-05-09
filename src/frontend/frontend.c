@@ -5,6 +5,7 @@
 #include "frontend/lexer.h"
 #include "frontend/preparser.h"
 #include "frontend/parser.h"
+#include "frontend/symtab.h"
 #include <string.h>
 
 int main(int argc, char* argv[]) {
@@ -17,6 +18,7 @@ int main(int argc, char* argv[]) {
   bool lexerInited   = false;
  //bool htmlLogInited = false;
   bool astInited     = false;
+  bool symtabInited  = false;
   loggerInit(NULL, ERROR);
   loggerInited = true;
 
@@ -78,6 +80,22 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
+  static const size_t SYMTAB_BUCKET_SIZE = 17;
+  static const size_t SYMTAB_LIST_CAPACITY = 4;
+  static const hash_f SYMTAB_HASH_FUNC = hashRotate;
+  HashTable symtab = (HashTable){};
+  if ((err = symtabInit(&symtab, SYMTAB_BUCKET_SIZE, 
+                        SYMTAB_LIST_CAPACITY, SYMTAB_HASH_FUNC, ast))) {
+    fprintf(stderr, "Failed to init symtab\n");
+    exitValue = err;
+    goto exit;
+  }
+  symtabInited = true;
+
+  FILE* logFile = openHtmlLogFile("./.log/");
+  hashTableDump(logFile, &symtab, "MANGLING");
+  closeHtmlLogFile(logFile);
+
   nodePrintPrefix(outFile, ast);
   fclose(outFile);
 
@@ -90,5 +108,7 @@ exit:
     //closeHtmlLogFile(logFile);
   if (astInited)
     nodeDestroy(ast);
+  if (symtabInited)
+    hashTableDestroy(&symtab, false);
   return exitValue;
 }

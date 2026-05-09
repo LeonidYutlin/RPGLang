@@ -189,7 +189,7 @@ Error lexerAnalyze(Lexer* lexer) {
       .size = len 
     };
     TokenType* kwType = NULL;
-    if (!hashTableGet(&KEYWORD_HT, strView, (void**)&kwType, &err)) {
+    if (!hashTableGet(&KEYWORD_HT, strView, &kwType, &err)) {
       EMIT(TOK_IDENTIFIER, oldPos, len);
     } else if (*kwType == TOK_NOTE){
       while (c != '\n') {
@@ -285,9 +285,6 @@ static bool isIn(char c, const char* str) {
   return strchr(str, c) != NULL;
 }
 
-static uint64_t hashdjb2(StringView strView);
-static uint64_t hashRotate(StringView strView);
-
 static const size_t KEYWORD_HT_BUCKET_SIZE = 101;
 static const size_t KEYWORD_HT_LIST_CAPACITY = 4;
 static const hash_f KEYWORD_HT_HASH_FUNC = hashRotate;
@@ -318,30 +315,6 @@ static Error keywordInit() {
   //closeHtmlLogFile(logFile);
 
   return OK;
-}
-
-// NOTE: Mainly taken from: http://www.cse.yorku.ca/~oz/hash.html
-static _unused uint64_t hashdjb2(StringView strView) {
-  uint64_t hash = 5381;
-
-  for (size_t i = 0; i < strView.size; i++)
-    hash = ((hash << 5) + hash) + (uint64_t)strView.data[i]; /* hash * 33 + c */
-
-  return hash;
-}
-
-static const size_t SHIFT = 23;
-
-static _unused uint64_t hashRotate(StringView strView) {
-  uint64_t hash = 0;
- 
-  // NOTE: Source for left rotation: https://stackoverflow.com/a/13289498
-  for (size_t i = 0; i < strView.size; i++) {
-    hash = (hash << SHIFT) | (hash >> ((sizeof(hash) - SHIFT) % sizeof(hash)));
-    hash ^= (uint64_t)strView.data[i];
-  }
-
-  return hash;
 }
 
 static bool cmpTokenType(void* tokTypeA, void* tokTypeB) {

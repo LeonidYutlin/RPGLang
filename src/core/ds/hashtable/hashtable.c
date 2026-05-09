@@ -116,7 +116,7 @@ Error hashTablePut(HashTable* table, StringView key, void* value) {
   return OK;
 }
 
-bool hashTableGet(HashTable* table, StringView key, void** result, Error* status) {
+bool hashTableGet(HashTable* table, StringView key, void* result, Error* status) {
   Error err = OK;
   if ((err = hashTableVerify(table)))
     RETURN_WITH_STATUS(err, false);
@@ -132,7 +132,7 @@ bool hashTableGet(HashTable* table, StringView key, void** result, Error* status
     return false;
   Entry* entry = (Entry*)listGetValue(bucket, index, &err);
 
-  *result = listGetValue(&table->values, entry->value, &err);
+  *(void**)result = listGetValue(&table->values, entry->value, &err);
   return true;
 }
 
@@ -192,6 +192,30 @@ Error hashTableDestroy(HashTable* table, bool isAlloced) {
   if (isAlloced)
     free(table);
   return OK;
+}
+
+// NOTE: Mainly taken from: http://www.cse.yorku.ca/~oz/hash.html
+_unused uint64_t hashdjb2(StringView strView) {
+  uint64_t hash = 5381;
+
+  for (size_t i = 0; i < strView.size; i++)
+    hash = ((hash << 5) + hash) + (uint64_t)strView.data[i]; /* hash * 33 + c */
+
+  return hash;
+}
+
+static const size_t SHIFT = 23;
+
+_unused uint64_t hashRotate(StringView strView) {
+  uint64_t hash = 0;
+ 
+  // NOTE: Source for left rotation: https://stackoverflow.com/a/13289498
+  for (size_t i = 0; i < strView.size; i++) {
+    hash = (hash << SHIFT) | (hash >> ((sizeof(hash) - SHIFT) % sizeof(hash)));
+    hash ^= (uint64_t)strView.data[i];
+  }
+
+  return hash;
 }
 
 static ListIndex listFindByKey(List* lst, StringView key) {

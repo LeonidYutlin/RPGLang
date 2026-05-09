@@ -186,7 +186,7 @@ Error listDestroy(List* lst, bool isAlloced) {
     return BadArgs;
 
   if (lst->freeFunc)
-    freeArray(lst->data, lst->capacity, 
+    freeArray(listGet(lst, 1), listGetCapacity(lst, NULL), 
               lst->itemSize, lst->freeFunc);
   free(lst->data);
   free(lst->next);
