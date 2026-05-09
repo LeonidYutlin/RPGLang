@@ -1,4 +1,5 @@
 #include "ds/hashtable/hashtable.h"
+#include "ds/hashtable/entry.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +7,9 @@
 static ListIndex listFindByKey(List* lst, StringView key);
 
 Error hashTableInit(HashTable* table, size_t bucketCount, 
-                    size_t initialListCapacity, hash_f hashFunc) {
+                    size_t initialListCapacity, size_t itemSize, 
+                    free_f freeFunc, printf_f printfFunc, 
+                    cmp_f cmpFunc, hash_f hashFunc) {
   Error err = hashTableVerify(table);
   if (err != OK &&
       err != Uninitialized)
@@ -15,6 +18,9 @@ Error hashTableInit(HashTable* table, size_t bucketCount,
     return DenyReinit;
   if (!bucketCount || 
       !initialListCapacity ||
+      !itemSize ||
+      !printfFunc ||
+      !cmpFunc ||
       !hashFunc)
     return BadArgs;
 
@@ -23,13 +29,22 @@ Error hashTableInit(HashTable* table, size_t bucketCount,
     return FailMemoryAllocation;
 
   for (size_t i = 0; i < bucketCount; i++) {
-    if ((err = listInit(buckets + i, initialListCapacity, true))) {
+    if ((err = listInit(buckets + i, initialListCapacity, 
+                        sizeof(Entry), NULL, printEntry, cmpEntry, true))) {
         free(buckets);
         return err;
     }
   }
 
+  List values = (List){};
+  if ((err = listInit(&values, initialListCapacity * bucketCount,
+                      itemSize, freeFunc, printfFunc, cmpFunc, true))) {
+    free(buckets);
+    return err;
+  }
+
   *table = (HashTable){
+    .values = values,
     .buckets = buckets,
     .bucketCount = bucketCount,
     .hashFunc = hashFunc,
@@ -39,10 +54,15 @@ Error hashTableInit(HashTable* table, size_t bucketCount,
   return OK;
 }
 
-HashTable* hashTableAlloc(size_t bucketCount, size_t initialListCapacity, 
+HashTable* hashTableAlloc(size_t bucketCount, size_t initialListCapacity,
+                          size_t itemSize, free_f freeFunc,
+                          printf_f printfFunc, cmp_f cmpFunc,
                           hash_f hashFunc, Error* status) {
   if (!bucketCount ||
       !initialListCapacity ||
+      !itemSize ||
+      !printfFunc ||
+      !cmpFunc ||
       !hashFunc)
     RETURN_WITH_STATUS(BadArgs, NULL);
 
@@ -52,7 +72,9 @@ HashTable* hashTableAlloc(size_t bucketCount, size_t initialListCapacity,
 
   Error err = OK;
   if ((err = hashTableInit(table, bucketCount, 
-                           initialListCapacity, hashFunc))) {
+                           initialListCapacity, itemSize, 
+                           freeFunc, printfFunc, 
+                           cmpFunc, hashFunc))) {
     free(table);
     RETURN_WITH_STATUS(err, NULL);
   }
@@ -60,33 +82,41 @@ HashTable* hashTableAlloc(size_t bucketCount, size_t initialListCapacity,
   return table;
 }
 
-Error hashTablePut(HashTable* table, StringView key, TokenType value) {
+Error hashTablePut(HashTable* table, StringView key, void* value) {
   Error err = OK;
   if ((err = hashTableVerify(table)))
     return err;
-  if (!key.data || !key.size)
+  if (!key.data || 
+      !key.size ||
+      !value)
     return BadArgs;
   
-  uint64_t hash = table->hashFunc(key); 
+  uint64_t hash = table->hashFunc(key);
   List* bucket = table->buckets + (hash % table->bucketCount);
   ListIndex index = listFindByKey(bucket, key);
   if (!index) {
+    ListIndex valueIndex = listAddAfterTail(&table->values, value, &err);
+    if (err)
+      return err;
     Entry entry = (Entry) {
       .key = key,
-      .value = value,
+      .value = valueIndex,
       .hash = hash,
     };
-    listAddAfterTail(bucket, entry, &err);
+    listAddAfterTail(bucket, &entry, &err);
     if (err)
       return err;
   } else {
-    (bucket->data + index)->value = value;
+    Entry* entry = (Entry*)listGetValue(bucket, index, &err);
+    if (err)
+      return err;
+    listSetValue(&table->values, entry->value, value);
   }
 
   return OK;
 }
 
-TokenType hashTableGet(HashTable* table, StringView key, Error* status) {
+void* hashTableGet(HashTable* table, StringView key, Error* status) {
   Error err = OK;
   if ((err = hashTableVerify(table)))
     RETURN_WITH_STATUS(err, 0);
@@ -98,7 +128,8 @@ TokenType hashTableGet(HashTable* table, StringView key, Error* status) {
   ListIndex index = listFindByKey(bucket, key);
   if (!index)
     RETURN_WITH_STATUS(NotFound, 0);
-  return (bucket->data + index)->value;
+  Entry* entry = (Entry*)listGetValue(bucket, index, &err);
+  return listGetValue(&table->values, entry->value, &err);
 }
 
 Error hashTableDelete(HashTable* table, StringView key) {
@@ -111,8 +142,11 @@ Error hashTableDelete(HashTable* table, StringView key) {
   uint64_t hash = table->hashFunc(key);
   List* bucket = table->buckets + (hash % table->bucketCount);
   ListIndex index = listFindByKey(bucket, key);
-  if (index)
+  if (index) {
+    Entry* entry = (Entry*)listGetValue(bucket, index, &err);
+    listDelete(&table->values, entry->value);
     listDelete(bucket, index);
+  }
 
   return OK;
 }
@@ -132,6 +166,8 @@ Error hashTableVerify(HashTable* table) {
     if ((err = listVerify(table->buckets + i)))
       return err;
   }
+  if ((err = listVerify(&table->values)))
+    return err;
   return OK;
 }
 
@@ -139,6 +175,7 @@ Error hashTableDestroy(HashTable* table, bool isAlloced) {
   if (!table)
     return BadArgs;
 
+  listDestroy(&table->values, false);
   if (table->buckets) {
     for (size_t i = 0; i < table->bucketCount; i++) {
       listDestroy(table->buckets + i, false);
@@ -163,7 +200,7 @@ static ListIndex listFindByKey(List* lst, StringView key) {
        cur = lst->next[cur]) {
     if (!cur)
       break;
-    ListUnit* unit = lst->data + cur;
+    Entry* unit = (Entry*)listGetValue(lst, cur, NULL);
     //logln(INFO, "Comparing %.*s and %.*s", key.size, key.data, unit->key.size, unit->key.data);
     if (unit->key.size == key.size &&
         strncmp(unit->key.data, key.data, key.size) == 0) {

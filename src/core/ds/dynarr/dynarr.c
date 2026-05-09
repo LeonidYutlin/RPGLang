@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const size_t REALLOC_MULT = 2;
+
 DynamicArray* dynArrAlloc(size_t initialCapacity, size_t itemSize, 
                           free_f freeFunc, Error* status) {
   if (!initialCapacity || !itemSize)
@@ -21,7 +23,7 @@ DynamicArray* dynArrAlloc(size_t initialCapacity, size_t itemSize,
 }
 
 Error dynArrInit(DynamicArray* da, size_t initialCapacity, 
-             size_t itemSize, free_f freeFunc) {
+                 size_t itemSize, free_f freeFunc) {
   if (!initialCapacity ||
       !itemSize ||
       !da)
@@ -44,13 +46,9 @@ Error dynArrDestroy(DynamicArray* da, bool isAlloced) {
   if (!da)
     return BadArgs;
 
-  if (da->items && da->freeFunc) {
-    char* endOfItems = (char*)da->items + da->capacity * da->itemSize;
-    size_t itemSize = da->itemSize;
-    free_f freeFunc = da->freeFunc;
-    for (char* i = da->items; i < endOfItems; i += itemSize)
-      freeFunc(i);
-  }
+  if (da->freeFunc)
+    freeArray(da->items, da->capacity, 
+              da->itemSize, da->freeFunc);
   free(da->items);
   if (isAlloced)
     free(da);
@@ -66,7 +64,7 @@ Error dynArrAppend(DynamicArray* da, void* elem) {
     return err;
  
   if (da->count == da->capacity) {
-    size_t newCapacity = da->capacity * 2;
+    size_t newCapacity = da->capacity * REALLOC_MULT;
     void* temp = realloc(da->items, newCapacity * da->itemSize);
     if (!temp)
       return FailMemoryReallocation;

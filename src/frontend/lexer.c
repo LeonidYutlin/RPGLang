@@ -16,6 +16,9 @@ static size_t KEYWORD_HT_REFCOUNT = 0;
 static Error keywordInit();
 static bool isIn(char c, const char* str);
 
+static bool cmpTokenType(void* tokTypeA, void* tokTypeB);
+static void printTokenType(FILE* sink, void* tokType); 
+
 static const char* const TOKEN_TYPES[] = {
   #define X(enm, str) \
     [enm] = str,
@@ -186,16 +189,16 @@ Error lexerAnalyze(Lexer* lexer) {
       .data = lexer->mf.data + oldPos, 
       .size = len 
     };
-    TokenType kwType = hashTableGet(&KEYWORD_HT, strView, &err);
+    TokenType* kwType = hashTableGet(&KEYWORD_HT, strView, &err);
     if (err == NotFound) {
       EMIT(TOK_IDENTIFIER, oldPos, len);
-    } else if (kwType == TOK_NOTE){
+    } else if (*kwType == TOK_NOTE){
       while (c != '\n') {
         lexer->pos++;
         c = buf[lexer->pos];
       }
     } else {
-      EMIT(kwType, oldPos, len);
+      EMIT(*kwType, oldPos, len);
     }
     continue;
 
@@ -294,12 +297,18 @@ static Error keywordInit() {
   Error err = OK;
   if ((err = hashTableInit(&KEYWORD_HT, 
                            KEYWORD_HT_BUCKET_SIZE, 
-                           KEYWORD_HT_LIST_CAPACITY, 
+                           KEYWORD_HT_LIST_CAPACITY,
+                           sizeof(TokenType), 
+                           NULL, printTokenType, cmpTokenType,
                            KEYWORD_HT_HASH_FUNC)))
     return err;
 
+  TokenType token = TOK_SEMIC;
 #define SV(str) (StringView){ .data = str, .size = sizeof(str) - 1 }
-#define X(tok, str) if ((err = hashTablePut(&KEYWORD_HT, SV(str), tok))) return err;
+#define X(tok, str) \
+  token = tok;      \
+  if ((err = hashTablePut(&KEYWORD_HT, SV(str), &token))) return err;
+
   KEYWORD_LIST()
   KEYWORD_ALIAS_LIST()
 #undef X
@@ -334,4 +343,23 @@ static _unused uint64_t hashRotate(StringView strView) {
   }
 
   return hash;
+}
+
+static bool cmpTokenType(void* tokTypeA, void* tokTypeB) {
+  if ((!tokTypeA &&  tokTypeB) ||
+      ( tokTypeA && !tokTypeB))
+    return false;
+  if (!tokTypeA && !tokTypeB)
+    return true;
+
+  return *((TokenType*)tokTypeA) == *((TokenType*)tokTypeB);
+}
+
+static void printTokenType(FILE* sink, void* tokType) { 
+  if (!sink || !tokType)
+    return;
+
+  fprintf(sink, 
+          "%s\n",
+          getTokenTypeStr(*((TokenType*)tokType)));
 }

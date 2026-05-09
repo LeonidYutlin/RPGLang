@@ -17,10 +17,17 @@
 #define _format
 #endif
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 typedef struct {
   char* data;
   size_t size;
 } StringView;
+
+typedef bool (*cmp_f)(void* a, void* b);
+typedef void (*printf_f)(FILE* sink, void* ptr);
+typedef void (*free_f)(void* ptr);
+Error freeArray(void* array, size_t count, size_t itemSize, free_f freeFunc);
 
 bool doubleEqual(double a, double b);
 

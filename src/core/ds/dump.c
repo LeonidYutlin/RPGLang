@@ -139,6 +139,7 @@ static Error hashTableTextDump(FILE* f, HashTable* table,
           "HashTable Dump #%u called from %s:%d\n"
           "Textual Dump:\n"
           "HashTable [%p] {\n"
+          "\t...\n"
           "\t%sbuckets = %p\n"
           "\tbucketCount = %zu\n"
           "\t%shashFunc = %p\n"
@@ -161,10 +162,14 @@ static Error hashTableGraphDump(FILE* f, HashTable* table) {
     assert(table->buckets);
 
     Error err = OK;
+    ++CALL_COUNT;
+    if ((err = listGraphDump(f, &table->values))) 
+      return err;
+
     for (size_t i = 0; i < table->bucketCount; i++) {
       ++CALL_COUNT;
       if ((err = listGraphDump(f, table->buckets + i))) 
-          return err;
+        return err;
     }
 
     return OK;
@@ -207,7 +212,7 @@ static Error listTextDump(FILE* f, List* lst,
             "\t%sdata = %p\n"
             "\t%snext = %p\n"
             "\t%sprev = %p\n"
-            "\t<b>|     index    |     data     |     next     |     prev     |\n",
+            "\t<b>|     index     |     next     |     prev     |     data     |\n",
             commentary,
             CALL_COUNT, filename, line,
             lst,
@@ -227,11 +232,15 @@ static Error listTextDump(FILE* f, List* lst,
 
     for (ListIndex i = 0; i < lst->capacity; i++) {
       fprintf(f,
-              "\t| "LIST_INDEX_FMT" | "LIST_UNIT_FMT" | "LIST_INDEX_FMT" | "LIST_INDEX_FMT" |\n"
-              "\t----------------------------------------------\n",
-              i, LIST_UNIT_FMT_ARGS(lst->data + i),
-              isNextNull ? 0 : lst->next[i], isPrevNull ? 0 : lst->prev[i]);
+              "\t| "LIST_INDEX_FMT" | "LIST_INDEX_FMT" | "LIST_INDEX_FMT" |",
+              i, isNextNull ? 0 : lst->next[i], isPrevNull ? 0 : lst->prev[i]);
 
+      if (i != 0)
+        lst->printfFunc(f, listGet(lst, i));
+      else 
+        fprintf(f, "%.*s", (int)lst->itemSize, listGet(lst, i));
+
+      fprintf(f, "\n\t----------------------------------------------\n");
     }
     fprintf(f, "</b>}\n");
 
@@ -289,7 +298,7 @@ static Error listGraphDump(FILE* f, List* lst) {
     }
 
     for (ListIndex i = 0; i < lst->capacity; i++) {
-        if (lst->isDoubleLinked)
+        if (lst->isDoubleLinked) {
             fprintf(dot,
                     "node%lu"
                     "[shape=box, style=\"rounded, filled\", color=\"%s\", fillcolor=\"%s\", penwidth=2.1, fontsize=14, label="
@@ -300,13 +309,7 @@ static Error listGraphDump(FILE* f, List* lst) {
                         "<td bgcolor=\"%s\"><b>next:</b> %lu</td>"
                     "</tr>"
                     "<tr>"
-                        "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> "LIST_UNIT_FMT"</td>"
-                    "</tr>"
-                    "<tr>"
-                        "<td colspan=\"6\" bgcolor=\"%s\"><b>addr:</b> %p</td>"
-                    "</tr>"
-                    "</table>"
-                    ">];\n",
+                        "<td colspan=\"5\" bgcolor=\"%s\"><b>value:</b>",
                     i,
                     TABLE_OUTLINE,
                     i == 0 ? BG_COLOR : isFree[i] ? FREE_FILL : LIST_CELL,
@@ -314,9 +317,8 @@ static Error listGraphDump(FILE* f, List* lst) {
                     PREV_FILL,    lst->prev[i],
                     INDEX_FILL,   i,
                     NEXT_FILL,    lst->next[i],
-                    VALUE_FILL,   LIST_UNIT_FMT_ARGS(lst->data + i),
-                    ADDRESS_FILL, lst->data + i);
-        else
+                    VALUE_FILL);
+        } else {
             fprintf(dot,
                     "node%lu"
                     "[shape=box, style=\"rounded, filled\", color=\"%s\", fillcolor=\"%s\", penwidth=2.1, fontsize=14, label="
@@ -326,21 +328,30 @@ static Error listGraphDump(FILE* f, List* lst) {
                         "<td bgcolor=\"%s\"><b>next:</b> %lu</td>"
                     "</tr>"
                     "<tr>"
-                        "<td colspan=\"5\" bgcolor=\"%s\"><b>value:</b>"LIST_UNIT_FMT"</td>"
-                    "</tr>"
-                    "<tr>"
-                        "<td colspan=\"5\" bgcolor=\"%s\"><b>addr:</b> %p</td>"
-                    "</tr>"
-                    "</table>"
-                    ">];\n",
+                        "<td colspan=\"5\" bgcolor=\"%s\"><b>value:</b>",
                     i,
                     TABLE_OUTLINE,
                     i == 0 ? BG_COLOR : isFree[i] ? FREE_FILL : LIST_CELL,
                     TABLE_OUTLINE,
                     INDEX_FILL,   i,
                     NEXT_FILL,    lst->next[i],
-                    VALUE_FILL,   LIST_UNIT_FMT_ARGS(lst->data + i),
-                    ADDRESS_FILL, lst->data + i);
+                    VALUE_FILL);
+        }
+
+        if (i != 0)
+          lst->printfFunc(dot, listGet(lst, i));
+        else 
+          fprintf(dot, "%.*s", (int)lst->itemSize, listGet(lst, i));
+
+        fprintf(dot,
+                   "</td>"
+                "</tr>"
+                "<tr>"
+                   "<td colspan=\"5\" bgcolor=\"%s\"><b>addr:</b> %p</td>"
+                "</tr>"
+                "</table>"
+                ">];\n",
+                ADDRESS_FILL, listGet(lst, i));
     }
 
     fprintf(dot, "{rank=same; ");

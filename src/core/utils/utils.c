@@ -14,6 +14,23 @@
 static const char* DEFAULT_OUTPUT_FILEPATH = "ast.txt";
 static const double DOUBLE_COMPARISON_PRECISION = DBL_EPSILON;
 
+Error freeArray(void* array, size_t count, size_t itemSize, free_f freeFunc) {
+  if (!array ||
+      !freeFunc ||
+      !count ||
+      !itemSize)
+    return BadArgs;
+
+  // NOTE: this method of iterating may be dangerous 
+  // if (somehow) the array reallocates in the middle of this iteration
+  // Since for now this hasn't caused any issues, I do not wish to change this
+  char* endOfArray = (char*)array + count * itemSize;
+  for (char* i = array; i < endOfArray; i += itemSize)
+    freeFunc(i);
+
+  return OK;
+}
+
 bool doubleEqual(double a, double b) {
   return fabs(a - b) < DOUBLE_COMPARISON_PRECISION;
 }
