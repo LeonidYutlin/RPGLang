@@ -6,6 +6,7 @@ DEFINE_FLAGS  := -D _DEBUG \
 							   -D LOG_STATUSES \
 								 -D BACKEND_DEBUG_INFO \
 								 -D CONDITIONAL_MOVES
+								# -D HARD_DIFFICULTY
 								# -D SIMPLIFIED_NODES
 								# -D LOG_FORCE_TRACE
 LIBS          := -lm -lc

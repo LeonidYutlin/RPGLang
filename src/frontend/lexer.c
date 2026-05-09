@@ -1,5 +1,4 @@
 #include "frontend/lexer.h"
-#include "ds/dump.h"
 #include "ds/hashtable/hashtable.h"
 #include "logger/logger.h"
 #include "utils/utils.h"
@@ -44,7 +43,7 @@ Error lexerInit(Lexer* lexer, const char* filename, size_t initCap) {
   }
 
   lexer->pos        = 0;
-  lexer->line       = lexer->mf.data + 1;
+  lexer->lineN      = 1;
   lexer->lineStart  = lexer->mf.data + 1;
 
   if (!KEYWORD_HT_REFCOUNT &&
@@ -80,7 +79,7 @@ Lexer* lexerAlloc(const char* filename, size_t initCap, Error* status) {
       .type = T,                       \
       .pos = lexer->mf.data + position,\
       .len = length,                   \
-      .line = lexer->line,             \
+      .lineN = lexer->lineN,           \
       .lineStart = lexer->lineStart,   \
     };                                 \
     dynArrAppend(tokens, &newToken);   \
@@ -110,8 +109,8 @@ Error lexerAnalyze(Lexer* lexer) {
     //skip whitespace
     if (isspace(c)) {
       if (c == '\n') {
-        lexer->line++;
-        lexer->lineStart = lexer->mf.data + lexer->pos;
+        lexer->lineN++;
+        lexer->lineStart = lexer->mf.data + lexer->pos + 1;
       }
       lexer->pos++;
       continue;

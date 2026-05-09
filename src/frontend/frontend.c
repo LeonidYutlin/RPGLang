@@ -43,9 +43,25 @@ int main(int argc, char* argv[]) {
   }
 
   //lexerPrintTokens(stdout, &lexer);
-  preparse(&lexer.tokens);
+
+  _unused bool valid = preparse(&lexer.tokens, &err);
+
+  if (err) {
+    fprintf(stderr, "Preparser Failed\n");
+    exitValue = err;
+    goto exit;
+  }
+#ifndef HARD_DIFFICULTY
+  if (!valid) {
+    fprintf(stderr, "Invalid class usage detected, no further compilation is done\n");
+    exitValue = Fail;
+    goto exit;
+  }
+#endif
+
   //printf("After Preparsing ------------\n");
   //lexerPrintTokens(stdout, &lexer);
+
   TreeNode* ast = parse(&lexer.tokens);
   if (!ast) {
     fprintf(stderr, "Failed to parse token stream\n");

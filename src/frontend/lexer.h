@@ -72,7 +72,7 @@ typedef struct Token {
   TokenType type;
   bool isInvalidClass;
   int64_t value;
-  char* line;
+  size_t lineN;
   char* lineStart;
   char* pos;
   size_t len;
@@ -83,7 +83,7 @@ typedef DynamicArray Tokens;
 typedef struct Lexer {
   Tokens tokens;
   MappedFile mf;
-  char* line;
+  size_t lineN;
   char* lineStart;
   size_t pos;
 } Lexer;

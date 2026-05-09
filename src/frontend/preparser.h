@@ -4,6 +4,6 @@
 #include "error/error.h"
 #include "frontend/lexer.h"
 
-Error preparse(Tokens* tokens);
+bool preparse(Tokens* ts, Error* status);
 
 #endif

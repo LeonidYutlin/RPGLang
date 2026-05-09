@@ -1,11 +1,17 @@
 #include "frontend/preparser.h"
+#include <string.h>
+
+#define CLASS_LIST() \
+  X(None)            \
+  X(Mage)            \
+  X(Priest)          \
+  X(Warrior)         \
+  X(Warlock)         
 
 typedef enum {
-  None,
-  Mage,
-  Priest,
-  Warrior,
-  Warlock,
+#define X(enm) enm,
+CLASS_LIST()
+#undef X
 } Class;
 
 //TODO: maybe another solution that doesnt involve Y-macro
@@ -30,15 +36,17 @@ typedef enum {
   X(TOK_OR, Warlock)
 
 static bool isInvalidClass(TokenType type, Class curClass);
+static const char* getClassStr(Class class);
 
-Error preparse(Tokens* ts) {
+bool preparse(Tokens* ts, Error* status) {
   Error err = OK;
   if ((err = dynArrVerify(ts)))
-    return err;
+    RETURN_WITH_STATUS(err, false);
 
+  bool allValid = true;
   Tokens newTs = (Tokens){};
   if ((err = dynArrInit(&newTs, ts->capacity, sizeof(Token), NULL)))
-    return err;
+    RETURN_WITH_STATUS(err, false);
 
   Class curClass = None;
   for (size_t i = 0; i < ts->count; i++) {
@@ -49,7 +57,18 @@ Error preparse(Tokens* ts) {
       case TOK_WARRIOR: curClass = Warrior; continue;
       case TOK_WARLOCK: curClass = Warlock; continue;
       default: {
-        t->isInvalidClass = isInvalidClass(t->type, curClass);
+        bool isInv = isInvalidClass(t->type, curClass);
+        if (isInv) {
+          fprintf(stderr, 
+                  "%zu:%zu [ERROR] %s isn't able to use \"%.*s\"\n"
+                  "|\t%.*s\n",
+                  t->lineN, (size_t)(t->pos - t->lineStart),
+                  getClassStr(curClass), (int)t->len, t->pos,
+                  (int)(strchr(t->lineStart, '\n') - t->lineStart), 
+                  t->lineStart);
+          allValid = false;
+        }
+        t->isInvalidClass = isInv;
         dynArrAppend(&newTs, t); break;
       }
     }
@@ -58,7 +77,7 @@ Error preparse(Tokens* ts) {
   dynArrDestroy(ts, false);
   *ts = newTs;
 
-  return OK;
+  return allValid;
 }
 
 static bool isInvalidClass(TokenType type, Class curClass) {
@@ -70,4 +89,16 @@ static bool isInvalidClass(TokenType type, Class curClass) {
   }
 #undef X
 #undef Y
+}
+
+static const char* getClassStr(Class class) {
+  if (class == None)
+    return "Unclassified";
+
+  switch (class) {
+#define X(enm) case enm: return #enm;
+    CLASS_LIST()
+#undef X
+    default: return "UnknownClass";
+  }
 }
