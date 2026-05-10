@@ -1,0 +1,10 @@
+note | arguments are evaluated from right to left, therefore first in to work is the right one
+prim main() {
+  out(:](in(); in()));
+  complete #mage 0;
+}
+
+prim :](prim a; prim b) {
+  out(a empower b);
+  complete a #warlock shatter b;
+}

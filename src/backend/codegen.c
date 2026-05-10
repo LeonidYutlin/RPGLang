@@ -6,6 +6,7 @@
 typedef struct {
   FILE* sink;
   HashTable* symtab;
+  TreeNode* curFuncDecl;
   uint64_t labelCount;
   uint64_t depth;
 } Context;
@@ -37,6 +38,7 @@ static void handleLoopBranches(Context* ctx, TreeNode* ast,
                                uint64_t* newLabel, CtrlType type,
                                const char* cmpStr, const char* prefix);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
+static inline void funcDecl(Context* ctx, TreeNode* ast);
 static inline void raiseExceptions(Context* ctx, TreeNode* ast);
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr);
 static void clearStack(Context* ctx, TreeNode* ast, uint64_t oldDepth);
@@ -58,10 +60,7 @@ static void gen_(FILE* sink, const char* commentary,
 // CTRL: CTRL_ASG, CTRL_DECL, CTRL_PARAM, CTRL_CONTINUE, CTRL_BREAK
 // IDENT: in context of a + b
 // TYPE: frac and loc
-// TODO: add typed return
-// TODO: add return value from function being handled
 // TODO: add parameters
-// TODO: add name mangling for func names
 
 void codegen(FILE* sink, TranslationUnit* trUnit) {
   if (!sink || 
@@ -93,6 +92,7 @@ void codegen(FILE* sink, TranslationUnit* trUnit) {
   Context ctx = (Context){
     .sink = sink,
     .symtab = &trUnit->symtab,
+    .curFuncDecl = NULL,
     .labelCount = 0,
     .depth = 0,
   };
@@ -109,15 +109,23 @@ static void codegenRec(Context* ctx, TreeNode* ast,
       !ast)
     return;
 
+  if (OF_CTRL(ast, CTRL_FUNC_DECL))
+      ctx->curFuncDecl = ast;
+
   if (OF_CTRL(ast, CTRL_FUNC_CALL)) {
-    com("PRECALL SAVED REGS");
-    size_t i = 0;
-    for (TreeNode* arg = ast->right; 
-         arg && i < ARG_REGS_SIZE; arg = arg->right) {
+    assert(ctx->curFuncDecl);
+    SymbolIndex index = ctx->curFuncDecl->left->left->right->data.value.sym;
+    Entry* e = (Entry*)listGetValue(ctx->symtab->buckets + index.bucketIndex, 
+                                    index.listIndex, NULL);
+    assert(e);
+    Symbol* sym = (Symbol*)listGetValue(&ctx->symtab->values, e->value, NULL);
+    assert(sym);
+    if (sym->argc)
+      com("PRECALL SAVED REGS");
+    for (size_t i = 0; i < ARG_REGS_SIZE && i < sym->argc; i++) {
       genn("\t\tpush %s\n",
            ARG_REGS[i]);
       ctx->depth++;
-      i++;
     }
   }
 
@@ -144,6 +152,28 @@ static void codegenRec(Context* ctx, TreeNode* ast,
 
   if (IS_NUM(ast)) {
     push(ctx, ast);    
+    return;
+  }
+
+  if (IS_SYMBOL(ast) && 
+      !OF_CTRL(ast->parent, CTRL_FUNC_CALL) &&
+      !OF_CTRL(ast->parent, CTRL_DECL) &&
+      !OF_CTRL(ast->parent, CTRL_PARAM)) {
+    SymbolOffset s = ast->data.value.symOff;
+    if (s.isArg) {
+      if (s.offset < ARG_REGS_SIZE) {
+        gen("PUSH REG ARGUMENT",
+            "\t\tpush %s\n",
+            ARG_REGS[s.offset]);
+        ctx->depth++;
+      } else {
+        gen("PUSH STACK ARGUMENT",
+            "\t\tmov rax, [rbp + %lu]\n"
+            "\t\tpush rax\n",
+            ((s.offset - (ARG_REGS_SIZE - 1)) + 1) * REG_SIZE);
+        ctx->depth++;
+      }
+    }
     return;
   }
   
@@ -282,31 +312,26 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
       call(ctx, ast, oldDepth);
       break;
     case CTRL_RETURN:
+      if (ast->left)
+        com("TYPED RETURN");
+      else 
+        com("VOID RETURN");
       if (ast->left) {
-        gen("TYPED RETURN",
-            "\t\tpop rax\n"
-            "\t\tret\n");
+        genn("\t\tpop rax\n");
         ctx->depth--;
-      } else
-        gen("VOID RETURN",
-            "\t\tret\n");         
+      }
+      genn("\t\tmov rsp, rbp\n"
+           "\t\tpop rbp\n"
+           "\t\tret\n");         
       break;
     case CTRL_FUNC_DECL:
       gen("EXTRA RETURN",
+          "\t\tmov rsp, rbp\n"
+          "\t\tpop rbp\n"
           "\t\tret\n");
       break;
     case CTRL_SIGNATURE:
-      {
-        SymbolIndex id = ast->left->right->data.value.sym;
-        Entry* e = (Entry*)listGetValue(ctx->symtab->buckets + id.bucketIndex, 
-                                        id.listIndex, NULL);
-        assert(e);
-        Symbol* sym = (Symbol*)listGetValue(&ctx->symtab->values, e->value, NULL);
-        assert(sym);
-        gen("FUNC DECL",
-            "%.*s:\n",
-            (int)sym->mangledName.size, sym->mangledName.data);
-      }
+      funcDecl(ctx, ast);
       break;
     default: break;
   }
@@ -448,20 +473,42 @@ static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
        (int)sym->mangledName.size, sym->mangledName.data);
   clearStack(ctx, ast, oldDepth); 
 
-  com("POP CALL SAVED REGS");
-  i--;
-  for (TreeNode* arg = ast->right; 
-       arg && i < ARG_REGS_SIZE; arg = arg->right) {
+  assert(ctx->curFuncDecl);
+  id = ctx->curFuncDecl->left->left->right->data.value.sym;
+  e = (Entry*)listGetValue(ctx->symtab->buckets + id.bucketIndex, 
+                           id.listIndex, NULL);
+  assert(e);
+  Symbol* curFuncDeclSym = (Symbol*)listGetValue(&ctx->symtab->values, e->value, NULL);
+  assert(curFuncDeclSym);
+  
+  if (curFuncDeclSym->argc)
+    com("POP CALL SAVED REGS");
+  for (size_t k = MIN(6, curFuncDeclSym->argc) - 1; k < ARG_REGS_SIZE; k--) {
     genn("\t\tpop %s\n",
-        ARG_REGS[i]);
+        ARG_REGS[k]);
     ctx->depth--;
-    i--;
   }
 
   if (sym->hasReturnValue) {
     genn("\t\tpush rax\n");
     ctx->depth++;
   }
+}
+
+static void funcDecl(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+
+  SymbolIndex id = ast->left->right->data.value.sym;
+  Entry* e = (Entry*)listGetValue(ctx->symtab->buckets + id.bucketIndex, 
+      id.listIndex, NULL);
+  assert(e);
+  Symbol* sym = (Symbol*)listGetValue(&ctx->symtab->values, e->value, NULL);
+  assert(sym);
+  gen("FUNC DECL",
+      "%.*s:\n"
+      "\t\tpush rbp\n"
+      "\t\tmov rbp, rsp\n",
+      (int)sym->mangledName.size, sym->mangledName.data);
 }
 
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr) {

@@ -1,0 +1,10 @@
+prim main() {
+  out(!(in()));
+  complete #mage 0;
+}
+
+prim !(prim a) {
+  if (a #warrior duel!> #mage 0II)
+    complete 0I;
+  complete a empower !(a #warrior hit #mage 0I);
+}

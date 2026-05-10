@@ -125,7 +125,7 @@ static Error checkCallsCallback(TreeNode* node,
     return Fail;
   } 
   if (!sym->hasReturnValue &&
-      IS_OP(node->parent)) {
+      !OF_CTRL(node->parent, CTRL_SEMIC)) {
     fprintf(stderr, 
             "[ERROR] void function %.*s used in a statement requiring a return value\n",
             (int)entry->key.size, entry->key.data);

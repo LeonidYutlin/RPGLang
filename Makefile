@@ -5,8 +5,8 @@ INCLUDE_FLAGS := -I src/ \
 DEFINE_FLAGS  := -D _DEBUG \
 							   -D LOG_STATUSES \
 								 -D BACKEND_DEBUG_INFO \
-								 -D CONDITIONAL_MOVES \
-                 -D EASY_DIFFICULTY \
+								 -D CONDITIONAL_MOVES
+                # -D EASY_DIFFICULTY
 								# -D HARD_DIFFICULTY
 								# -D SIMPLIFIED_NODES
 								# -D LOG_FORCE_TRACE
