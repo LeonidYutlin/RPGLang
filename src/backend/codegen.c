@@ -39,6 +39,7 @@ static void handleLoopBranches(Context* ctx, TreeNode* ast,
                                const char* cmpStr, const char* prefix);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static inline void funcDecl(Context* ctx, TreeNode* ast);
+static inline void asg(Context* ctx, TreeNode* ast);
 static inline void raiseExceptions(Context* ctx, TreeNode* ast);
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr);
 static void clearStack(Context* ctx, TreeNode* ast, uint64_t oldDepth);
@@ -155,7 +156,9 @@ static void codegenRec(Context* ctx, TreeNode* ast,
     return;
   }
 
+  // TODO: cleanup this monstrosity
   if (IS_SYMBOL(ast) && 
+      !(OF_CTRL(ast->parent, CTRL_ASG) && ast == ast->parent->left) &&
       !OF_CTRL(ast->parent, CTRL_FUNC_CALL) &&
       !OF_CTRL(ast->parent, CTRL_DECL) &&
       !OF_CTRL(ast->parent, CTRL_PARAM)) {
@@ -333,6 +336,9 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
     case CTRL_SIGNATURE:
       funcDecl(ctx, ast);
       break;
+    case CTRL_ASG:
+      asg(ctx, ast);
+      break;
     default: break;
   }
 }
@@ -493,6 +499,22 @@ static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
     genn("\t\tpush rax\n");
     ctx->depth++;
   }
+}
+
+static void asg(Context* ctx, TreeNode* ast) {
+  PRELUDE();
+
+  SymbolOffset s = ast->left->data.value.symOff;
+  com("ASSIGNMENT");
+  if (s.isArg && s.offset < ARG_REGS_SIZE) {
+    genn("\t\tpop %s\n",
+         ARG_REGS[s.offset]);
+  } else {
+    genn("\t\tpop rax\n"
+         "\t\tmov qword[rbp + %lu], rax\n",
+         ((s.offset - (ARG_REGS_SIZE - 1)) + 1) * REG_SIZE);
+  }
+  ctx->depth--;
 }
 
 static void funcDecl(Context* ctx, TreeNode* ast) {

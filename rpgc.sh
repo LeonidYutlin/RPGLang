@@ -10,7 +10,7 @@ STDLIB_OBJ=".temp/stdlib.o"
 
 ./bin/rpgc-frontend $1 -o $AST
 ./bin/rpgc-middleend $AST -o $AST_OPT
-./bin/rpgc-backend $AST -o $ASM # we ignore AST_OPT for now, to test things out
+./bin/rpgc-backend $AST_OPT -o $ASM 
 nasm -f elf64 $ASM -wno-number-overflow -o $OBJ
 nasm -f elf64 $STDLIB_ASM -wno-number-overflow -o $STDLIB_OBJ
 ld $OBJ $STDLIB_OBJ -o $2
