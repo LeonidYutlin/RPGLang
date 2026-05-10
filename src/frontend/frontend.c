@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
   int  exitValue = 0;
   bool loggerInited  = false;
   bool lexerInited   = false;
-  bool htmlLogInited = false;
+  //bool htmlLogInited = false;
   bool astInited     = false;
   bool symtabInited  = false;
   loggerInit(NULL, ERROR);
@@ -31,12 +31,12 @@ int main(int argc, char* argv[]) {
   }
   lexerInited = true;
 
-  FILE* logFile = openHtmlLogFile("./.log/");
-  if (!logFile) {
-   exitValue = FailFileOpen; 
-   goto exit;
-  }
-  htmlLogInited = true;
+  //FILE* logFile = openHtmlLogFile("./.log/");
+  //if (!logFile) {
+  // exitValue = FailFileOpen; 
+  // goto exit;
+  //}
+  //htmlLogInited = true;
 
   if ((err = lexerAnalyze(&lexer))) {
     logln(FATAL, "lexerAnalyze returned %s", parseError(err)->str);
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
   astInited = true;
-  nodeDump(logFile, ast, "Parsed Tree");
+  //nodeDump(logFile, ast, "Parsed Tree");
 
   FILE* outFile = fopen(output, "w");
   if (!outFile) {
@@ -89,8 +89,8 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
-  hashTableDump(logFile, &trUnit.symtab, "MANGLING");
-  nodeDump(logFile, ast, "After Symtab Init");
+  //hashTableDump(logFile, &trUnit.symtab, "MANGLING");
+  //nodeDump(logFile, ast, "After Symtab Init");
 
   if (!symtabCheckCalls(&trUnit, &err)) {
     fprintf(stderr, "Invalid function call detected, no further compilation is done\n");
@@ -111,8 +111,8 @@ exit:
     loggerCloseFile();
   if (lexerInited)
     lexerDestroy(&lexer, false);
-  if (htmlLogInited)
-    closeHtmlLogFile(logFile);
+  //if (htmlLogInited)
+  //  closeHtmlLogFile(logFile);
   if (astInited)
     nodeDestroy(ast);
   if (symtabInited)

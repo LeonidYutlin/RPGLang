@@ -1,0 +1,12 @@
+prim main() {
+  out(->f->(in()));
+  complete #mage 0;
+}
+
+prim ->f->(prim n) {
+  if (n #warrior duel!> #mage 0II)
+    complete n;
+  complete ->f->(n #warrior hit #mage 0I) 
+           #priest unite 
+           ->f->(n #warrior hit #mage 0II);
+}
