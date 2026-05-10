@@ -162,7 +162,7 @@ static void push(Context* ctx, TreeNode* ast) {
 static void op(Context* ctx, TreeNode* ast) {
   PRELUDE();
   if (ast->left) {
-    genn("\t\tpop rbx\n");
+    genn("\t\tpop r10\n");
     ctx->depth--;
   }
   if (ast->right) {
@@ -172,40 +172,46 @@ static void op(Context* ctx, TreeNode* ast) {
   switch (ast->data.value.op) {
     case OP_ADD:
       gen("ADD",
-          "\t\tadd rax, rbx\n"
+          "\t\tadd rax, r10\n"
           "\t\tpush rax\n");
       ctx->depth++;
       break;
     case OP_SUB:
       gen("SUB",
-          "\t\tsub rax, rbx\n"
+          "\t\tsub rax, r10\n"
           "\t\tpush rax\n");
       ctx->depth++;
       break;
     case OP_MUL:
       gen("MUL",
-          "\t\timul rax, rbx\n"
+          "\t\timul rax, r10\n"
           "\t\tpush rax\n");
       ctx->depth++;
       break;
     case OP_DIV:
       gen("DIV",
+          "\t\tpush rdx\n"
           "\t\tcqo\n"
-          "\t\tidiv rbx\n"
+          "\t\tidiv r10\n"
+          "\t\tpop rdx\n"
           "\t\tpush rax\n");
       ctx->depth++;
       break;
     case OP_SHL:
       gen("SHL",
-          "\t\tmov cl, bl\n"
+          "\t\tpush rcx\n"
+          "\t\tmov cl, r10b\n"
           "\t\tshl rax, cl\n"
+          "\t\tpop rcx\n"
           "\t\tpush rax\n");
       ctx->depth++;
       break;
     case OP_SHR:
       gen("SHR",
-          "\t\tmov cl, bl\n"
+          "\t\tpush rcx\n"
+          "\t\tmov cl, r10b\n"
           "\t\tshr rax, cl\n"
+          "\t\tpop rcx\n"
           "\t\tpush rax\n");
       ctx->depth++;
       break;
@@ -439,17 +445,17 @@ static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr) {
   PRELUDE();
   assert(cmpStr);
 #ifdef CONDITIONAL_MOVES
-  genn("\t\tmov rcx, rax\n"
+  genn("\t\tmov r11, rax\n"
        "\t\txor eax, eax\n"
-       "\t\tcmp rcx, rbx\n"
-       "\t\tmov rcx, 1\n"
-       "\t\t%s rax, rcx\n"
+       "\t\tcmp r11, r10\n"
+       "\t\tmov r11, 1\n"
+       "\t\t%s rax, r11\n"
        "\t\tpush rax\n",
        cmpStr);
 #else
   uint64_t pushZeroLabel     = ctx->labelCount++;
   uint64_t skipPushZeroLabel = ctx->labelCount++;
-  genn("\t\tcmp rax, rbx\n"
+  genn("\t\tcmp rax, r10\n"
        "\t\t%s .push_one%zu\n"
        //"\t\t.push_zero%zu:\n"
        "\t\tpush 0\n"
@@ -468,11 +474,11 @@ static void not(Context* ctx, TreeNode* ast) {
   PRELUDE();
 #ifdef CONDITIONAL_MOVES
   gen("LOGICAL NOT",
-      "\t\tmov rcx, rax\n"
+      "\t\tmov r10, rax\n"
       "\t\txor eax, eax\n"
-      "\t\ttest rcx, rcx\n"
-      "\t\tmov rcx, 1\n"
-      "\t\tcmovz rax, rcx\n"
+      "\t\ttest r10, r10\n"
+      "\t\tmov r10, 1\n"
+      "\t\tcmovz rax, r10\n"
       "\t\tpush rax\n");
 #else
   uint64_t pushZeroLabel     = ctx->labelCount++;
@@ -498,7 +504,7 @@ static void and(Context* ctx, TreeNode* ast) {
   gen("LOGICAL AND",
       "\t\ttest rax, rax\n"
       "\t\tjz .false%zu\n"
-      "\t\ttest rbx, rbx\n"
+      "\t\ttest r10, r10\n"
       "\t\tjz .false%zu\n"
       "\t\tpush 1\n"
       "\t\tjmp .skip_false%zu\n"
@@ -518,7 +524,7 @@ static void or(Context* ctx, TreeNode* ast) {
   gen("LOGICAL OR",
       "\t\ttest rax, rax\n"
       "\t\tjnz .true%zu\n"
-      "\t\ttest rbx, rbx\n"
+      "\t\ttest r10, r10\n"
       "\t\tjnz .true%zu\n"
       "\t\tpush 0\n"
       "\t\tjmp .skip_true%zu\n"

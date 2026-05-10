@@ -48,7 +48,7 @@ bool preparse(Tokens* ts, Error* status) {
   if ((err = dynArrInit(&newTs, ts->capacity, sizeof(Token), NULL)))
     RETURN_WITH_STATUS(err, false);
 
-  Class curClass = None;
+  _unused Class curClass = None;
   for (size_t i = 0; i < ts->count; i++) {
     Token* t = (Token*)dynArrGet(ts, i);
     switch (t->type) {
@@ -57,6 +57,7 @@ bool preparse(Tokens* ts, Error* status) {
       case TOK_WARRIOR: curClass = Warrior; continue;
       case TOK_WARLOCK: curClass = Warlock; continue;
       default: {
+        #ifndef EASY_DIFFICULTY
         bool isInv = isInvalidClass(t->type, curClass);
         if (isInv) {
           fprintf(stderr, 
@@ -69,6 +70,7 @@ bool preparse(Tokens* ts, Error* status) {
           allValid = false;
         }
         t->isInvalidClass = isInv;
+        #endif
         dynArrAppend(&newTs, t); break;
       }
     }
@@ -80,7 +82,7 @@ bool preparse(Tokens* ts, Error* status) {
   return allValid;
 }
 
-static bool isInvalidClass(TokenType type, Class curClass) {
+_unused static bool isInvalidClass(TokenType type, Class curClass) {
 #define X(tok, class)           case tok: return class != curClass;
 #define Y(tok, class, altClass) case tok: return class != curClass && altClass != curClass;
   switch (type) {
@@ -91,7 +93,7 @@ static bool isInvalidClass(TokenType type, Class curClass) {
 #undef Y
 }
 
-static const char* getClassStr(Class class) {
+_unused static const char* getClassStr(Class class) {
   if (class == None)
     return "Unclassified";
 
