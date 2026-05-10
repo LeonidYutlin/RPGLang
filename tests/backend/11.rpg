@@ -1,0 +1,4 @@
+prim main() {
+  out(in() #priest unite in());
+  complete 0;
+}

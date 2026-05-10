@@ -59,6 +59,7 @@ bool symtabCheckCalls(TranslationUnit* trUnit, Error* status) {
   X("out",    1, false)    \
   X("exit",   1, false)    \
   X("rout",   2, false)    \
+  X("in",     0, true)     \
   X("random", 0, false)
 
 static Error symtabAddStdlib(HashTable* symtab) {

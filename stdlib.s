@@ -4,6 +4,7 @@ default rel
 
 ; -------------- GLOBAL HEADER ---------------
 
+global in
 global out
 global rout
 global random
@@ -37,6 +38,7 @@ REG_SIZE equ 8
 SIGN_BIT_MASK equ 0x80000000
 NEWLINE equ 0xA
 DECIMAL_RADIX equ 10
+STDIN_FD equ 0
 STDOUT_FD equ 1
 STDERR_FD equ 2
 
@@ -119,9 +121,37 @@ num_common:
     pop rax
     ret
 
+READ_SYSCALL  equ 0x0
+
+;--------------
+; in - reads signed 64-bit integer from stdin
+; Output: rax = number
+; Destr:  
+;--------------
+in:
+    push rbp
+    mov rbp, rsp
+    sub rsp, REG_SIZE
+
+    mov rdi, STDIN_FD
+    lea rax, [rbp - REG_SIZE]
+    mov rsi, rax
+    mov rax, READ_SYSCALL
+    mov rdx, REG_SIZE
+    syscall
+
+    push rbx
+    lea rdi, [rbp - REG_SIZE]
+    call str2num
+    mov rax, rbx
+    pop rbx
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
 CLOSE_SYSCALL equ 0x3
 OPEN_SYSCALL  equ 0x2
-READ_SYSCALL  equ 0x0
 READ_ONLY equ 0
 
 RAND_INT_SIZE equ 1
@@ -232,6 +262,60 @@ num_unwind:
     loop .loop
 .exit:
     ret
+
+
+;--------------
+; str2num - converts string of bytes to signed integer, 
+;           until a whitespace is encountered. 
+;           In case of an error returns 0
+; Input:  rdi -> string
+; Output: rbx = integer
+; Destr:  rsi, rbx, rdx, rax
+;--------------
+str2num:
+    push rbp
+    mov rbp, rsp
+    sub rsp, REG_SIZE
+    mov byte [rbp - REG_SIZE], 0
+    mov rsi, rdi
+    xor eax, eax
+    xor ebx, ebx
+    lodsb
+    cmp al, '-'
+    jne .skip_minus
+    mov byte [rbp - REG_SIZE], 1
+    inc rsi
+    jmp .preloop
+.skip_minus:
+    cmp al, '0'
+    jbe .exit
+.preloop:
+    dec rsi
+.loop:
+    lodsb
+    cmp al, '0'
+    jb .exit
+    cmp al, '9'
+    ja .exit
+    mov rdx, rbx
+    shl rdx, 2
+    add rbx, rdx
+    shl rbx, 1
+    sub al, '0'
+    add rbx, rax
+    jmp .loop
+.exit:
+    mov al, byte [rbp - REG_SIZE]
+    test al, al
+    jz .no_minus
+    not rbx
+    inc rbx
+.no_minus:
+    dec rsi
+    mov rsp, rbp
+    pop rbp
+    ret
+
 
 ; ------------------- ---- -------------------
 
