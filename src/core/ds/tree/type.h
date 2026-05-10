@@ -114,8 +114,8 @@ int getVarTypeType(const char* str, size_t n);
 #define IS_CTRL(node)      IS_TYPE(node, CTRL_TYPE)
 #define IS_VAR_TYPE(node)  IS_TYPE(node, VAR_TYPE_TYPE)
 #define IS_SYMBOL(node)    IS_TYPE(node, SYMBOL_TYPE)
-#define OF_VAR_TYPE(node, varType) \
-  (IS_VAR_TYPE((node)) && (node)->data.value.varType == (varType))
+#define OF_VAR_TYPE(node, type) \
+  (IS_VAR_TYPE((node)) && (node)->data.value.varType == (type))
 #define OF_CTRL(node, ctrlType) \
   (IS_CTRL((node)) && (node)->data.value.ctrl == (ctrlType))
 #define OF_OP(node, opType) \

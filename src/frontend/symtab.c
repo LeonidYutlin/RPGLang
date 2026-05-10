@@ -49,16 +49,17 @@ bool symtabCheckCalls(TranslationUnit* trUnit, Error* status) {
       !trUnit->ast)
     RETURN_WITH_STATUS(BadArgs, false);
 
-  return !nodeTraverse(trUnit->ast, 
-                      .postfix = checkCallsCallback,
-                      .postfixData = &trUnit->symtab);
+  return !nodeTraverse(trUnit->ast,
+                       .postfix = checkCallsCallback,
+                       .postfixData = &trUnit->symtab);
 }
 
+// NOTE: name, argc, hasReturnValue
 #define STDLIB_FUNC_LIST() \
-  X("out", 1)              \
-  X("exit", 1)             \
-  X("rout", 2)             \
-  X("random", 0)
+  X("out",    1, false)    \
+  X("exit",   1, false)    \
+  X("rout",   2, false)    \
+  X("random", 0, false)
 
 static Error symtabAddStdlib(HashTable* symtab) {
   Error err = OK;
@@ -66,9 +67,10 @@ static Error symtabAddStdlib(HashTable* symtab) {
     return err;
   
   Symbol sym = (Symbol){.external = true};
-#define X(name, argCount)                       \
+#define X(name, argCount, ret)                  \
   sym.argc = argCount;                          \
   sym.mangledName = mangleName(SV(name), &err); \
+  sym.hasReturnValue = ret;                     \
   if (err)                                      \
     return err;                                 \
   hashTablePut(symtab, SV(name), &sym);
@@ -147,6 +149,7 @@ static Error populateSymtabCallback(TreeNode* node,
     .mangledName = mangleName(funcName, &err),
     .argc = argc,
     .external = false,
+    .hasReturnValue = !OF_VAR_TYPE(node->left->left->left, TYPE_VOID),
   };
   if (err)
     return err;

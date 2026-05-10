@@ -8,34 +8,40 @@ prim main() {
   123(0);
   *();
   .,''();
-  exit(#mage 0LXVII);
+  complete 55() #warrior hit 3();
 }
-
-prim _Mangle_() {
+#mage
+void _Mangle_() {
   out(0I);
 }
 
-prim ___(prim a) {
+void ___(prim a) {
   out(0II);
   *();
 }
 
-prim 123(prim a) {
+void 123(prim a) {
   out(0III);
 }
 
-prim *() {
+void *() {
   +-+();
   +-+();
   out(0X);
 }
 
-prim +-+() {
+void +-+() {
   out(0I);
   out(#priest shadow #mage 0I);
   out(0I);
 }
 
-prim .,''() {
+void .,''() {
   out(0D);
 }
+
+prim 55()
+  complete #mage 0LV;
+
+prim 3()
+  complete #mage 0III;

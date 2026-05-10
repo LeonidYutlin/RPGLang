@@ -83,10 +83,11 @@ void codegen(FILE* sink, TranslationUnit* trUnit) {
   gen("TEXT",
       "section .text\n"
       "_start:\n"
-      "\t\tcall main\n");
+      "\t\tcall main\n"
+      "\t\tpush rax\n");
   gen("EXIT",
       "\t\tmov rax, 0x3c ; syscall exit\n"
-      "\t\tmov rdi, 123\n"
+      "\t\tpop rdi\n"
       "\t\tsyscall\n");
 
   Context ctx = (Context){
@@ -263,11 +264,12 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
       call(ctx, ast, oldDepth);
       break;
     case CTRL_RETURN:
-      if (ast->left)
+      if (ast->left) {
         gen("TYPED RETURN",
             "\t\tpop rax\n"
             "\t\tret\n");
-      else
+        ctx->depth--;
+      } else
         gen("VOID RETURN",
             "\t\tret\n");         
       break;
@@ -427,6 +429,10 @@ static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
   genn("\t\tcall %.*s\n",
        (int)sym->mangledName.size, sym->mangledName.data);
   clearStack(ctx, ast, oldDepth); 
+  if (sym->hasReturnValue) {
+    genn("\t\tpush rax\n");
+    ctx->depth++;
+  }
 }
 
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr) {

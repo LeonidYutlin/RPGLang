@@ -13,6 +13,7 @@ bool cmpSymbol(void* symA, void* symB) {
   Symbol* b = symB;
   return a->argc == b->argc &&
          a->external == b->external &&
+         a->hasReturnValue == b->hasReturnValue &&
          a->mangledName.size == b->mangledName.size &&
          strncmp(a->mangledName.data, b->mangledName.data, a->mangledName.size);
 }
@@ -25,9 +26,12 @@ void printSymbol(FILE* sink, void* sym) {
   fprintf(sink, 
           "mangledName = %.*s\n"
           "argc = %lu\n"
-          "external = %s\n",
+          "external = %s\n"
+          "hasReturnValue = %s\n",
           (int)s->mangledName.size, s->mangledName.data,
-          s->argc, s->external ? "true" : "false");
+          s->argc, 
+          s->external       ? "true" : "false",
+          s->hasReturnValue ? "true" : "false");
 }
 
 void freeSymbol(void* sym) {

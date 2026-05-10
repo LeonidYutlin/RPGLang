@@ -452,12 +452,14 @@ Error symtabRead(MappedFile* mf, HashTable* symtab, size_t* stopPoint) {
     SKIP_WHITESPACE;
     readN = 0;
 
+    // TODO:factor this out into scanBool or smth
     sscanf(CUR, "external = %ln", &readN);
     if (!readN) {
       hashTableDestroy(symtab, false);
       return Fail;
     }
     p += (size_t)readN;
+    readN = 0;
 
     len = (size_t)(strchr(CUR, '\n') - CUR);
     if (strncmp(CUR, "true", len) == 0) {
@@ -467,6 +469,24 @@ Error symtabRead(MappedFile* mf, HashTable* symtab, size_t* stopPoint) {
     }
     p += len;
     SKIP_WHITESPACE;
+
+    sscanf(CUR, "hasReturnValue = %ln", &readN);
+    if (!readN) {
+      hashTableDestroy(symtab, false);
+      return Fail;
+    }
+    p += (size_t)readN;
+    readN = 0;
+
+    len = (size_t)(strchr(CUR, '\n') - CUR);
+    if (strncmp(CUR, "true", len) == 0) {
+      sym.hasReturnValue = true;
+    } else {
+      sym.hasReturnValue = false;
+    }
+    p += len;
+    SKIP_WHITESPACE;
+
     if ((err = hashTablePut(symtab, key, &sym)))
       return err;
   }
