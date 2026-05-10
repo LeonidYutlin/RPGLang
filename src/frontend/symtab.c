@@ -24,9 +24,13 @@ Error symtabInit(TranslationUnit* trUnit, size_t bucketCount,
     return err;
 
   symtabAddStdlib(&trUnit->symtab);
-  nodeTraverse(trUnit->ast, 
-               .postfix = populateSymtabCallback, 
-               .postfixData = &trUnit->symtab);
+  if (nodeTraverse(trUnit->ast, 
+                   .postfix = populateSymtabCallback, 
+                   .postfixData = &trUnit->symtab)) {
+    fprintf(stderr, "Multiple declarations of the same symbol detected, "
+                    "no further compilation is done\n");
+    return Fail;
+  }
   if (nodeTraverse(trUnit->ast, 
                     .postfix = convertRawIdentifiersCallback,
                     .postfixData = &trUnit->symtab)) {
@@ -53,7 +57,8 @@ bool symtabCheckCalls(TranslationUnit* trUnit, Error* status) {
 #define STDLIB_FUNC_LIST() \
   X("out", 1)              \
   X("exit", 1)             \
-  X("rout", 2)
+  X("rout", 2)             \
+  X("random", 0)
 
 static Error symtabAddStdlib(HashTable* symtab) {
   Error err = OK;
@@ -122,13 +127,23 @@ static Error populateSymtabCallback(TreeNode* node,
   HashTable* ht = (HashTable*)data;
   TreeNode* funcIdNode = node->left->left->right;
   StringView funcName = funcIdNode->data.value.rawId;
+  Symbol sym = (Symbol){};
+  if (hashTableGet(ht, funcName, &sym, &err)) {
+    fprintf(stderr, 
+            "[ERROR]: Function %.*s has already been declared before\n",
+            (int)funcName.size, funcName.data);
+    return Fail;
+  }
+  if (err)
+    return err;
+
   uint64_t argc = 0;
   TreeNode* paramNode = node->left->right;
   while (paramNode) {
     argc++;
     paramNode = paramNode->right;
   }
-  Symbol sym = (Symbol){
+  sym = (Symbol){
     .mangledName = mangleName(funcName, &err),
     .argc = argc,
     .external = false,
