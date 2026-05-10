@@ -3,12 +3,20 @@
 #include "ds/tree/type.h"
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+  StringView name;
+  size_t offset;
+  bool isArg;
+} ConvertRawVariableCallbackData;
 
 static StringView mangleName(StringView name, Error* status);
 static Error symtabAddStdlib(HashTable* symtab);
 static Error checkCallsCallback(TreeNode* node, uint level, void* data);
 static Error populateSymtabCallback(TreeNode* node, uint level, void* data);
 static Error convertRawIdentifiersCallback(TreeNode* node, uint level, void* data);
+static Error convertRawVariableCallback(TreeNode* node, uint level, void* data);
 
 Error symtabInit(TranslationUnit* trUnit, size_t bucketCount, 
                  size_t initialListCapacity, hash_f hashFunc) {
@@ -150,6 +158,19 @@ static Error populateSymtabCallback(TreeNode* node,
   uint64_t argc = 0;
   TreeNode* paramNode = node->left->right;
   while (paramNode) {
+    ConvertRawVariableCallbackData d = (ConvertRawVariableCallbackData) {
+      .name = paramNode->left->right->data.value.rawId,
+      .isArg = true,
+      .offset = argc,
+    };
+    nodeChangeChild(paramNode->left->right->parent, paramNode->left->right,
+                    SYMBOL_OFFSETTED_(true, argc), NULL);
+    TreeNode* funcBody = node->right;
+    nodeTraverse(funcBody, 
+                 .postfix = convertRawVariableCallback,
+                 .postfixData = &d);
+    if (err)
+      return err;
     argc++;
     paramNode = paramNode->right;
   }
@@ -177,10 +198,10 @@ static Error convertRawIdentifiersCallback(TreeNode* node,
   if (!OF_CTRL(node, CTRL_FUNC_CALL))
     return OK;
 
-  node = node->left; //TODO: remove this once we are doing all raw idents
+  TreeNode* funcNameNode = node->left;
   Error err = OK;
   HashTable* ht = (HashTable*)data;
-  StringView* name = &node->data.value.rawId;
+  StringView* name = &funcNameNode->data.value.rawId;
   Symbol* sym = NULL;
   size_t bucketIndex  = 0;
   ListIndex listIndex = 0;
@@ -191,7 +212,7 @@ static Error convertRawIdentifiersCallback(TreeNode* node,
     return Fail;
   }
   
-  nodeChangeChild(node->parent, node, 
+  nodeChangeChild(funcNameNode->parent, funcNameNode, 
                   SYMBOL_(bucketIndex, listIndex), NULL);
   if (err)
     return err;
@@ -250,3 +271,26 @@ static StringView mangleName(StringView name, Error* status) {
   };
   return result;
 }
+
+static Error convertRawVariableCallback(TreeNode* node, 
+                                        _unused uint level, void* data) {
+  if (!data)
+    return BadArgs;
+  if (!IS_RAW_IDENT(node) ||
+      OF_CTRL(node->parent, CTRL_FUNC_CALL))
+    return OK;
+
+  Error err = OK;
+  ConvertRawVariableCallbackData* d = (ConvertRawVariableCallbackData*)data;
+  StringView funcName = node->data.value.rawId;
+  if (funcName.size == d->name.size &&
+      strncmp(funcName.data, d->name.data, d->name.size) == 0) {
+    nodeChangeChild(node->parent, node,
+                    SYMBOL_OFFSETTED_(d->isArg, d->offset), NULL);
+    if (err)
+      return err;
+  }
+
+  return OK;
+}
+

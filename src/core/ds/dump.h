@@ -5,6 +5,8 @@
 #include "ds/tree/root.h"
 #include "ds/hashtable/hashtable.h"
 
+// TODO: symbol offset is dumped incorrectly
+
 /*
 Accounted situations:
     -Premature next 0

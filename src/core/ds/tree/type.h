@@ -134,10 +134,12 @@ int getVarTypeType(const char* str, size_t n);
 #define RAW_IDENT_UNIT_(name, len)  (NodeUnit){.type = RAW_IDENT_TYPE, .value = {.rawId = (StringView){name, len}}}
 #define VAR_TYPE_UNIT_(i)  (NodeUnit){.type = VAR_TYPE_TYPE, .value = {.varType = i}}
 #define SYMBOL_UNIT_(bucket, index)  (NodeUnit){.type = SYMBOL_TYPE, .value = {.sym = (SymbolIndex){.bucketIndex = bucket, .listIndex = index}}}
+#define SYMBOL_OFFSETTED_UNIT_(arg, off)  (NodeUnit){.type = SYMBOL_TYPE, .value = {.symOff = (SymbolOffset){.isArg = arg, .offset = off}}}
 
 #define NUM_(i, inv) nodeAlloc(NUM_UNIT_(i, inv))
 #define RAW_IDENT_(name, len) nodeAlloc(RAW_IDENT_UNIT_(name, len))
 #define SYMBOL_(bucket, index) nodeAlloc(SYMBOL_UNIT_(bucket, index))
+#define SYMBOL_OFFSETTED_(isArg, offset) nodeAlloc(SYMBOL_OFFSETTED_UNIT_(isArg, offset))
 
 #define PRIM_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_PRIM))
 #define FRAC_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_FRAC))

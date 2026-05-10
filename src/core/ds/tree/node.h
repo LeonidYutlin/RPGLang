@@ -15,12 +15,18 @@ typedef struct {
   ListIndex listIndex;
 } SymbolIndex;
 
+typedef struct {
+  bool    isArg;
+  size_t offset;
+} SymbolOffset;
+
 typedef union {
   VarType varType;
   OpType op;
   CtrlType ctrl;
   StringView rawId;
   SymbolIndex sym;
+  SymbolOffset symOff;
   int64_t num;
 } NodeValue;
 

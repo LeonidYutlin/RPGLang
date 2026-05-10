@@ -109,8 +109,20 @@ static void codegenRec(Context* ctx, TreeNode* ast,
       !ast)
     return;
 
+  if (OF_CTRL(ast, CTRL_FUNC_CALL)) {
+    com("PRECALL SAVED REGS");
+    size_t i = 0;
+    for (TreeNode* arg = ast->right; 
+         arg && i < ARG_REGS_SIZE; arg = arg->right) {
+      genn("\t\tpush %s\n",
+           ARG_REGS[i]);
+      ctx->depth++;
+      i++;
+    }
+  }
+
   uint64_t oldDepth = ctx->depth;
-  handleConditionLabels(ctx, ast, &conditionLabel);   
+  handleConditionLabels(ctx, ast, &conditionLabel);
 
   codegenRec(ctx, ast->left, 0, 0);
 
@@ -435,6 +447,17 @@ static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
   genn("\t\tcall %.*s\n",
        (int)sym->mangledName.size, sym->mangledName.data);
   clearStack(ctx, ast, oldDepth); 
+
+  com("POP CALL SAVED REGS");
+  i--;
+  for (TreeNode* arg = ast->right; 
+       arg && i < ARG_REGS_SIZE; arg = arg->right) {
+    genn("\t\tpop %s\n",
+        ARG_REGS[i]);
+    ctx->depth--;
+    i--;
+  }
+
   if (sym->hasReturnValue) {
     genn("\t\tpush rax\n");
     ctx->depth++;

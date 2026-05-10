@@ -123,6 +123,8 @@ num_common:
 
 READ_SYSCALL  equ 0x0
 
+; TODO: check conventions here
+; TODO: destr here
 ;--------------
 ; in - reads signed 64-bit integer from stdin
 ; Output: rax = number
