@@ -1,8 +1,8 @@
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
-#include "ds/tree/node.h"
+#include "symbol/symbol.h"
 
-void codegen(FILE* sink, TreeNode* ast);
+void codegen(FILE* sink, TranslationUnit* trUnit);
 
 #endif

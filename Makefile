@@ -39,7 +39,7 @@ OBJECTS           := $(OBJECTS_CORE) $(OBJECTS_FRONTEND) $(OBJECTS_MIDDLEEND) $(
 
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
-C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
+C_FLAGS := -ggdb3 -O1 -Wall -Wextra                                       \
 				   -Waggressive-loop-optimizations                                \
 				   -Wmissing-declarations -Wcast-align -Wcast-qual                \
 				   -Wchar-subscripts                                              \
@@ -67,7 +67,7 @@ C_FLAGS := -ggdb3 -O0 -Wall -Wextra                                       \
 				   shift,signed-integer-overflow,undefined,$\
 				   unreachable,vla-bound,vptr
 
-build: ensure_directories_exist $(FRONTEND) #$(MIDDLEEND) $(BACKEND) update_todo
+build: ensure_directories_exist $(FRONTEND) $(MIDDLEEND) $(BACKEND) update_todo
 
 $(FRONTEND): $(OBJECTS_CORE) $(OBJECTS_FRONTEND)
 	@echo -e "•Linking Frontend together"

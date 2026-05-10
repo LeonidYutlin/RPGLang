@@ -3,11 +3,47 @@
 #include <stdlib.h>
 #include <string.h>
 #include "io/io.h"
+#include "ds/hashtable/entry.h"
+#include "ds/hashtable/hashtable.h"
 #include "ds/tree/node.h"
+
+const size_t SYMTAB_BUCKET_SIZE = 17;
+const size_t SYMTAB_LIST_CAPACITY = 4;
+const hash_f SYMTAB_HASH_FUNC = hashRotate;
 
 static TreeNode* nodeReadRecursion(MappedFile* mf, size_t* p,
                                    Error* status, size_t* nodeCount);
 static Error nodePrint(FILE* f, TreeNode* node);
+
+Error translationUnitPrint(FILE* sink, TranslationUnit* trUnit) {
+  return symtabPrint(sink, &trUnit->symtab) ||
+         nodePrintPrefix(sink, trUnit->ast);
+}
+
+Error translationUnitRead(MappedFile* mf, TranslationUnit* trUnit) {
+  if (!mf || 
+      !mf->data ||
+      !trUnit)
+    return BadArgs;
+
+  Error err = OK;
+  size_t p = 0;
+  if ((err = symtabRead(mf, &trUnit->symtab, &p))) {
+    hashTableDestroy(&trUnit->symtab, false);
+    return err;
+  }
+  MappedFile mfCopy = *mf;
+  mfCopy.data += p;
+  mfCopy.size -= p;
+  trUnit->ast = nodeRead(&mfCopy, &err);
+  if (err) {
+    nodeDestroy(trUnit->ast);
+    hashTableDestroy(&trUnit->symtab, false);
+    return err;
+  }
+
+  return OK;
+}
 
 #define NULL_STR "NULL"
 static const char* NULL_STRING = NULL_STR;
@@ -15,7 +51,7 @@ static size_t NULL_STRING_LEN  = sizeof(NULL_STR) - 1;
 #undef  NULL_STR_REP
 
 TreeNode* nodeReadC(MappedFile* mf, Error* status, size_t* nodeCount) {
-  if (!mf || !mf->data)
+  if (!mf || !mf->data) 
     RETURN_WITH_STATUS(BadArgs, NULL);
   Error err = OK;
 
@@ -88,6 +124,8 @@ static TreeNode* nodeReadRecursion(MappedFile* mf, size_t* p,
     RETURN_WITH_STATUS(Fail, NULL);
   }
   *p += (size_t)readN;
+  readN = 0;
+
 
   size_t len = (size_t)(strchr(CUR, ' ') - CUR);
   int type = getNodeType(CUR, len);
@@ -100,6 +138,7 @@ static TreeNode* nodeReadRecursion(MappedFile* mf, size_t* p,
   if (!readN)
     DUMP_ERROR_RETURN("Value field error");
   *p += (size_t)readN;
+  readN = 0;
   SKIP_WHITESPACE;
   switch (data.type) {
     case NUM_TYPE:
@@ -126,7 +165,6 @@ static TreeNode* nodeReadRecursion(MappedFile* mf, size_t* p,
           .bucketIndex = bucketIndex, 
           .listIndex   = listIndex,
         };
-        *p += len;
       }
       break;
     case OP_TYPE:
@@ -157,6 +195,7 @@ static TreeNode* nodeReadRecursion(MappedFile* mf, size_t* p,
       DUMP_ERROR_RETURN("unreacheable");
       break;
   }
+  readN = 0;
   SKIP_WHITESPACE;
 
   TreeNode* left  = nodeReadRecursion(mf, p, status, nodeCount);
@@ -314,3 +353,128 @@ static Error nodePrint(FILE* f, TreeNode* node) {
   }
   return OK;
 }
+
+Error symtabPrint(FILE* f, HashTable* symtab) {
+  if (!f)
+    return BadArgs;
+  Error err = OK;
+  if ((err = hashTableVerify(symtab)))
+    return err;
+
+  for (size_t i = 0; i < symtab->bucketCount; i++) {
+    List* bucket = symtab->buckets + i;
+    for (ListIndex j = listGetHead(bucket, &err); j; j = bucket->next[j]) {
+      Entry* e  = (Entry*)listGetValue(bucket, j, &err);
+      Symbol* s = (Symbol*)listGetValue(&symtab->values, e->value, &err);
+      if (err)
+        return err;
+      fprintf(f, 
+              "key = %.*s value =\n",
+              (int)e->key.size, e->key.data);
+      symtab->values.printfFunc(f, s);
+    }
+  }
+  fprintf(f, "\n\n");
+
+  return OK;
+}
+
+
+#define CUR (mf->data + p)
+
+#define SKIP_WHITESPACE     \
+  while (mf->size > p &&    \
+         (isspace(*CUR) ||  \
+         *CUR == '\n'))     \
+      p++;
+
+Error symtabRead(MappedFile* mf, HashTable* symtab, size_t* stopPoint) {
+  if (!mf ||
+      !mf->data ||
+      !symtab)
+    return BadArgs;
+
+  Error err = OK;
+  if ((err = hashTableInit(symtab, SYMTAB_BUCKET_SIZE, 
+                           SYMTAB_LIST_CAPACITY, sizeof(Symbol),
+                           NULL, printSymbol,
+                           cmpSymbol, SYMTAB_HASH_FUNC)))
+    return err;
+  
+  size_t p = 0;
+  SKIP_WHITESPACE;
+  long readN = 0;
+  while (true && p < mf->size) {
+    readN = 0;
+    sscanf(CUR, "key = %ln", &readN);
+    if (!readN)
+      break;
+    p += (size_t)readN;
+    readN = 0;
+
+    StringView key = (StringView){};
+    size_t len = (size_t)(strchr(CUR, ' ') - CUR);
+    key.size = len;
+    key.data = CUR;
+    p += len;
+    SKIP_WHITESPACE;
+
+
+    sscanf(CUR, "value = %ln", &readN);
+    if (!readN) {
+      hashTableDestroy(symtab, false);
+      return Fail;
+    }
+    p += (size_t)readN;
+    readN = 0;
+    SKIP_WHITESPACE;
+
+    Symbol sym = (Symbol){};
+    sscanf(CUR, "mangledName = %ln", &readN);
+    if (!readN) {
+      hashTableDestroy(symtab, false);
+      return Fail;
+    }
+    p += (size_t)readN;
+    readN = 0;
+    len = (size_t)(strchr(CUR, '\n') - CUR);
+    sym.mangledName.size = len;
+    sym.mangledName.data = CUR;
+    p += len;
+    SKIP_WHITESPACE;
+
+    if (sscanf(CUR, "argc = %lu%ln", 
+               &sym.argc, &readN) != 1) {
+      hashTableDestroy(symtab, false);
+      return Fail;
+    }
+    p += (size_t)readN;
+    SKIP_WHITESPACE;
+    readN = 0;
+
+    sscanf(CUR, "external = %ln", &readN);
+    if (!readN) {
+      hashTableDestroy(symtab, false);
+      return Fail;
+    }
+    p += (size_t)readN;
+
+    len = (size_t)(strchr(CUR, '\n') - CUR);
+    if (strncmp(CUR, "true", len) == 0) {
+      sym.external = true;
+    } else {
+      sym.external = false;
+    }
+    p += len;
+    SKIP_WHITESPACE;
+    if ((err = hashTablePut(symtab, key, &sym)))
+      return err;
+  }
+
+  if (stopPoint)
+    *stopPoint = p;
+  return OK;
+}
+
+#undef SKIP_WHITESPACE
+#undef CUR

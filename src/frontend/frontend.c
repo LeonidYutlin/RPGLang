@@ -80,9 +80,6 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
-  static const size_t SYMTAB_BUCKET_SIZE = 17;
-  static const size_t SYMTAB_LIST_CAPACITY = 4;
-  static const hash_f SYMTAB_HASH_FUNC = hashRotate;
   TranslationUnit trUnit = (TranslationUnit){.ast = ast};
   symtabInited = true;
   if ((err = symtabInit(&trUnit, SYMTAB_BUCKET_SIZE, 
@@ -106,7 +103,7 @@ int main(int argc, char* argv[]) {
     goto exit;
   }
 
-  nodePrintPrefix(outFile, ast);
+  translationUnitPrint(outFile, &trUnit);
   fclose(outFile);
 
 exit:

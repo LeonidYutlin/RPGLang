@@ -1,9 +1,11 @@
 #include "backend/codegen.h"
+#include "ds/hashtable/entry.h"
 #include <assert.h>
 #include <stdarg.h>
 
 typedef struct {
   FILE* sink;
+  HashTable* symtab;
   uint64_t labelCount;
   uint64_t depth;
 } Context;
@@ -28,12 +30,12 @@ static inline void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static inline void handleBranches(Context* ctx, TreeNode* ast,
                                   uint64_t conditionLabel, uint64_t endLabel,
                                   uint64_t* newLabel);
-static inline void handleIfBranches(Context* ctx, TreeNode* ast, 
+static void handleIfBranches(Context* ctx, TreeNode* ast, 
                                     uint64_t label, uint64_t* newLabel);
-static inline void handleLoopBranches(Context* ctx, TreeNode* ast,
-                                      uint64_t conditionLabel, uint64_t endLabel,
-                                      uint64_t* newLabel, CtrlType type,
-                                      const char* cmpStr, const char* prefix);
+static void handleLoopBranches(Context* ctx, TreeNode* ast,
+                               uint64_t conditionLabel, uint64_t endLabel,
+                               uint64_t* newLabel, CtrlType type,
+                               const char* cmpStr, const char* prefix);
 static inline void call(Context* ctx, TreeNode* ast, uint64_t oldDepth);
 static inline void raiseExceptions(Context* ctx, TreeNode* ast);
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr);
@@ -61,16 +63,24 @@ static void gen_(FILE* sink, const char* commentary,
 // TODO: add parameters
 // TODO: add name mangling for func names
 
-void codegen(FILE* sink, TreeNode* ast) {
-  if (!sink || !ast)
+void codegen(FILE* sink, TranslationUnit* trUnit) {
+  if (!sink || 
+      !trUnit ||
+      !trUnit->ast ||
+      hashTableVerify(&trUnit->symtab))
     return;
 
   gen("HEADER",
-      "global _start\n"
-      "extern rout\n"
-      "extern out\n"
-      "extern exit\n"
-      "extern random\n"
+      "global _start\n");
+  com("EXTERNS");
+  List* lst = &trUnit->symtab.values;
+  for (ListIndex i = listGetHead(lst, NULL); i; i = lst->next[i]) {
+    Symbol* s = (Symbol*)listGetValue(lst, i, NULL);
+    if (s->external)
+      genn("extern %.*s\n",
+           (int)s->mangledName.size, s->mangledName.data);
+  }
+  gen("TEXT",
       "section .text\n"
       "_start:\n"
       "\t\tcall main\n");
@@ -81,10 +91,11 @@ void codegen(FILE* sink, TreeNode* ast) {
 
   Context ctx = (Context){
     .sink = sink,
+    .symtab = &trUnit->symtab,
     .labelCount = 0,
     .depth = 0,
   };
-  codegenRec(&ctx, ast, 0, 0);
+  codegenRec(&ctx, trUnit->ast, 0, 0);
 }
 
 #undef sinkFile
@@ -266,10 +277,15 @@ static void ctrl(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
       break;
     case CTRL_SIGNATURE:
       {
-        StringView funcName = ast->left->right->data.value.id;
+        SymbolIndex id = ast->left->right->data.value.sym;
+        Entry* e = (Entry*)listGetValue(ctx->symtab->buckets + id.bucketIndex, 
+                                        id.listIndex, NULL);
+        assert(e);
+        Symbol* sym = (Symbol*)listGetValue(&ctx->symtab->values, e->value, NULL);
+        assert(sym);
         gen("FUNC DECL",
             "%.*s:\n",
-            (int)funcName.size, funcName.data);
+            (int)sym->mangledName.size, sym->mangledName.data);
       }
       break;
     default: break;
@@ -402,9 +418,14 @@ static void call(Context* ctx, TreeNode* ast, uint64_t oldDepth) {
     i++;
   }
 
-  StringView funcName = ast->left->data.value.id;
+  SymbolIndex id = ast->left->data.value.sym;
+  Entry* e = (Entry*)listGetValue(ctx->symtab->buckets + id.bucketIndex, 
+                                  id.listIndex, NULL);
+  assert(e);
+  Symbol* sym = (Symbol*)listGetValue(&ctx->symtab->values, e->value, NULL);
+  assert(sym);
   genn("\t\tcall %.*s\n",
-       (int)funcName.size, funcName.data);
+       (int)sym->mangledName.size, sym->mangledName.data);
   clearStack(ctx, ast, oldDepth); 
 }
 

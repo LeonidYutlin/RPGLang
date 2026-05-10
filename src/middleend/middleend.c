@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
   bool loggerInited  = false;
   //bool htmlLogInited = false;
   bool mapFileInited = false;
-  bool astInited     = false;
+  bool trUnitInited  = false;
   loggerInit(NULL, ERROR);
   loggerInited = true;
 
@@ -24,23 +24,25 @@ int main(int argc, char* argv[]) {
   }
   mapFileInited = true;
 
-  TreeNode* ast = nodeRead(&mf, &exitValue);
-  if (exitValue) {
-    fprintf(stderr, "nodeRead returned %s\n", parseError(exitValue)->str);
+  TranslationUnit trUnit = (TranslationUnit){};
+  if ((exitValue = translationUnitRead(&mf, &trUnit))) {
+    fprintf(stderr, "translationUnitRead returned %s\n", parseError(exitValue)->str);
     goto exit;
   }
-  astInited = true;
+  trUnitInited = true;
 
   // FILE* logFile = openHtmlLogFile("./.log/");
   // if (!logFile) {
   //   exitValue = FailFileOpen; 
   //   goto exit;
   // }
-  // htmlLogInited = true;
+  //htmlLogInited = true;
 
-  // nodeDump(logFile, ast, "<b2>hello</b2>");
-  nodeOptimize(&ast);
-  // nodeDump(logFile, ast, "<b2>hello again</b2>");
+
+  //hashTableDump(logFile, &trUnit.symtab, "MANGLING");
+  //nodeDump(logFile, trUnit.ast, "<b2>hello</b2>");
+  nodeOptimize(&trUnit.ast);
+  //nodeDump(logFile, trUnit.ast, "<b2>hello again</b2>");
 
   FILE* outFile = fopen(output, "w");
   if (!outFile) {
@@ -48,16 +50,18 @@ int main(int argc, char* argv[]) {
     exitValue = FailFileOpen;
     goto exit;
   }
-  nodePrintPrefix(outFile, ast);
+  translationUnitPrint(outFile, &trUnit);
   fclose(outFile);
 
 exit:
   if (loggerInited)
     loggerCloseFile();
-  // if (htmlLogInited)
-  //   closeHtmlLogFile(logFile);
-  if (astInited)
-    nodeDestroy(ast);
+  //if (htmlLogInited)
+    //closeHtmlLogFile(logFile);
+  if (trUnitInited) {
+    hashTableDestroy(&trUnit.symtab, false);
+    nodeDestroy(trUnit.ast);
+  }
   if (mapFileInited)
     mappedFileDestroy(&mf);
   return exitValue;
