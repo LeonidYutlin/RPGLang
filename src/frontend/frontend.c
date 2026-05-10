@@ -84,13 +84,13 @@ int main(int argc, char* argv[]) {
   static const size_t SYMTAB_LIST_CAPACITY = 4;
   static const hash_f SYMTAB_HASH_FUNC = hashRotate;
   TranslationUnit trUnit = (TranslationUnit){.ast = ast};
+  symtabInited = true;
   if ((err = symtabInit(&trUnit, SYMTAB_BUCKET_SIZE, 
                         SYMTAB_LIST_CAPACITY, SYMTAB_HASH_FUNC))) {
     fprintf(stderr, "Failed to init symtab\n");
     exitValue = err;
     goto exit;
   }
-  symtabInited = true;
 
   hashTableDump(logFile, &trUnit.symtab, "MANGLING");
   nodeDump(logFile, ast, "After Symtab Init");

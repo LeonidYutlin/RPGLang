@@ -31,9 +31,12 @@ Error symtabInit(TranslationUnit* trUnit, size_t bucketCount,
   nodeTraverse(trUnit->ast, 
                .postfix = populateSymtabCallback, 
                .postfixData = &trUnit->symtab);
-  nodeTraverse(trUnit->ast, 
-               .postfix = convertRawIdentifiersCallback,
-               .postfixData = &trUnit->symtab);
+  if (nodeTraverse(trUnit->ast, 
+                    .postfix = convertRawIdentifiersCallback,
+                    .postfixData = &trUnit->symtab)) {
+    fprintf(stderr, "Unknown function call detected, no further compilation is done\n");
+    return Fail;
+  }
   
   return OK;
 }
@@ -149,18 +152,25 @@ static Error convertRawIdentifiersCallback(TreeNode* node,
                                            _unused uint level, void* data) {
   if (!data)
     return BadArgs;
-  if (!IS_RAW_IDENT(node))
+  if (!OF_CTRL(node, CTRL_FUNC_CALL))
     return OK;
 
+  node = node->left; //TODO: remove this once we are doing all raw idents
   Error err = OK;
   HashTable* ht = (HashTable*)data;
   StringView* name = &node->data.value.rawId;
   Symbol* sym = NULL;
   size_t bucketIndex  = 0;
   ListIndex listIndex = 0;
-  if (hashTableGetExt(ht, *name, &sym, &bucketIndex, &listIndex, &err))
-    nodeChangeChild(node->parent, node, 
-                    SYMBOL_(bucketIndex, listIndex), NULL);
+  if (!hashTableGetExt(ht, *name, &sym, &bucketIndex, &listIndex, &err)) {
+    fprintf(stderr, 
+            "[ERROR] Function named \"%.*s\" is undeclared\n",
+            (int)name->size, name->data);
+    return Fail;
+  }
+  
+  nodeChangeChild(node->parent, node, 
+                  SYMBOL_(bucketIndex, listIndex), NULL);
   if (err)
     return err;
   return OK;

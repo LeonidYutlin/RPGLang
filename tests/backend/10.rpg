@@ -13,6 +13,7 @@ prim main() {
 
 prim _Mangle_() {
   out(0I);
+  outttaaaa();
 }
 
 prim ___(prim a) {
