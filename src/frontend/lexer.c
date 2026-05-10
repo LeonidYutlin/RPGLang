@@ -300,7 +300,6 @@ static Error keywordInit() {
     return err;
 
   TokenType token = TOK_SEMIC;
-#define SV(str) (StringView){ .data = str, .size = sizeof(str) - 1 }
 #define X(tok, str) \
   token = tok;      \
   if ((err = hashTablePut(&KEYWORD_HT, SV(str), &token))) return err;
@@ -308,7 +307,6 @@ static Error keywordInit() {
   KEYWORD_LIST()
   KEYWORD_ALIAS_LIST()
 #undef X
-#undef SV
 
   //FILE* logFile = openHtmlLogFile("./.log/");
   //hashTableDump(logFile, &KEYWORD_HT, "TESTING HASHES");

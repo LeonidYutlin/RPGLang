@@ -13,6 +13,7 @@ typedef struct {
 typedef struct {
   StringView mangledName;
   uint64_t argc;
+  bool external;
 } Symbol;
 
 Error symtabInit(TranslationUnit* trUnit, size_t bucketCount, 

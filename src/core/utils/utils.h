@@ -18,6 +18,7 @@
 #endif
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define SV(str) (StringView){ .data = str, .size = sizeof(str) - 1 }
 
 typedef struct {
   char* data;

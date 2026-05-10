@@ -6,6 +6,7 @@
 #include <string.h>
 
 static StringView mangleName(StringView name, Error* status);
+static Error symtabAddStdlib(HashTable* symtab);
 static Error checkCallsCallback(TreeNode* node, uint level, void* data);
 static Error populateSymtabCallback(TreeNode* node, uint level, void* data);
 static Error convertRawIdentifiersCallback(TreeNode* node, uint level, void* data);
@@ -26,6 +27,7 @@ Error symtabInit(TranslationUnit* trUnit, size_t bucketCount,
                            cmpSymbol, hashFunc)))
     return err;
 
+  symtabAddStdlib(&trUnit->symtab);
   nodeTraverse(trUnit->ast, 
                .postfix = populateSymtabCallback, 
                .postfixData = &trUnit->symtab);
@@ -39,7 +41,7 @@ Error symtabInit(TranslationUnit* trUnit, size_t bucketCount,
 bool symtabCheckCalls(TranslationUnit* trUnit, Error* status) {
   Error err = OK;
   if ((err = hashTableVerify(&trUnit->symtab)))
-    return err;
+    RETURN_WITH_STATUS(err, false);
   if (!trUnit ||
       !trUnit->ast)
     RETURN_WITH_STATUS(BadArgs, false);
@@ -47,6 +49,31 @@ bool symtabCheckCalls(TranslationUnit* trUnit, Error* status) {
   return !nodeTraverse(trUnit->ast, 
                       .postfix = checkCallsCallback,
                       .postfixData = &trUnit->symtab);
+}
+
+#define STDLIB_FUNC_LIST() \
+  X("out", 1)              \
+  X("exit", 1)             \
+  X("rout", 2)
+
+static Error symtabAddStdlib(HashTable* symtab) {
+  Error err = OK;
+  if ((err = hashTableVerify(symtab)))
+    return err;
+  
+  Symbol sym = (Symbol){.external = true};
+#define X(name, argCount)                       \
+  sym.argc = argCount;                          \
+  sym.mangledName = mangleName(SV(name), &err); \
+  if (err)                                      \
+    return err;                                 \
+  hashTablePut(symtab, SV(name), &sym);
+
+  STDLIB_FUNC_LIST()
+
+#undef X
+
+  return OK;
 }
 
 static Error checkCallsCallback(TreeNode* node,
@@ -105,6 +132,7 @@ static Error populateSymtabCallback(TreeNode* node,
   Symbol sym = (Symbol){
     .mangledName = mangleName(funcName, &err),
     .argc = argc,
+    .external = false,
   };
   if (err)
     return err;
@@ -201,6 +229,7 @@ static bool cmpSymbol(void* symA, void* symB) {
   Symbol* a = symA;
   Symbol* b = symB;
   return a->argc == b->argc &&
+         a->external == b->external &&
          a->mangledName.size == b->mangledName.size &&
          strncmp(a->mangledName.data, b->mangledName.data, a->mangledName.size);
 }
@@ -212,9 +241,10 @@ static void printSymbol(FILE* sink, void* sym) {
   Symbol* s = sym;
   fprintf(sink, 
           "mangledName = %.*s\n"
-          "argc = %lu\n",
+          "argc = %lu\n"
+          "external = %s\n",
           (int)s->mangledName.size, s->mangledName.data,
-          s->argc);
+          s->argc, s->external ? "true" : "false");
 }
 
 static void freeSymbol(void* sym) {
