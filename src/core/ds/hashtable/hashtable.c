@@ -82,7 +82,8 @@ HashTable* hashTableAlloc(size_t bucketCount, size_t initialListCapacity,
   return table;
 }
 
-Error hashTablePut(HashTable* table, StringView key, void* value) {
+Error hashTablePutExt(HashTable* table, StringView key, void* value, 
+                      size_t* bucketIndexPtr, ListIndex* listIndexPtr) {
   Error err = OK;
   if ((err = hashTableVerify(table)))
     return err;
@@ -92,7 +93,10 @@ Error hashTablePut(HashTable* table, StringView key, void* value) {
     return BadArgs;
   
   uint64_t hash = table->hashFunc(key);
-  List* bucket = table->buckets + (hash % table->bucketCount);
+  size_t bucketIndex = hash % table->bucketCount;
+  if (bucketIndexPtr)
+    *bucketIndexPtr = bucketIndex;
+  List* bucket = table->buckets + (bucketIndex);
   ListIndex index = listFindByKey(bucket, key);
   if (!index) {
     ListIndex valueIndex = listAddAfterTail(&table->values, value, &err);
@@ -103,10 +107,14 @@ Error hashTablePut(HashTable* table, StringView key, void* value) {
       .value = valueIndex,
       .hash = hash,
     };
-    listAddAfterTail(bucket, &entry, &err);
+    ListIndex listIndex = listAddAfterTail(bucket, &entry, &err);
     if (err)
       return err;
+    if (listIndexPtr)
+      *listIndexPtr = listIndex;
   } else {
+    if (listIndexPtr)
+      *listIndexPtr = index;
     Entry* entry = (Entry*)listGetValue(bucket, index, &err);
     if (err)
       return err;
@@ -116,7 +124,9 @@ Error hashTablePut(HashTable* table, StringView key, void* value) {
   return OK;
 }
 
-bool hashTableGet(HashTable* table, StringView key, void* result, Error* status) {
+bool hashTableGetExt(HashTable* table, StringView key, void* result, 
+                     size_t* bucketIndexPtr, ListIndex* listIndexPtr, 
+                     Error* status) {
   Error err = OK;
   if ((err = hashTableVerify(table)))
     RETURN_WITH_STATUS(err, false);
@@ -126,10 +136,15 @@ bool hashTableGet(HashTable* table, StringView key, void* result, Error* status)
     RETURN_WITH_STATUS(BadArgs, false);
   
   uint64_t hash = table->hashFunc(key);
-  List* bucket = table->buckets + (hash % table->bucketCount);
+  size_t bucketIndex = hash % table->bucketCount;
+  List* bucket = table->buckets + (bucketIndex);  
   ListIndex index = listFindByKey(bucket, key);
   if (!index)
     return false;
+  if (listIndexPtr)
+    *listIndexPtr = index;
+  if (bucketIndexPtr)
+    *bucketIndexPtr = bucketIndex;
   Entry* entry = (Entry*)listGetValue(bucket, index, &err);
 
   *(void**)result = listGetValue(&table->values, entry->value, &err);

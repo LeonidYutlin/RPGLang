@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 #include "io/io.h"
 #include "ds/tree/node.h"
@@ -107,10 +108,26 @@ static TreeNode* nodeReadRecursion(MappedFile* mf, size_t* p,
         DUMP_ERROR_RETURN("Num node value error");
       *p += (size_t)readN;
       break;
-    case IDENT_TYPE:
+    case RAW_IDENT_TYPE:
       len = (size_t)(strchr(CUR, ' ') - CUR);
-      data.value.id = (StringView){.data = CUR, .size = len};
+      data.value.rawId = (StringView){.data = CUR, .size = len};
       *p += len;
+      break;
+    case SYMBOL_TYPE: 
+      {
+        int radix = 10;
+        char* end = CUR;
+        size_t bucketIndex = strtoull(CUR, &end, radix);
+        *p += (size_t)(end - CUR);
+        end = CUR;
+        size_t listIndex = strtoull(CUR, &end, radix);
+        *p += (size_t)(end - CUR);
+        data.value.sym = (SymbolIndex){
+          .bucketIndex = bucketIndex, 
+          .listIndex   = listIndex,
+        };
+        *p += len;
+      }
       break;
     case OP_TYPE:
       len = (size_t)(strchr(CUR, ' ') - CUR);
@@ -262,10 +279,15 @@ static Error nodePrint(FILE* f, TreeNode* node) {
     case NUM_TYPE:
       fprintf(f, "%ld ", node->data.value.num); 
       break;
-    case IDENT_TYPE:
+    case RAW_IDENT_TYPE:
       fprintf(f, "%.*s ", 
-              (int)node->data.value.id.size, 
-              node->data.value.id.data); 
+              (int)node->data.value.rawId.size, 
+              node->data.value.rawId.data); 
+      break;
+    case SYMBOL_TYPE:
+      fprintf(f, "%lu %lu ", 
+              node->data.value.sym.bucketIndex, 
+              node->data.value.sym.listIndex); 
       break;
     case OP_TYPE:
       {

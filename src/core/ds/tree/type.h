@@ -6,13 +6,14 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#define NODE_TYPE_LIST()           \
-  X(UNKNOWN_TYPE,  "UNKNOWN_TYPE") \
-  X(OP_TYPE,       "OP")           \
-  X(CTRL_TYPE,     "CTRL")         \
-  X(NUM_TYPE,      "NUM")          \
-  X(IDENT_TYPE,    "IDENT")        \
-  X(VAR_TYPE_TYPE, "TYPE")
+#define NODE_TYPE_LIST()             \
+  X(UNKNOWN_TYPE,    "UNKNOWN_TYPE") \
+  X(OP_TYPE,         "OP")           \
+  X(CTRL_TYPE,       "CTRL")         \
+  X(NUM_TYPE,        "NUM")          \
+  X(RAW_IDENT_TYPE,  "RAW_IDENT")    \
+  X(SYMBOL_TYPE,     "SYMBOL")       \
+  X(VAR_TYPE_TYPE,   "TYPE")
 
 typedef enum NodeType {
   #define X(enm, ...) enm,
@@ -107,11 +108,12 @@ int getVarTypeType(const char* str, size_t n);
 
 // Node utility macros
 #define IS_TYPE(node, t) ((node) && (node)->data.type == t) 
-#define IS_OP(node)    IS_TYPE(node, OP_TYPE)
-#define IS_NUM(node)   IS_TYPE(node, NUM_TYPE)
-#define IS_IDENT(node) IS_TYPE(node, IDENT_TYPE)
-#define IS_CTRL(node)  IS_TYPE(node, CTRL_TYPE)
-#define IS_VAR_TYPE(node) IS_TYPE(node, VAR_TYPE_TYPE)
+#define IS_OP(node)        IS_TYPE(node, OP_TYPE)
+#define IS_NUM(node)       IS_TYPE(node, NUM_TYPE)
+#define IS_RAW_IDENT(node) IS_TYPE(node, RAW_IDENT_TYPE)
+#define IS_CTRL(node)      IS_TYPE(node, CTRL_TYPE)
+#define IS_VAR_TYPE(node)  IS_TYPE(node, VAR_TYPE_TYPE)
+#define IS_SYMBOL(node)    IS_TYPE(node, SYMBOL_TYPE)
 #define OF_VAR_TYPE(node, varType) \
   (IS_VAR_TYPE((node)) && (node)->data.value.varType == (varType))
 #define OF_CTRL(node, ctrlType) \
@@ -129,11 +131,13 @@ int getVarTypeType(const char* str, size_t n);
   (NodeUnit){.type = CTRL_TYPE, .value = {.ctrl = i}, .exceptionCount = (uint64_t)inv}
 #define NUM_UNIT_(i, inv) \
   (NodeUnit){.type = NUM_TYPE,  .value = {.num = i}, .exceptionCount = (uint64_t)inv}
-#define IDENT_UNIT_(name, len)  (NodeUnit){.type = IDENT_TYPE, .value = {.id = (StringView){name, len}}}
+#define RAW_IDENT_UNIT_(name, len)  (NodeUnit){.type = RAW_IDENT_TYPE, .value = {.rawId = (StringView){name, len}}}
 #define VAR_TYPE_UNIT_(i)  (NodeUnit){.type = VAR_TYPE_TYPE, .value = {.varType = i}}
+#define SYMBOL_UNIT_(bucket, index)  (NodeUnit){.type = SYMBOL_TYPE, .value = {.sym = (SymbolIndex){.bucketIndex = bucket, .listIndex = index}}}
 
 #define NUM_(i, inv) nodeAlloc(NUM_UNIT_(i, inv))
-#define IDENT_(name, len) nodeAlloc(IDENT_UNIT_(name, len))
+#define RAW_IDENT_(name, len) nodeAlloc(RAW_IDENT_UNIT_(name, len))
+#define SYMBOL_(bucket, index) nodeAlloc(SYMBOL_UNIT_(bucket, index))
 
 #define PRIM_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_PRIM))
 #define FRAC_() nodeAlloc(VAR_TYPE_UNIT_(TYPE_FRAC))

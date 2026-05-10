@@ -5,19 +5,26 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include "ds/list/list.h"
 #include "ds/tree/type.h"
 #include "error/error.h"
 #include "utils/utils.h"
 
-typedef union NodeValue {
+typedef struct {
+  size_t    bucketIndex;
+  ListIndex listIndex;
+} SymbolIndex;
+
+typedef union {
   VarType varType;
   OpType op;
   CtrlType ctrl;
-  StringView id;
+  StringView rawId;
+  SymbolIndex sym;
   int64_t num;
 } NodeValue;
 
-typedef struct NodeUnit {
+typedef struct {
   NodeType  type;
   NodeValue value;
   uint64_t  exceptionCount;

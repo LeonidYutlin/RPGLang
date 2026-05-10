@@ -1,10 +1,12 @@
 #include "frontend/symtab.h"
+#include "ds/tree/type.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
 static StringView mangleName(StringView name, Error* status);
 static Error populateSymtabCallback(TreeNode* node, uint level, void* data);
+static Error convertRawIdentifiersCallback(TreeNode* node, uint level, void* data);
 static bool cmpSymbol(void* symA, void* symB);
 static void printSymbol(FILE* sink, void* sym);
 static void freeSymbol(void* sym); 
@@ -19,8 +21,11 @@ Error symtabInit(HashTable* symtab, size_t bucketCount,
     return err;
 
   nodeTraverse(ast, 
-               .infix = populateSymtabCallback, 
-               .infixData = symtab);
+               .postfix = populateSymtabCallback, 
+               .postfixData = symtab);
+  nodeTraverse(ast, 
+               .postfix = convertRawIdentifiersCallback,
+               .postfixData = symtab);
   return OK;
 }
 
@@ -33,13 +38,40 @@ static Error populateSymtabCallback(TreeNode* node,
 
   Error err = OK;
   HashTable* ht = (HashTable*)data;
-  StringView funcName = node->left->left->right->data.value.id;
+  TreeNode* funcIdNode = node->left->left->right;
+  StringView funcName = funcIdNode->data.value.rawId;
   Symbol sym = (Symbol){
     .mangledName = mangleName(funcName, &err),
   };
   if (err)
     return err;
-  hashTablePut(ht, funcName, &sym);
+
+  size_t bucketIndex  = 0;
+  ListIndex listIndex = 0;
+  hashTablePutExt(ht, funcName, &sym, &bucketIndex, &listIndex);
+  nodeChangeChild(funcIdNode->parent, funcIdNode, 
+                  SYMBOL_(bucketIndex, listIndex), NULL);
+  return OK;
+}
+
+static Error convertRawIdentifiersCallback(TreeNode* node, 
+                                           _unused uint level, void* data) {
+  if (!data)
+    return BadArgs;
+  if (!IS_RAW_IDENT(node))
+    return OK;
+
+  Error err = OK;
+  HashTable* ht = (HashTable*)data;
+  StringView* name = &node->data.value.rawId;
+  Symbol* sym = NULL;
+  size_t bucketIndex  = 0;
+  ListIndex listIndex = 0;
+  if (hashTableGetExt(ht, *name, &sym, &bucketIndex, &listIndex, &err))
+    nodeChangeChild(node->parent, node, 
+                    SYMBOL_(bucketIndex, listIndex), NULL);
+  if (err)
+    return err;
   return OK;
 }
 

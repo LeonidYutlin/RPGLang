@@ -24,7 +24,8 @@ _unused static const char* BAD_FILL      = "#F02222";
 _unused static const char* DEFAULT_CELL  = "#F02222";
 _unused static const char* OP_CELL       = "#A6E3A1";
 _unused static const char* NUM_CELL      = "#6CA1F9";
-_unused static const char* VAR_CELL      = "#B581F4";
+_unused static const char* RAW_ID_CELL   = "#FF81B4";
+_unused static const char* SYMBOL_CELL   = "#B581F4";
 _unused static const char* CTRL_CELL     = "#F9E2AF";
 _unused static const char* TYPE_CELL     = "#FAB387";
 _unused static const char* TABLE_OUTLINE = "#101510";
@@ -629,11 +630,12 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
   const char* nodeStr = getNodeTypeStr(node->data.type);
   const char* nodeColor = DEFAULT_CELL;
   switch (node->data.type) {
-    case NUM_TYPE:      nodeColor = NUM_CELL;  break;
-    case OP_TYPE:       nodeColor = OP_CELL;   break;
-    case IDENT_TYPE:    nodeColor = VAR_CELL;  break;
-    case CTRL_TYPE:     nodeColor = CTRL_CELL; break;
-    case VAR_TYPE_TYPE: nodeColor = TYPE_CELL; break;
+    case NUM_TYPE:       nodeColor = NUM_CELL;     break;
+    case OP_TYPE:        nodeColor = OP_CELL;      break;
+    case SYMBOL_TYPE:    nodeColor = SYMBOL_CELL;  break;
+    case RAW_IDENT_TYPE: nodeColor = RAW_ID_CELL;  break;
+    case CTRL_TYPE:      nodeColor = CTRL_CELL;    break;
+    case VAR_TYPE_TYPE:  nodeColor = TYPE_CELL;    break;
     default: break;
   }
 
@@ -693,9 +695,9 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
                 opInfo ? opInfo->str : "ERROR: no info for such OpType");
       }
       break;
-    case IDENT_TYPE:
+    case RAW_IDENT_TYPE:
       {
-        StringView var = node->data.value.id;
+        StringView var = node->data.value.rawId;
         if (var.data) 
           fprintf(dot,
                   "<tr>"
@@ -710,6 +712,20 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
                   "</tr>",
                   BAD_FILL,
                   "NULL");
+      }
+      break;
+    case SYMBOL_TYPE:
+      {
+        SymbolIndex i = node->data.value.sym;
+        fprintf(dot,
+                "<tr>"
+                 "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> bucketIndex = %lu </td>"
+                "</tr>"
+                "<tr>"
+                 "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> listIndex   = %lu </td>"
+                "</tr>",
+                VALUE_FILL, i.bucketIndex, 
+                VALUE_FILL, i.listIndex);
       }
       break;
     case NUM_TYPE:

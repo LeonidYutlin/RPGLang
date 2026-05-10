@@ -618,7 +618,7 @@ static bool consumeClassifiedToken(Parser* p, TokenType type, bool* isInvalid) {
 static bool getIdentifier(Parser* p, TreeNode** result) {
   PRELUDE();
   if (CHECK(TOK_IDENTIFIER)) {
-    *result = IDENT_(PEEK()->pos, PEEK()->len);
+    *result = RAW_IDENT_(PEEK()->pos, PEEK()->len);
     p->i++;
     return true;
   }

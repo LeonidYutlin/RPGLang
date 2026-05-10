@@ -168,3 +168,4 @@ _Figure 13. Function call_
 3. function declarations are chained with `;` nodes in the same way statements are. So, from a topdown view, the tree is just a chain of function declarations chained with `;`
 
 TODO: update images to have clear distinction of whether the fields are left, or right, or parent
+TODO: RAW_IDENT and SYMBOL changes in AST_STANDARD.md
