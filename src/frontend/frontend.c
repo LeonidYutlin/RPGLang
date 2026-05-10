@@ -83,17 +83,28 @@ int main(int argc, char* argv[]) {
   static const size_t SYMTAB_BUCKET_SIZE = 17;
   static const size_t SYMTAB_LIST_CAPACITY = 4;
   static const hash_f SYMTAB_HASH_FUNC = hashRotate;
-  HashTable symtab = (HashTable){};
-  if ((err = symtabInit(&symtab, SYMTAB_BUCKET_SIZE, 
-                        SYMTAB_LIST_CAPACITY, SYMTAB_HASH_FUNC, ast))) {
+  TranslationUnit trUnit = (TranslationUnit){.ast = ast};
+  if ((err = symtabInit(&trUnit, SYMTAB_BUCKET_SIZE, 
+                        SYMTAB_LIST_CAPACITY, SYMTAB_HASH_FUNC))) {
     fprintf(stderr, "Failed to init symtab\n");
     exitValue = err;
     goto exit;
   }
   symtabInited = true;
 
-  hashTableDump(logFile, &symtab, "MANGLING");
+  hashTableDump(logFile, &trUnit.symtab, "MANGLING");
   nodeDump(logFile, ast, "After Symtab Init");
+
+  if (!symtabCheckCalls(&trUnit, &err)) {
+    fprintf(stderr, "Invalid function call detected, no further compilation is done\n");
+    exitValue = Fail;
+    goto exit;
+  }
+  if (err) {
+    fprintf(stderr, "Failed to check function calls\n");
+    exitValue = err;
+    goto exit;
+  }
 
   nodePrintPrefix(outFile, ast);
   fclose(outFile);
@@ -108,6 +119,6 @@ exit:
   if (astInited)
     nodeDestroy(ast);
   if (symtabInited)
-    hashTableDestroy(&symtab, false);
+    hashTableDestroy(&trUnit.symtab, false);
   return exitValue;
 }

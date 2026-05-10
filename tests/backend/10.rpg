@@ -4,8 +4,8 @@ note | and continue with anything that isn't ;(){}
 note | Also, function name can't be a keyword.
 prim main() {
   _Mangle_();
-  ___();
-  123();
+  ___(#mage 0V);
+  123(0);
   *();
   .,''();
   exit(#mage 0LXVII);
@@ -15,12 +15,12 @@ prim _Mangle_() {
   out(0I);
 }
 
-prim ___() {
+prim ___(prim a) {
   out(0II);
   *();
 }
 
-prim 123() {
+prim 123(prim a) {
   out(0III);
 }
 

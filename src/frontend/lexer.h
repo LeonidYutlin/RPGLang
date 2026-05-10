@@ -37,21 +37,21 @@
   X(TOK_ROLLBACK, "rollback")    \
   X(TOK_SKIP, "skip")            \
   X(TOK_PRIM, "prim")            \
-  X(TOK_FRAC, "frac")            \
-  X(TOK_LOC,  "loc")             \
   X(TOK_VOID, "void")
+//  X(TOK_FRAC, "frac")
+//  X(TOK_LOC,  "loc")
 
 #define KEYWORD_ALIAS_LIST() \
-  X(TOK_PRIM, "primordial")  \
-  X(TOK_FRAC, "fractured")   \
-  X(TOK_LOC,  "location")
+  X(TOK_PRIM, "primordial")
+  //X(TOK_FRAC, "fractured")
+  //X(TOK_LOC,  "location")
 
 #define TOKEN_TYPE_LIST()          \
   X(TOK_EOF,        "EOF")         \
   X(TOK_IDENTIFIER, "IDENTIFIER")  \
   X(TOK_SEMIC,      "';'")         \
-  X(TOK_LPAREN,       "'('")       \
-  X(TOK_RPAREN,       "')'")       \
+  X(TOK_LPAREN,     "'('")         \
+  X(TOK_RPAREN,     "')'")         \
   X(TOK_LBRACE,     "'{'")         \
   X(TOK_RBRACE,     "'}'")         \
   X(TOK_NUM_LIT,    "NUM_LITERAL") \

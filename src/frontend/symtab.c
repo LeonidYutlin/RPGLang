@@ -1,31 +1,87 @@
 #include "frontend/symtab.h"
+#include "ds/hashtable/entry.h"
 #include "ds/tree/type.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
 static StringView mangleName(StringView name, Error* status);
+static Error checkCallsCallback(TreeNode* node, uint level, void* data);
 static Error populateSymtabCallback(TreeNode* node, uint level, void* data);
 static Error convertRawIdentifiersCallback(TreeNode* node, uint level, void* data);
 static bool cmpSymbol(void* symA, void* symB);
 static void printSymbol(FILE* sink, void* sym);
 static void freeSymbol(void* sym); 
 
-Error symtabInit(HashTable* symtab, size_t bucketCount, 
-                 size_t initialListCapacity, hash_f hashFunc, TreeNode* ast) {
+Error symtabInit(TranslationUnit* trUnit, size_t bucketCount, 
+                 size_t initialListCapacity, hash_f hashFunc) {
+  if (!trUnit ||
+      !trUnit->ast)
+    return BadArgs;
+
   Error err = OK;
-  if ((err = hashTableInit(symtab, bucketCount, 
+  if ((err = hashTableInit(&trUnit->symtab, bucketCount, 
                            initialListCapacity, sizeof(Symbol),
                            freeSymbol, printSymbol,
                            cmpSymbol, hashFunc)))
     return err;
 
-  nodeTraverse(ast, 
+  nodeTraverse(trUnit->ast, 
                .postfix = populateSymtabCallback, 
-               .postfixData = symtab);
-  nodeTraverse(ast, 
+               .postfixData = &trUnit->symtab);
+  nodeTraverse(trUnit->ast, 
                .postfix = convertRawIdentifiersCallback,
-               .postfixData = symtab);
+               .postfixData = &trUnit->symtab);
+  
+  return OK;
+}
+
+bool symtabCheckCalls(TranslationUnit* trUnit, Error* status) {
+  Error err = OK;
+  if ((err = hashTableVerify(&trUnit->symtab)))
+    return err;
+  if (!trUnit ||
+      !trUnit->ast)
+    RETURN_WITH_STATUS(BadArgs, false);
+
+  return !nodeTraverse(trUnit->ast, 
+                      .postfix = checkCallsCallback,
+                      .postfixData = &trUnit->symtab);
+}
+
+static Error checkCallsCallback(TreeNode* node,
+                                _unused uint level, void* data) {
+  if (!data)
+    return BadArgs;
+  if (!OF_CTRL(node, CTRL_FUNC_CALL))
+    return OK;
+
+  Error err = OK;
+  HashTable* ht = (HashTable*)data;
+  TreeNode* funcIdNode = node->left;
+  if (!IS_SYMBOL(funcIdNode))
+    return OK;
+  SymbolIndex symIdx = funcIdNode->data.value.sym;
+  Entry* entry = (Entry*)listGetValue(ht->buckets + symIdx.bucketIndex, 
+                                      symIdx.listIndex, &err);
+  if (err)
+    return err;
+  Symbol* sym = (Symbol*)listGetValue(&ht->values, entry->value, &err);
+  if (err)
+    return err;
+  uint64_t argc = 0;
+  TreeNode* argNode = node->right;
+  while (argNode) {
+    argc++;
+    argNode = argNode->right;
+  }
+  if (argc != sym->argc) {
+    //TODO: better diagnostics when call is invalid
+    fprintf(stderr, 
+            "[ERROR] function %.*s expects %lu arguments, but %lu were provided\n",
+            (int)entry->key.size, entry->key.data, sym->argc, argc);
+    return Fail;
+  } 
   return OK;
 }
 
@@ -40,8 +96,15 @@ static Error populateSymtabCallback(TreeNode* node,
   HashTable* ht = (HashTable*)data;
   TreeNode* funcIdNode = node->left->left->right;
   StringView funcName = funcIdNode->data.value.rawId;
+  uint64_t argc = 0;
+  TreeNode* paramNode = node->left->right;
+  while (paramNode) {
+    argc++;
+    paramNode = paramNode->right;
+  }
   Symbol sym = (Symbol){
     .mangledName = mangleName(funcName, &err),
+    .argc = argc,
   };
   if (err)
     return err;
@@ -137,7 +200,8 @@ static bool cmpSymbol(void* symA, void* symB) {
 
   Symbol* a = symA;
   Symbol* b = symB;
-  return a->mangledName.size == b->mangledName.size &&
+  return a->argc == b->argc &&
+         a->mangledName.size == b->mangledName.size &&
          strncmp(a->mangledName.data, b->mangledName.data, a->mangledName.size);
 }
 
@@ -147,8 +211,10 @@ static void printSymbol(FILE* sink, void* sym) {
 
   Symbol* s = sym;
   fprintf(sink, 
-          "mangledName = %.*s\n",
-          (int)s->mangledName.size, s->mangledName.data);
+          "mangledName = %.*s\n"
+          "argc = %lu\n",
+          (int)s->mangledName.size, s->mangledName.data,
+          s->argc);
 }
 
 static void freeSymbol(void* sym) {

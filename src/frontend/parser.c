@@ -648,8 +648,8 @@ static bool getNonVoidType(Parser* p, TreeNode** result) {
   PRELUDE();
   switch (PEEK()->type) {
     case TOK_PRIM: *result = PRIM_(); p->i++; return true;
-    case TOK_FRAC: *result = FRAC_(); p->i++; return true;
-    case TOK_LOC:  *result = LOC_();  p->i++; return true;
+    //case TOK_FRAC: *result = FRAC_(); p->i++; return true;
+    //case TOK_LOC:  *result = LOC_();  p->i++; return true;
     default: return false;
   }
 }

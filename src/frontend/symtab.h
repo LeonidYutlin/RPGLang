@@ -6,10 +6,18 @@
 #include "utils/utils.h"
 
 typedef struct {
+  HashTable symtab;
+  TreeNode* ast;
+} TranslationUnit;
+
+typedef struct {
   StringView mangledName;
+  uint64_t argc;
 } Symbol;
 
-Error symtabInit(HashTable* symtab, size_t bucketCount, 
-                 size_t initialListCapacity, hash_f hashFunc, TreeNode* ast);
+Error symtabInit(TranslationUnit* trUnit, size_t bucketCount, 
+                 size_t initialListCapacity, hash_f hashFunc);
+
+bool symtabCheckCalls(TranslationUnit* trUnit, Error* status);
 
 #endif

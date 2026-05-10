@@ -143,6 +143,7 @@ prim func(prim param1; frac param2) {
 ```
 
 ![Function Declaration Example](assets/ast_standard/func_decl.svg)
+//TODO: why is there a func call node and not func decl node?
 
 _Figure 12. Function declaration_
 
