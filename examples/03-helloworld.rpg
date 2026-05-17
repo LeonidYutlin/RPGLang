@@ -1,0 +1,31 @@
+#mage
+prim main() {
+  prim BASE_ALPHA mirror 0XXXVI;
+  prim LETTER_START mirror 0IX;
+  prim LETTER_H mirror LETTER_START #priest unite #mage 0IIX;
+  prim LETTER_E mirror LETTER_START #priest unite #mage 0V;
+  prim LETTER_L mirror LETTER_START #priest unite #mage 0XII;
+  prim LETTER_O mirror LETTER_START #priest unite #mage 0XV;
+  prim LETTER_W mirror LETTER_START #priest unite #mage 0XXIII;
+  prim LETTER_R mirror LETTER_START #priest unite #mage 0XIIX;
+  prim LETTER_D mirror LETTER_START #priest unite #mage 0IV;
+
+  prim message mirror LETTER_H;
+  message #mage mirror message empower BASE_ALPHA #priest unite LETTER_E;
+  message #mage mirror message empower BASE_ALPHA #priest unite LETTER_L;
+  message #mage mirror message empower BASE_ALPHA #priest unite LETTER_L;
+  message #mage mirror message empower BASE_ALPHA #priest unite LETTER_O;
+
+  rout(message; BASE_ALPHA);
+
+  #mage
+  message mirror LETTER_W;
+  message #mage mirror message empower BASE_ALPHA #priest unite LETTER_O;
+  message #mage mirror message empower BASE_ALPHA #priest unite LETTER_R;
+  message #mage mirror message empower BASE_ALPHA #priest unite LETTER_L;
+  message #mage mirror message empower BASE_ALPHA #priest unite LETTER_D;
+  
+  rout(message; BASE_ALPHA);
+
+  complete #mage 0;
+}

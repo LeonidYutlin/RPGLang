@@ -58,10 +58,8 @@ static void gen_(FILE* sink, const char* commentary,
 #endif
 
 // TODO: backend for: 
-// CTRL: CTRL_ASG, CTRL_DECL, CTRL_PARAM, CTRL_CONTINUE, CTRL_BREAK
-// IDENT: in context of a + b
+// CTRL: CTRL_CONTINUE, CTRL_BREAK
 // TYPE: frac and loc
-// TODO: add parameters
 
 void codegen(FILE* sink, TranslationUnit* trUnit) {
   if (!sink || 
