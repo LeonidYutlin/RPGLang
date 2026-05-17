@@ -21,6 +21,6 @@ prim main() {
   note | rout (Radixed Out): print first argument as an unsigned number 
   note | in base-n, where n is second argument(must be 1-36)
   note | also prints a newline, like out()
-  rout(0IXX; 0XX);
+  rout(0DDDDIXX; 0XX);
   exit(0I);
 }

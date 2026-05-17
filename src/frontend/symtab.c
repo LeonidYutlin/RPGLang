@@ -148,7 +148,7 @@ static Error populateSymtabCallback(TreeNode* node,
   Symbol sym = (Symbol){};
   if (hashTableGet(ht, funcName, &sym, &err)) {
     fprintf(stderr, 
-            "[ERROR]: Function %.*s has already been declared before\n",
+            "[ERROR]: Function %.*s has multiple definitions\n",
             (int)funcName.size, funcName.data);
     return Fail;
   }

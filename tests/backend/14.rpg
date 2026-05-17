@@ -4,7 +4,8 @@ prim main() {
   complete 0;
 }
 
-void 8(prim a; prim b; prim c; prim d; prim e; prim f; prim g; prim h) {
+void 8(prim a; prim b; prim c; prim d;
+       prim e; prim f; prim g; prim h) {
   out(h);
   h mirror a;
   out(h);
