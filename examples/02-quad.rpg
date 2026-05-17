@@ -1,0 +1,63 @@
+#mage
+prim main() {
+  note ax^2 + bx + c = 0
+  prim a mirror in();
+  prim b mirror in();
+  prim c mirror in();
+
+  prim BASE_ALPHA mirror 0XXXVI;
+  prim LETTER_D mirror 0XIII;
+
+  prim d mirror discriminant(a; b; c);
+  note print "d"
+  rout(LETTER_D; BASE_ALPHA);
+  out(d);
+
+  if (printRootCount(d)) {
+    prim sqrtD mirror ≈sqrt(d);
+
+    prim LETTER_R mirror 0XXVII;
+    note print "r1"
+    rout(LETTER_R empower BASE_ALPHA #priest unite #mage 0I; BASE_ALPHA);
+    out((#priest shadow b #warrior hit sqrtD) #warlock shatter (#mage 0II empower a));
+    note print "r2"
+    rout(LETTER_R empower BASE_ALPHA #priest unite #mage 0II; BASE_ALPHA);
+    out((#priest shadow b unite sqrtD) #warlock shatter (#mage 0II empower a));
+  }
+  
+  complete 0;
+}
+
+prim discriminant(prim a; prim b; prim c) {
+  #mage
+  complete b empower b #warrior hit #mage 0IV empower a empower c;
+}
+
+prim printRootCount(prim d) {
+  prim BASE_ALPHA mirror 0XXXVI;
+  prim LETTER_R mirror 0XXVII;
+
+  note print "r"
+  rout(LETTER_R; BASE_ALPHA);
+  if (d #warrior duel!< #mage 0) {
+    out(0II);
+    complete 0I;
+  } else if (d #warrior duel!> #mage 0) {
+    out(0);
+    complete 0;
+  } else {
+    out(0I);
+    complete 0I;
+  }
+}
+
+prim ≈sqrt(prim n) {
+  prim res mirror 0I;
+  #warlock
+  until (res #mage empower res #warrior duel!< n){
+   #mage
+   res mirror res #priest unite #mage 0I;
+  }
+    
+  complete res #warrior hit #mage 0I;
+}

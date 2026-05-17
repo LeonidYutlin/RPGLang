@@ -13,6 +13,7 @@ typedef struct {
 typedef struct {
   StringView mangledName;
   uint64_t argc;
+  uint64_t varc;
   bool hasReturnValue;
   bool external;
 } Symbol;

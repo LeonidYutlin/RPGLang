@@ -168,15 +168,20 @@ static void codegenRec(Context* ctx, TreeNode* ast,
         gen("PUSH REG ARGUMENT",
             "\t\tpush %s\n",
             ARG_REGS[s.offset]);
-        ctx->depth++;
       } else {
         gen("PUSH STACK ARGUMENT",
             "\t\tmov rax, [rbp + %lu]\n"
             "\t\tpush rax\n",
             ((s.offset - (ARG_REGS_SIZE - 1)) + 1) * REG_SIZE);
-        ctx->depth++;
       }
+    } else {
+      gen("PUSH STACK VARIABLE",
+          "\t\tmov rax, [rbp - %lu]\n"
+          "\t\tpush rax\n",
+          ((s.offset + 1) * REG_SIZE));
     }
+
+    ctx->depth++;
     return;
   }
   
@@ -509,10 +514,14 @@ static void asg(Context* ctx, TreeNode* ast) {
   if (s.isArg && s.offset < ARG_REGS_SIZE) {
     genn("\t\tpop %s\n",
          ARG_REGS[s.offset]);
-  } else {
+  } else if (s.isArg) {
     genn("\t\tpop rax\n"
          "\t\tmov qword[rbp + %lu], rax\n",
          ((s.offset - (ARG_REGS_SIZE - 1)) + 1) * REG_SIZE);
+  } else {
+    genn("\t\tpop rax\n"
+         "\t\tmov qword[rbp - %lu], rax\n",
+         ((s.offset + 1) * REG_SIZE));
   }
   ctx->depth--;
 }
@@ -529,8 +538,10 @@ static void funcDecl(Context* ctx, TreeNode* ast) {
   gen("FUNC DECL",
       "%.*s:\n"
       "\t\tpush rbp\n"
-      "\t\tmov rbp, rsp\n",
-      (int)sym->mangledName.size, sym->mangledName.data);
+      "\t\tmov rbp, rsp\n"
+      "\t\tsub rsp, %lu\n",
+      (int)sym->mangledName.size, sym->mangledName.data,
+      sym->varc * REG_SIZE);
 }
 
 static void cmp(Context* ctx, TreeNode* ast, const char* cmpStr) {

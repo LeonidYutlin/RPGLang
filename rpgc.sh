@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -xe
 AST=".temp/ast.txt"
 AST_OPT=".temp/ast_opt.txt"
 ASM=".temp/asm.s"
@@ -14,4 +14,3 @@ STDLIB_OBJ=".temp/stdlib.o"
 nasm -f elf64 $ASM -wno-number-overflow -o $OBJ
 nasm -f elf64 $STDLIB_ASM -wno-number-overflow -o $STDLIB_OBJ
 ld $OBJ $STDLIB_OBJ -o $2
-./$2

@@ -277,10 +277,12 @@ static bool getVariableDeclaration(Parser* p, TreeNode** result) {
       getIdentifier(p, &lhs)) {
     TreeNode* rhs = NULL;
     bool inv = false;
+    size_t oldI = p->i;
     if (getAssignmentBody(p, &rhs, &inv)) {
       *result = DECL_(type, ASG_(lhs, rhs, inv));
       return true;
     }
+    p->i = oldI;
     nodeDestroy(rhs);
     *result = DECL_(type, lhs);
     return true;

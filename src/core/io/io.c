@@ -452,6 +452,15 @@ Error symtabRead(MappedFile* mf, HashTable* symtab, size_t* stopPoint) {
     SKIP_WHITESPACE;
     readN = 0;
 
+    if (sscanf(CUR, "varc = %lu%ln", 
+               &sym.varc, &readN) != 1) {
+      hashTableDestroy(symtab, false);
+      return Fail;
+    }
+    p += (size_t)readN;
+    SKIP_WHITESPACE;
+    readN = 0;
+
     // TODO:factor this out into scanBool or smth
     sscanf(CUR, "external = %ln", &readN);
     if (!readN) {

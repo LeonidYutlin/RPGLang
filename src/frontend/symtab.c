@@ -1,6 +1,7 @@
 #include "frontend/symtab.h"
 #include "ds/hashtable/entry.h"
 #include "ds/tree/type.h"
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,8 @@ typedef struct {
 static StringView mangleName(StringView name, Error* status);
 static Error symtabAddStdlib(HashTable* symtab);
 static Error checkCallsCallback(TreeNode* node, uint level, void* data);
+static Error resolveFunctionVariables(TreeNode* node, uint64_t* argcPtr, uint64_t* varcPtr);
+static Error resolveLocalVariablesCallback(TreeNode* node, uint level, void* data);
 static Error populateSymtabCallback(TreeNode* node, uint level, void* data);
 static Error convertRawIdentifiersCallback(TreeNode* node, uint level, void* data);
 static Error convertRawVariableCallback(TreeNode* node, uint level, void* data);
@@ -42,7 +45,7 @@ Error symtabInit(TranslationUnit* trUnit, size_t bucketCount,
   if (nodeTraverse(trUnit->ast, 
                     .postfix = convertRawIdentifiersCallback,
                     .postfixData = &trUnit->symtab)) {
-    fprintf(stderr, "Unknown function call detected, no further compilation is done\n");
+    fprintf(stderr, "Unknown symbol being used, no further compilation is done\n");
     return Fail;
   }
   
@@ -155,28 +158,14 @@ static Error populateSymtabCallback(TreeNode* node,
   if (err)
     return err;
 
-  uint64_t argc = 0;
-  TreeNode* paramNode = node->left->right;
-  while (paramNode) {
-    ConvertRawVariableCallbackData d = (ConvertRawVariableCallbackData) {
-      .name = paramNode->left->right->data.value.rawId,
-      .isArg = true,
-      .offset = argc,
-    };
-    nodeChangeChild(paramNode->left->right->parent, paramNode->left->right,
-                    SYMBOL_OFFSETTED_(true, argc), NULL);
-    TreeNode* funcBody = node->right;
-    nodeTraverse(funcBody, 
-                 .postfix = convertRawVariableCallback,
-                 .postfixData = &d);
-    if (err)
-      return err;
-    argc++;
-    paramNode = paramNode->right;
-  }
+  uint64_t argc = 0, varc = 0;
+  if ((err = resolveFunctionVariables(node, &argc, &varc)))
+    return err;
+
   sym = (Symbol){
     .mangledName = mangleName(funcName, &err),
     .argc = argc,
+    .varc = varc,
     .external = false,
     .hasReturnValue = !OF_VAR_TYPE(node->left->left->left, TYPE_VOID),
   };
@@ -191,10 +180,87 @@ static Error populateSymtabCallback(TreeNode* node,
   return OK;
 }
 
+static Error resolveFunctionVariables(TreeNode* node, uint64_t* argcPtr, uint64_t* varcPtr) {
+  if (!OF_CTRL(node, CTRL_FUNC_DECL) ||
+      !argcPtr || !varcPtr)
+    return BadArgs;
+
+  Error err = OK;
+  uint64_t argc = 0;
+  TreeNode* funcBody = node->right;
+  TreeNode* paramNode = node->left->right;
+  while (paramNode) {
+    ConvertRawVariableCallbackData d = (ConvertRawVariableCallbackData) {
+      .name = paramNode->left->right->data.value.rawId,
+      .isArg = true,
+      .offset = argc,
+    };
+    nodeChangeChild(paramNode->left->right->parent, paramNode->left->right,
+                    SYMBOL_OFFSETTED_(true, argc), NULL);
+    nodeTraverse(funcBody, 
+                 .postfix = convertRawVariableCallback,
+                 .postfixData = &d);
+    if (err)
+      return err;
+    argc++;
+    paramNode = paramNode->right;
+  }
+
+  uint64_t varc = 0;
+  if ((err = nodeTraverse(funcBody, 
+                          .postfix = resolveLocalVariablesCallback,
+                          .postfixData = &varc)))
+    return err;
+
+  *argcPtr = argc;
+  *varcPtr = varc;
+  return OK;
+}
+
+static Error resolveLocalVariablesCallback(TreeNode* node, 
+                                           _unused uint level, void* data) {
+  if (!data)
+    return BadArgs;
+  if (!OF_CTRL(node, CTRL_DECL))
+    return OK;
+
+  TreeNode* varNameNode = !OF_CTRL(node->right, CTRL_ASG) 
+                          ? node->right
+                          : node->right->left;
+  assert(IS_RAW_IDENT(varNameNode));
+  Error err = OK;
+  uint64_t* varc = (uint64_t*)data;
+  StringView* name = &varNameNode->data.value.rawId;
+
+  ConvertRawVariableCallbackData d = (ConvertRawVariableCallbackData) {
+    .name = *name,
+    .isArg = false,
+    .offset = *varc,
+  };
+  nodeChangeChild(varNameNode->parent, varNameNode,
+                  SYMBOL_OFFSETTED_(false, *varc), NULL);
+  if ((err = nodeTraverse(node->parent,
+                          .postfix = convertRawVariableCallback,
+                          .postfixData = &d)))
+    return err;
+  (*varc)++;
+
+  return OK;
+}
+
 static Error convertRawIdentifiersCallback(TreeNode* node, 
                                            _unused uint level, void* data) {
   if (!data)
     return BadArgs;
+
+  if (IS_RAW_IDENT(node) &&
+      !OF_CTRL(node->parent, CTRL_FUNC_CALL)) {
+    StringView* name = &node->data.value.rawId;
+    fprintf(stderr, 
+            "[ERROR] Symbol named \"%.*s\" is undeclared\n",
+            (int)name->size, name->data);   
+    return Fail;
+  }
   if (!OF_CTRL(node, CTRL_FUNC_CALL))
     return OK;
 
@@ -282,9 +348,20 @@ static Error convertRawVariableCallback(TreeNode* node,
 
   Error err = OK;
   ConvertRawVariableCallbackData* d = (ConvertRawVariableCallbackData*)data;
-  StringView funcName = node->data.value.rawId;
-  if (funcName.size == d->name.size &&
-      strncmp(funcName.data, d->name.data, d->name.size) == 0) {
+  StringView varName = node->data.value.rawId;
+  if (varName.size == d->name.size &&
+      strncmp(varName.data, d->name.data, d->name.size) == 0) {
+
+    if (OF_CTRL(node->parent, CTRL_DECL) ||
+        (OF_CTRL(node->parent, CTRL_ASG) &&
+         node == node->parent->left &&
+         OF_CTRL(node->parent->parent, CTRL_DECL))) {
+      fprintf(stderr, 
+              "[ERROR] Variable \"%.*s\" has multiple declarations\n",
+              (int)varName.size, varName.data);
+      return Fail;     
+    }
+    
     nodeChangeChild(node->parent, node,
                     SYMBOL_OFFSETTED_(d->isArg, d->offset), NULL);
     if (err)
@@ -293,4 +370,3 @@ static Error convertRawVariableCallback(TreeNode* node,
 
   return OK;
 }
-
