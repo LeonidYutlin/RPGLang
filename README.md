@@ -1,9 +1,9 @@
 # RPGLang
 
-RPGLang - esoteric programming language that uses a brand new paradigm - Team Oriented Programming™ (TOP for short). 
+RPGLang - an esoteric imperative compiled programming language that uses a brand new paradigm - Team Oriented Programming™ (TOP for short). 
 In RPGLang the programmer is not a lonely coder, but instead a player managing a group of adventurers. 
-Each of these adventurers has an RPG class (mage, warlock, priest, warrior) that dictates strengths and weaknesses, 
-what they can and cannot do. 
+Each of these adventurers has an RPG class (mage, warlock, priest, warrior) that dictates their strengths and weaknesses, 
+what they can and cannot do.
 The programmer must switch between these characters in order to build a cohesive programm.
 
 ## Useful Resources 
