@@ -1,23 +1,19 @@
 # RPGLang
 
-(очень временное вступление, требует доработок)
+RPGLang - esoteric programming language that uses a brand new paradigm - Team Oriented Programming™ (TOP for short). 
+In RPGLang the programmer is not a lonely coder, but instead a player managing a group of adventurers. 
+Each of these adventurers has an RPG class (mage, warlock, priest, warrior) that dictates strengths and weaknesses, 
+what they can and cannot do. 
+The programmer must switch between these characters in order to build a cohesive programm.
 
-RPGLang - эзотерический язык программирования в парадигме Командно-Ориентированного Программирования™ (Team Oriented Programming™ - TOP). В RPGLang'е обязанности программы делигируются не одному программисту, а группе RPG-классов, каждый из которых имеет свои сильные и слабые стороны. Чтобы программировать на данном языке, нужно уметь эффективно комбинировать действия классов, ведь если требовать от мага умений махать мечом, то далеко вы не уедете.
+## Useful Resources 
+- [Example Programs](examples/)
+- [RPGLang's Syntax Grammar](GRAMMAR.md)
+- [AST Standard](AST_STANDARD.md)
+- [Vim Syntax Highlighting](rpg.vim)
 
-План по разработке:
-- [x] Лексер языка (frontend lexer)
-- [x] Синтаксический анализ языка (frontend)
-- [x] Оптимизация (middleend)
-- [ ] Бэкэнд в ассемблер (backend)
-- [ ] Улучшение парсера до packrat (frontend)
-- [ ] Реверс-фронтенд (reverse-frontend)
-
-На данный момент разрабатывается бэкэнд.
-
-Полезные файлы: [Грамматике языка](GRAMMAR.md), [Стандарт AST](AST_STANDARD.md), [Подсветка синтаксиса для Vim](rpg.vim)
-
-Язык находится в разработке, и на данный момент не готов к использованию.
-
-Держите утешительную картинку дампа дерева:
-
-![Tree Dump](assets/tree_dump.svg)
+## Upcoming Development Plan
+- [ ] Create a Wiki
+- [ ] Adding more types (floats, pointers, arrays)
+- [ ] Upgrading frontend parser to packrat
+- [ ] Adding reverse-frontend to decompile AST back into source code
